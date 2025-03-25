@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    
+    <!-- id="fleet_accident_configuration_menu" --> 
+    <menuitem id="fleet_accident_root_menu"
+        name="Accident"
+        web_icon="fleet_accident,static/description/icon.png"
+        sequence="20" />
+
+    <menuitem id="fleet_accident_card_menu"
+        name="Accident Card"
+        parent="fleet_accident_root_menu"
+        action="fleet_accident_action"
+        sequence="10" />
+
+    <menuitem id="fleet_accident_configuration_menu"
+        name="Configuration"
+        parent="fleet_accident_root_menu"
+        sequence="20" />
+    
+    <menuitem id="fleet_accident_evaluation_party_menu"
+        name="Evaluation Party"
+        parent="fleet_accident_configuration_menu"
+        action="fleet_accident_evaluation_party_action"
+        sequence="10" />
+    <menuitem id="fleet_accident_evaluation_item_menu"
+        name="Evaluation Item"
+        parent="fleet_accident_configuration_menu"
+        action="fleet_accident_evaluation_item_action"
+        sequence="20" />
+    <menuitem id="default_accident_item_menu"
+        name="Default Accident Item"
+        parent="fleet_accident_configuration_menu"
+        action="default_accident_item_action"
+        sequence="30" />
+
+</odoo>

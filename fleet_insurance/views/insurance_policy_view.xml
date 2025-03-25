@@ -1,0 +1,178 @@
+<odoo>
+
+    <record id="view_insurance_policy_tree" model="ir.ui.view">
+        <field name="name">insurance.policy.tree</field>
+        <field name="model">insurance.policy</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="description"/>
+                <field name="insurance_company"/>
+                <field name="insurance_type"/>
+                <field name="status_color" widget="color_picker" invisible="1"/>
+                <field name="status" widget="badge" options="{'color_field': 'status_color'}"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_insurance_policy_form" model="ir.ui.view">
+        <field name="name">insurance.policy.form</field>
+        <field name="model">insurance.policy</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_create_bill" string="Create Bill" type="object"
+                            class="btn-success" invisible="status != 'approved' or show_create_bill == False"/>
+                    <button name="action_approve" string="Approve" type="object"
+                            class="btn-primary" invisible="status != 'under_review'"/>
+                    <button name="action_request_validation" string="Request Validation" type="object"
+                            class="btn-primary" invisible="status != 'quotation'"/>
+                    <button name="action_terminate" string="Terminate" type="object"
+                            confirm="Are you sure you want to terminate ?"
+                            class="btn-danger" invisible="status != 'approved'"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            class="btn-secondary" invisible="status != 'quotation' and show_cancel_button == False "/>
+                    <button name="action_draft" string="Set to Draft" type="object"
+                            confirm="Are you sure you want to reset to draft ?"
+                            class="btn-secondary" invisible="status != 'cancelled'"/>
+                    <field name="status" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_insurance_bills" icon="fa-bars" type="object"
+                                help="Show Bill related to this policy">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Show Bill</span>
+                            </div>
+                        </button>
+                        <button name="action_view_termination_logs" icon="fa-bars" type="object"
+                                help="Show Bill related to this policy">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Termination Logs</span>
+                            </div>
+                        </button>
+                        <button name="action_insurance_credit_note" icon="fa-bars" type="object"
+                                help="Show Credit Notes related to this policy">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Credit Notes</span>
+                            </div>
+                        </button>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="insurance_company" readonly="status == 'approved'"/>
+                            <field name="insurance_number" readonly="status == 'approved'"/>
+                            <field name="refund_insurance_journal_id" invisible="1"/>
+                            <field name="show_cancel_button" invisible="1"/>
+                            <field name="company" readonly="status == 'approved'"/>
+                            <field name="insurance_type" readonly="status == 'approved'"/>
+                        </group>
+                        <group>
+                            <field name="start_date" readonly="status == 'approved'"/>
+                            <field name="end_date" readonly="status == 'approved'"/>
+                            <field name="description" readonly="status == 'approved'"/>
+                            <field name="category_id" widget="many2many_tags" string="Tag" invisible="1"/>
+                            <field name="show_create_bill" invisible="1"/>
+                            <field name="vendor_bill_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Vehicles Info">
+                            <field name="policy_lines_ids" form_view_ref="False">
+                                <list editable="bottom" create="true" edit="true">
+                                    <field name="id" optional='show'/>
+                                    <field name="vehicle_id"
+                                           options="{'no_create': True, 'no_open': True, 'no_edit': True}"
+                                           readonly="bill_status == 'true'"/>
+                                    <field name="plat_number" optional='show'/>
+                                    <field name="model" optional='show'/>
+                                    <field name="purchase_market_value" optional='show'
+                                           readonly="bill_status == 'true'"/>
+                                    <field name="insurance_rate" widget="percentage" optional='show'
+                                           readonly="bill_status == 'true'"/>
+                                    <field name="minimum_insurance_rate" optional='show'
+                                           readonly="bill_status == 'true'"/>
+                                    <field name="insurance_amount" optional='show'/>
+                                    <field name="start_date" optional='show' readonly="bill_status == 'true'"/>
+                                    <field name="end_date" optional='show'/>
+                                    <field name="endurance_rate" optional='show'
+                                           readonly="bill_status == 'true'"/>
+                                    <field name="endurance_customer" optional='show'
+                                           readonly="bill_status == 'true'"/>
+                                    <field name="insurance_duration" optional='show'/>
+                                    <field name="daily_rate" optional='show'/>
+                                    <field name="bill_status" optional='show'/>
+                                    <field name="insurance_status" optional='show' readonly="1"/>
+                                </list>
+                            </field>
+
+                            <group name="note_group" col="6" class="mt-2 mt-md-0">
+                                <group colspan="4" class="order-1 order-lg-0">
+                                    <field colspan="2" name="note" nolabel="1" placeholder="Terms and conditions..."/>
+                                </group>
+                                <group class="oe_subtotal_footer d-flex order-0 order-lg-1 flex-column gap-0 gap-sm-3"
+                                       colspan="2" name="sale_total">
+                                    <h3>Total Policy Amount</h3>
+                                    <h3>
+                                        <field name="total_policy_amount" nolabel="1"
+                                               readonly="1"/>
+                                    </h3>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_insurance_policy" model="ir.actions.act_window">
+        <field name="name">Insurance Policies</field>
+        <field name="res_model">insurance.policy</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_insurance_policy" name="Insurance Policy"
+              parent="menu_insurance_root" sequence="1"/>
+
+    <menuitem id="menu_insurance_policy_data" name="Insurance Policy Data"
+              parent="menu_insurance_policy" action="action_insurance_policy" sequence="1"/>
+
+    <record id="action_view_insurance_bills_form" model="ir.actions.act_window">
+        <field name="name">Vendor Bills</field>
+        <field name="res_model">account.move</field>
+        <field name="view_mode">form</field>
+        <field name="domain">[('insurance_policy_id', '=', active_id)]</field>
+    </record>
+
+    <record id="cron_insurance_line_status" model="ir.cron">
+        <field name="name">Control Status</field>
+        <field name="model_id" ref="model_insurance_policy_line"/>
+        <field name="state">code</field>
+        <field name="code">
+            model.update_insurance_status()
+        </field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="priority">3</field>
+    </record>
+
+    <record id="policy_line_view_tree" model="ir.ui.view">
+        <field name="name">policy_line_view_tree</field>
+        <field name="model">insurance.policy.line</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="policy_id"/>
+                <field name="start_date" optional='show' readonly="bill_status == 'true'"/>
+                <field name="end_date" optional='show'/>
+                <field name="insurance_amount" optional='show'/>
+                <field name="purchase_market_value" optional='show'/>
+                <field name="insurance_duration" optional='show'/>
+                <field name="daily_rate" optional='show'/>
+                <field name="insurance_status" optional='show' readonly="1"/>
+            </list>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,131 @@
+<odoo>
+    <record id="view_fleet_damage_list" model="ir.ui.view">
+        <field name="name">fleet.damage.list</field>
+        <field name="model">fleet.damage</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="state_color" widget="color_picker"/>
+                <field name="state" widget="badge" options="{'color_field': 'state_color'}"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_fleet_damage_form" model="ir.ui.view">
+        <field name="name">fleet.damage.form</field>
+        <field name="model">fleet.damage</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_reset_draft" string="Reset To Draft" type="object"
+                            confirm="Are you sure you want to reset back to draft state ?"
+                            class="btn-primary" invisible="state != 'cancelled'"/>
+                    <button name="action_waiting_evaluation" string="Request Evaluation" type="object"
+                            confirm="Are you sure you want to transfer to Waiting evaluation state ?"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_charge" string="Charge Invoice" type="object"
+                            class="btn-success" invisible="state != 'waiting_evaluation'"
+                            confirm="Are you sure you want to Charge Invoice ?"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            confirm="Are you sure you want to Cancel Damage ?"
+                            class="btn-danger" invisible="state not in ('draft', 'waiting_evaluation')"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_invoices" icon="fa-bars" type="object"  invisible="invoice_id==False"
+                                help="Show invoices related to this Damage">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Invoice</span>
+                            </div>
+                        </button>
+                    </div>
+                    <group>
+                        <group string="Vehicle Info">
+                            <field name="vehicle_id" options="{'no_create': True, 'no_open': True, 'no_edit': True}" readonly="state != 'draft'"/>
+                            <field name="model_id" />
+                            <field name="category_id"/>
+                        </group>
+                        <group string="Customer Info">
+                            <field name="rental_customer_number" readonly="state != 'draft'"/>
+                            <field name="customer_id" readonly="state != 'draft'"/>
+                            <field name="id_no" readonly="state != 'draft'"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Evaluation Info">
+                            <field name="evaluation_type" readonly="state != 'draft'"/>
+                            <field name="evaluation_party_id" readonly="state != 'draft'"/>
+                            <field name="company_id" readonly="state != 'draft'"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Evaluation" invisible="state == 'draft'">
+                            <field name="evaluation_ids" readonly="state in ('charged','cancelled')">
+                                <list editable="bottom" create="true" edit="true">
+                                    <field name="evaluation_item_id" optional='show'/>
+                                    <field name="amount_without_tax" optional='show'/>
+                                    <field name="tax_ids" optional='show' widget="many2many_tags"/>
+                                    <field name="amount_include_tax" optional='show'/>
+                                </list>
+                            </field>
+                            <div class="row">
+                                <div class="col-7"/>
+                                <div class="col-3">
+                                    <h3 style="padding-bottom:7px;font-weight:bold">Total Without Tax :</h3>
+                                    <h3 style="padding-bottom:7px;font-weight:bold">Total Tax :</h3>
+                                    <h3 style="font-weight:bold">Total Include Tax :</h3>
+                                </div>
+                                <div class="col-2">
+                                    <h3>
+                                        <field name="total_without_tax"
+                                               style="font-weight:bold;border-bottom:1px solid black"
+                                               readonly="1"/>
+                                    </h3>
+                                    <h3>
+                                        <field name="total_tax"
+                                               style="font-weight:bold;border-bottom:1px solid black"
+                                               readonly="1"/>
+                                    </h3>
+                                    <h3>
+                                        <field name="total_include_tax"
+                                               style="font-weight:bold;border-bottom:1px solid black"
+                                               readonly="1"/>
+                                    </h3>
+                                </div>
+                            </div>
+                        </page>
+                        <page string="Damage Notes" name="note" invisible="state == 'draft'">
+                            <field name="note" string="Damage Notes"
+                                   placeholder="Add an internal note that will be related to Damage"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_fleet_damage" model="ir.actions.act_window">
+        <field name="name">Fleet Damage</field>
+        <field name="res_model">fleet.damage</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_fleet_damage" name="Fleet Damage"
+              parent="fleet_accident.fleet_accident_root_menu" sequence="1"/>
+
+    <menuitem id="menu_fleet_damage_data" name="Fleet Damage Data"
+              parent="menu_fleet_damage" action="action_fleet_damage" sequence="1"/>
+
+    <record id="action_fleet_damage_invoice" model="ir.actions.act_window">
+        <field name="name">Fleet Damage Invoice</field>
+        <field name="res_model">account.move</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[("move_type","=","out_invoice"),("is_damage_invoice","=",True)]</field>
+    </record>
+
+    <menuitem id="menu_fleet_damage_invoice_menu" name="Invoice Damage" parent="fleet_accident.fleet_accident_root_menu" action="action_fleet_damage_invoice" sequence="1"/>
+
+
+</odoo>

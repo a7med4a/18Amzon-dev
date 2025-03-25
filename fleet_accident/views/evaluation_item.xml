@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="fleet_accident_evaluation_item_view_list" model="ir.ui.view">
+        <field name="name">fleet.accident.evaluation.item.view.list</field>
+        <field name="model">fleet.accident.evaluation.item</field>
+        <field name="arch" type="xml">
+            <list string="Evaluation Item" editable="bottom">
+                <field name="name"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="fleet_accident_evaluation_item_action" model="ir.actions.act_window">
+        <field name="name">Evaluation Item</field>
+        <field name="res_model">fleet.accident.evaluation.item</field>
+        <field name="view_mode">list</field>
+    </record>
+
+</odoo>

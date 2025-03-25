@@ -1,0 +1,126 @@
+<odoo>
+  <record id="fleet_vehicle_view_form_inherit_hr" model="ir.ui.view">
+    <field name="name">fleet.vehicle.hr.view.form.inherit</field>
+    <field name="model">fleet.vehicle</field>
+    <field name="inherit_id" ref="hr_fleet.fleet_vehicle_view_form_inherit_hr" />
+    <field name="arch" type="xml">
+      <xpath expr="//field[@name='mobility_card']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+    </field>
+  </record>
+
+  <record id="fleet_vehicle_view_form" model="ir.ui.view">
+    <field name="name">fleet.vehicle.view.form.inherit</field>
+    <field name="model">fleet.vehicle</field>
+    <field name="inherit_id" ref="fleet.fleet_vehicle_view_form" />
+    <field name="arch" type="xml">
+
+      <!-- Invisible Unwanted Fields -->
+      <xpath expr="//button[@name='return_action_to_open'][1]" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//button[@name='return_action_to_open'][2]" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//button[@name='return_action_to_open'][3]" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//button[@name='return_action_to_open'][4]" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//button[@name='return_action_to_open'][5]" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='plan_to_change_car']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='plan_to_change_bike']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='next_assignation_date']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='order_date']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='acquisition_date']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='write_off_date']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='location']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='fuel_type']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//page[@name='page_tax_info']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//group[@name='group_model']/following-sibling::group[1]" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+
+      <!-- New Fields -->
+      <xpath expr="//label[@for='tag_ids']" position="before">
+        <h3>
+          <label for="analytic_account_id" class="me-3" />
+          <field name="analytic_account_id" />
+        </h3>
+      </xpath>
+      <xpath expr="//field[@name='vin_sn']" position="after">
+        <field name="serial_number" />
+        <field name="card_number" />
+        <field name="usage_type" />
+        <field name="license_type" />
+      </xpath>
+       <xpath expr="//field[@name='location']" position="after">
+        <field name="branch_id"/>
+       </xpath>
+      <xpath expr="//page[@name='note']" position="after">
+        <page name="checklist" string="Checklist">
+          <group>
+            <group>
+              <field name="ac" />
+              <field name="radio_stereo" />
+              <field name="screen" />
+              <field name="spare_tire_tools" />
+              <field name="tires" />
+              <field name="spare_tires" />
+            </group>
+            <group>
+              <field name="speedometer" />
+              <field name="keys" />
+              <field name="care_seats" />
+              <field name="oil_change_km" />
+              <field name="fuel_type_code" />
+              <field name="keys_number" />
+            </group>
+            <group>
+              <field name="safety_triangle" />
+              <field name="fire_extinguisher" />
+              <field name="first_aid_kit" />
+              <field name="oil_type" />
+              <field name="oil_change_date" />
+              <field name="vehicle_status" />
+            </group>
+          </group>
+        </page>
+
+      </xpath>
+
+      <!-- Change  Color field Nature -->
+      <xpath expr="//field[@name='color']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='color']" position="after">
+        <field name="vehicle_color" widget="color_picker" />
+      </xpath>
+
+    </field>
+  </record>
+
+
+</odoo>

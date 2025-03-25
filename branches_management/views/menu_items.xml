@@ -1,0 +1,27 @@
+<odoo>
+
+    <menuitem id="branches_configuration_root_menu"
+        name="Branches"
+        web_icon="branches_management,static/description/branch.png"
+        sequence="10" />
+
+    <menuitem id="branches_configuration_menu"
+        name="Branches"
+        action="branches_management.branch_action" groups="base.group_user"
+        parent="branches_configuration_root_menu"
+        sequence="10" />
+
+    <menuitem id="branch_master_configuration_menu"
+        name="Configuration"
+        parent="branches_configuration_root_menu"
+        sequence="20" />
+
+    <menuitem id="res_area_configuration_menu"
+        name="Area"
+        action="branches_management.area_master_configuration_action"
+        parent="branch_master_configuration_menu"
+        sequence="10" />
+
+
+
+</odoo>

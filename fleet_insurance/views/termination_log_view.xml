@@ -1,0 +1,47 @@
+<odoo>
+    <record id="view_insurance_policy_termination_log_tree" model="ir.ui.view">
+        <field name="name">termination.log.tree</field>
+        <field name="model">termination.log</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="vehicle_id"/>
+                <field name="stop_date"/>
+                <field name="estimated_refunded_amount"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_insurance_policy_termination_log_form" model="ir.ui.view">
+        <field name="name">termination.log.form</field>
+        <field name="model">termination.log</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            confirm="Are you sure you want to cancel ?"
+                            class="btn-secondary" invisible="status != 'draft'"/>
+                    <button name="terminate" string="Terminate" type="object"
+                            confirm="Are you sure you want to terminate ?"
+                            class="btn-danger" invisible="status != 'draft'"/>
+                    <button name="action_draft" string="Set To Draft" type="object"
+                            confirm="Are you sure you want to reset to draft ?"
+                            class="btn-primary" invisible="status != 'cancelled'"/>
+                    <button name="action_create_credit_note" string="Create Credit Note" type="object"
+                            class="btn-success" invisible="status != 'terminated' or credit_note_status == 'true'"/>
+                    <field name="status" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="vehicle_id"/>
+                        <field name="stop_date"/>
+                        <field name="estimated_refunded_amount"/>
+                        <field name="actual_refunded_amount"/>
+                        <field name="credit_note_status"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,102 @@
+<odoo>
+    <!-- Inherit Form View to Modify it -->
+     <record id="res_config_settings_purchase_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.purchase.form.inherit.crm</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority" eval="6"/>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Purchases Type" string="Purchase Type" name="fleet_tracking_device">
+                    <block title="Purchases Type" name="fleet_tracking_device">
+                        <setting help="Define purchase name ">
+                            <field name="purchase_name"/>
+                        </setting>
+                        <setting id="purchase_type" title="Purchase Type"
+                                 help="Add Purchase Type to control type of product to purchase">
+                            <field name="purchase_type"/>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="crm_config_settings_purchase_type_action" model="ir.actions.act_window">
+        <field name="name">Purchase Type</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_id" ref="res_config_settings_purchase_view_form"/>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+        <field name="context">{'module' : 'fleet_tracking_device', 'bin_size': False}</field>
+    </record>
+
+    <menuitem id="menu_purchase_type_menu" name="Purchase Type" parent="purchase.menu_purchase_config" action="crm_config_settings_purchase_type_action"/>
+
+
+    <!-- Inherit Form View to Modify it -->
+    <record id="purchase_order_form_inherite" model="ir.ui.view">
+        <field name="name">purchase.order.form</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='product_id']" position="before">
+                <field name="purchase_type" column_invisible="1"/>
+            </xpath>
+            <xpath expr="//field[@name='product_id']" position="attributes">
+                <attribute name="domain">[('purchase_ok', '=', True),('categ_id.purchase_type', '=', purchase_type), '|', ('company_id', '=', False), ('company_id', 'parent_of', parent.company_id)]</attribute>
+            </xpath>
+
+        </field>
+    </record>
+
+
+<!--    <record id="view_purchase_type_list" model="ir.ui.view">-->
+<!--        <field name="name">purchase.type.list</field>-->
+<!--        <field name="model">purchase.type</field>-->
+<!--        <field name="arch" type="xml">-->
+<!--            <list>-->
+<!--                <field name="name"/>-->
+<!--                <field name="type"/>-->
+<!--                <field name="product_id"/>-->
+<!--            </list>-->
+<!--        </field>-->
+<!--    </record>-->
+
+<!--    <record id="view_purchase_type_form" model="ir.ui.view">-->
+<!--        <field name="name">purchase.type.form</field>-->
+<!--        <field name="model">purchase.type</field>-->
+<!--        <field name="arch" type="xml">-->
+<!--            <form>-->
+<!--                <sheet>-->
+<!--                    <group>-->
+<!--                        <group>-->
+<!--                            <field name="name"/>-->
+<!--                            <field name="type" />-->
+<!--                        </group>-->
+<!--                        <group>-->
+<!--                            <field name="is_tracking_device" invisible="1"/>-->
+<!--                            <field name="is_spare_parts" invisible="1"/>-->
+<!--                            <field name="product_id" domain="[('categ_id.is_tracking_device', '=',is_tracking_device ),('categ_id.is_spare_parts', '=',is_spare_parts )]"/>-->
+<!--                        </group>-->
+<!--                    </group>-->
+<!--                </sheet>-->
+<!--            </form>-->
+<!--        </field>-->
+<!--    </record>-->
+
+<!--    <record id="action_purchase_type" model="ir.actions.act_window">-->
+<!--        <field name="name">Purchase Type</field>-->
+<!--        <field name="res_model">purchase.type</field>-->
+<!--        <field name="view_mode">list,form</field>-->
+<!--    </record>-->
+
+
+<!--    <menuitem id="menu_purchase_type_menu" name="Purchase Type" parent="purchase.menu_purchase_config" action="action_purchase_type"/>-->
+
+
+
+
+
+</odoo>
+

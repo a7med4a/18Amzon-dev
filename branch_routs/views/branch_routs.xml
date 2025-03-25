@@ -1,0 +1,207 @@
+<odoo>
+  <record id="branch_route_view_form"
+    model="ir.ui.view">
+    <field name="name">branch.route.view.form</field>
+    <field name="model">branch.route</field>
+    <field name="arch"
+      type="xml">
+      <form string="Branches Routes">
+        <header>
+          <field name="all_vehicle_exit_done"
+            invisible="1" />
+          <field name="all_vehicle_entry_done"
+            invisible="1" />
+          <button name="action_approve"
+            type="object"
+            string="Approve"
+            class="oe_highlight"
+            invisible="state != 'draft'" />
+          <button name="action_exit_done"
+            type="object"
+            string="Exit Done"
+            class="oe_highlight"
+            invisible="state != 'approved' or not all_vehicle_exit_done" />
+          <button name="action_entry_done"
+            type="object"
+            string="Entry Done"
+            class="oe_highlight"
+            invisible="state != 'exit_done' or not all_vehicle_entry_done" />
+          <button name="action_button_cancel"
+            type="object"
+            string="Cancel"
+            class="oe_highlight"
+            invisible="state not in ['draft', 'approved']" />
+          <button name="action_button_draft"
+            type="object"
+            string="Set Draft"
+            class="oe_highlight"
+            invisible="state != 'cancel'" />
+
+          <field name="state"
+            widget="statusbar"
+            statusbar_visible="draft,approved,exit_done,entry_done" />
+        </header>
+        <sheet>
+          <div name="button_box"
+            class="oe_button_box">
+            <button class="oe_stat_button"
+              type="action"
+              name="%(branch_routs.vehicle_route_exit_permits_action)d"
+              icon="fa-book">
+              <div class="o_stat_info">
+                <span class="o_stat_value">
+                  <field name="exist_permit_count" />
+                </span>
+                <span class="o_stat_text">Exit Permits</span>
+              </div>
+            </button>
+            <button class="oe_stat_button"
+              type="action"
+              name="%(branch_routs.vehicle_route_entry_permits_action)d"
+              icon="fa-book">
+              <div class="o_stat_info">
+                <span class="o_stat_value">
+                  <field name="entry_permit_count" />
+                </span>
+                <span class="o_stat_text">Entry Permits</span>
+              </div>
+            </button>
+          </div>
+          <div class="oe_title">
+            <label for="name"
+              class="oe_edit_only" />
+            <h1>
+              <field name="name"
+                readonly="1" />
+            </h1>
+          </div>
+          <group>
+            <group>
+              <field name="destination_branch_domain"
+                invisible="1" />
+              <field name="company_id"
+                readonly="state != 'draft'" />
+              <field name="destination_type"
+                readonly="state != 'draft'" />
+              <label for="source_branch_id"
+                string="Source Branch / Workshop" />
+              <field name="source_branch_id"
+                nolabel="1"
+                readonly="state != 'draft'" />
+              <label for="destination_branch_id"
+                string="Destination Branch"
+                invisible="destination_type != 'branch'" />
+              <label for="destination_branch_id"
+                string="Destination Workshop"
+                invisible="destination_type != 'workshop'" />
+              <field name="destination_branch_id"
+                nolabel="1"
+                invisible="not destination_type"
+                domain="destination_branch_domain"
+                options="{'no_quick_create': True}"
+                readonly="state != 'draft'" />
+            </group>
+            <group>
+              <field name="transfer_type"
+                readonly="state != 'draft'" />
+              <field name="driver_employee_id"
+                invisible="transfer_type not in ['driver', 'amazon']"
+                required="transfer_type  in ['driver', 'amazon'] and state == 'approved'"
+                readonly="state not in ['draft', 'approved']" />
+              <field name="truck_vehicle_id"
+                invisible="transfer_type != 'amazon'"
+                required="transfer_type == 'amazon' and state == 'approved'"
+                readonly="state not in ['draft', 'approved']" />
+              <field name="third_party_partner_id"
+                invisible="transfer_type != 'outsource'"
+                required="transfer_type == 'outsource' and state == 'approved'"
+                readonly="state not in ['draft', 'approved']" />
+              <field name="create_date"
+                string="Request Date"
+                readonly="True" />
+              <field name="approve_date"
+                readonly="True" />
+              <field name="close_date"
+                readonly="True" />
+            </group>
+          </group>
+          <notebook>
+            <page name="vehicle_route"
+              string="Vehicle Routes">
+              <field name="disable_create_vehicle_line"
+                invisible="1" />
+              <field name="vehicle_route_ids"
+                readonly="state != 'draft'"
+                invisible="disable_create_vehicle_line">
+                <list editable="bottom">
+                  <field name="fleet_vehicle_id"
+                    domain="[('state_id.allow_transfer', '=', True), ('branch_id', '=', parent.source_branch_id)]" />
+                  <field name="exit_checklist_status"
+                    readonly="True" />
+                  <field name="entry_checklist_status"
+                    readonly="True" />
+                </list>
+              </field>
+              <field name="vehicle_route_ids"
+                readonly="state != 'draft'"
+                invisible="not disable_create_vehicle_line">
+                <list create="0">
+                  <field name="fleet_vehicle_id"
+                    domain="[('state_id.allow_transfer', '=', True), ('branch_id', '=', parent.source_branch_id)]" />
+                  <field name="exit_checklist_status"
+                    readonly="True" />
+                  <field name="entry_checklist_status"
+                    readonly="True" />
+                </list>
+              </field>
+            </page>
+          </notebook>
+          <chatter />
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <record id="branch_route_tree"
+    model="ir.ui.view">
+    <field name="name">branch.route.list</field>
+    <field name="model">branch.route</field>
+    <field name="arch"
+      type="xml">
+      <list>
+        <field name="name" />
+        <field name="company_id" />
+        <field name="destination_type" />
+        <field name="source_branch_id" />
+        <field name="destination_branch_id" />
+        <field name="create_date"
+          string="Request Date" />
+        <field name="state" />
+      </list>
+    </field>
+  </record>
+  <record id="branch_route_search"
+    model="ir.ui.view">
+    <field name="name">branch.route.search</field>
+    <field name="model">branch.route</field>
+    <field name="arch"
+      type="xml">
+      <search>
+        <field name="name" />
+        <field name="company_id" />
+        <filter string="Company"
+          name="company"
+          context="{'group_by':'company_id'}" />
+      </search>
+    </field>
+  </record>
+
+  <record id="branch_route_action"
+    model="ir.actions.act_window">
+    <field name="name">Branch Routes</field>
+    <field name="res_model">branch.route</field>
+    <field name="view_mode">list,form</field>
+  </record>
+
+
+</odoo>

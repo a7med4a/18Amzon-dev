@@ -1,0 +1,105 @@
+<odoo>
+    <data>
+        <record id="view_partner_form_rental" model="ir.ui.view">
+            <field name="name">res.partner.form</field>
+            <field name="model">res.partner</field>
+            <field name="priority" eval="1"/>
+            <field name="arch" type="xml">
+                <form string="Individual Customers">
+                    <sheet>
+                        <field name="create_from_rental" invisible="1"/>
+                        <div class="oe_title mb24">
+                            <h1>
+                                <field id="individual" options="{'line_breaks': False}" widget="text" class="text-break"
+                                       name="name" default_focus="1" placeholder="e.g. Brandon Freeman"
+                                      required="1"/>
+                            </h1>
+                        </div>
+
+                        <group>
+                            <group col="2">
+                                <field name="date_of_birth" widget="date"/>
+                                <field name="age"/>
+                                <field name="id_type"/>
+                                <field name="version_no"/>
+                                <field name="license_type"/>
+                                 <label for="street" string="Address"/>
+                                <div class="o_address_format">
+                                    <field name="street" placeholder="Street..." class="o_address_street"/>
+                                    <field name="street2" placeholder="Street 2..." class="o_address_street"/>
+                                    <field name="city" placeholder="City" class="o_address_city"/>
+                                    <field name="state_id" class="o_address_state" placeholder="State"
+                                           options="{'no_open': True, 'no_quick_create': True}"
+                                           context="{'country_id': country_id, 'default_country_id': country_id, 'zip': zip}"/>
+                                    <field name="zip" placeholder="ZIP" class="o_address_zip"/>
+                                    <div name="partner_address_country" class="d-flex justify-content-between">
+                                        <field name="country_id" placeholder="Country" class="o_address_country"
+                                               options='{"no_open": True, "no_create": True}'/>
+                                    </div>
+                                </div>
+                            </group>
+
+
+                            <group col="6">
+                                <field name="nationality"/>
+                                <field name="id_no"/>
+                                <field name="mobile2" class="oe_title"/>
+                                <field name="license_expiry_date" widget="date"/>
+                                <field name="id_no" string="License NO." readonly="1"/>
+                                <field name="id_expiry_date" widget="date"/>
+                                <field name="place_of_issue"/>
+                                <field name="function" placeholder="e.g. Sales Director"/>
+
+                                <field name="title" options='{"no_open": True}' placeholder="e.g. Mister"/>
+                                <field name="lang" invisible="active_lang_count &lt;= 1"/>
+                                <field name="category_id" widget="many2many_tags" options="{'color_field': 'color'}"
+                                       placeholder='e.g. "B2B", "VIP", "Consulting", ...'/>
+                                 <field name="property_account_receivable_id"/>
+                            </group>
+
+
+                        </group>
+                        <notebook colspan="4">
+                            <page name='internal_notes' string="Internal Notes">
+                                <field name="comment" placeholder="Internal notes..."/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <chatter/>
+
+                </form>
+            </field>
+        </record>
+        <record id="view_partner_tree_rental" model="ir.ui.view">
+            <field name="name">res.partner.list</field>
+            <field name="model">res.partner</field>
+            <field eval="8" name="priority"/>
+            <field name="arch" type="xml">
+                <list string="Individual Customers" sample="1" multi_edit="1">
+                    <field name="complete_name" string="Name"/>
+                    <field name="user_id" optional="show" widget="many2one_avatar_user"
+                           domain="[('share', '=', False)]"/>
+                    <field name="street" optional="hide"/>
+                    <field name="city" optional="show"/>
+                     <field name="create_from_rental" invisible="1"/>
+                    <field name="state_id" optional="hide" readonly="1"/>
+                    <field name="country_id" optional="show" readonly="1"/>
+                    <field name="category_id" optional="hide" widget="many2many_tags"
+                           options="{'color_field': 'color'}"/>
+                    <field name="company_id" groups="base.group_multi_company" readonly="1"/>
+                </list>
+            </field>
+        </record>
+         <record id="rental_individual_customers_action" model="ir.actions.act_window">
+            <field name="name">Individual Customers</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">list,form</field>
+            <field name="view_ids" eval="[
+            (5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('customer_info.view_partner_tree_rental')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('customer_info.view_partner_form_rental')})]"/>
+             <field name="domain">[('create_from_rental', '=', True)]</field>
+        <field name="context">{'default_create_from_rental': True,'default_is_company': False}</field>
+        </record>
+    </data>
+</odoo>

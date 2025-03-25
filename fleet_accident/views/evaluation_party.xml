@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="fleet_accident_evaluation_party_view_list" model="ir.ui.view">
+        <field name="name">fleet.accident.evaluation.party.view.list</field>
+        <field name="model">fleet.accident.evaluation.party</field>
+        <field name="arch" type="xml">
+            <list string="Evaluation Party" editable="bottom">
+                <field name="name"/>
+                <field name="type"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="fleet_accident_evaluation_party_action" model="ir.actions.act_window">
+        <field name="name">Evaluation Party</field>
+        <field name="res_model">fleet.accident.evaluation.party</field>
+        <field name="view_mode">list</field>
+    </record>
+
+</odoo>

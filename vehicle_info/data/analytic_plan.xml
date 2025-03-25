@@ -1,0 +1,8 @@
+<odoo>
+    <data noupdate="1">
+        <record id="vehicle_analytic_plan" model="account.analytic.plan">
+            <field name="name">Vehicle</field>
+            <field name="is_vehicle">True</field>
+        </record>
+    </data>
+</odoo>

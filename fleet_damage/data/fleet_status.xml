@@ -1,0 +1,9 @@
+<odoo>
+    <data noupdate="1">
+        <record id="fleet_vehicle_state_total_loss" model="fleet.vehicle.state">
+            <field name="name">Total Loss</field>
+            <field name="sequence">11</field>
+            <field name="type">total_loss</field>
+        </record>
+    </data>
+</odoo>

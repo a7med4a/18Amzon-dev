@@ -1,0 +1,25 @@
+<odoo>
+  <record id="fleet_vehicle_state_view_tree" model="ir.ui.view">
+    <field name="name">fleet.vehicle.state.view.tree.inherit</field>
+    <field name="model">fleet.vehicle.state</field>
+    <field name="inherit_id" ref="fleet_status.fleet_vehicle_state_view_tree" />
+    <field name="arch" type="xml">
+      <xpath expr="//field[@name='type']" position="after">
+        <field name="allow_transfer" widget="boolean_toggle"/>
+      </xpath>
+    </field>
+  </record>
+
+  <record id="fleet_vehicle_state_view_form" model="ir.ui.view">
+    <field name="name">fleet.vehicle.state.view.form.inherit</field>
+    <field name="model">fleet.vehicle.state</field>
+    <field name="inherit_id" ref="fleet_status.fleet_vehicle_state_view_form" />
+    <field name="arch" type="xml">
+      <xpath expr="//field[@name='type']" position="after">
+            <field name="allow_transfer" widget="boolean_toggle"/>
+      </xpath>
+    </field>
+  </record>
+
+
+</odoo>

@@ -1,0 +1,5 @@
+<odoo>
+    <data>
+        <menuitem id="menu_insurance_root" name="Insurance and Accident" sequence="10"/>
+    </data>
+</odoo>

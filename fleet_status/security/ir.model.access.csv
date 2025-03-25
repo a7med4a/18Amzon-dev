@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+fleet.fleet_vehicle_state_access_right,fleet.vehicle.state,fleet.model_fleet_vehicle_state,fleet.fleet_group_manager,1,1,0,0
+fleet_vehicle_state_admin_access_right,fleet.vehicle.state,fleet.model_fleet_vehicle_state,base.group_system,1,1,1,1
+fleet_vehicle_status_log_access_right,fleet.vehicle.status.log,fleet_status.model_fleet_vehicle_status_log,base.group_system,1,1,1,1

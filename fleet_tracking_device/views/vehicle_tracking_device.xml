@@ -1,0 +1,56 @@
+<odoo>
+
+    <record id="view_production_lot_form_inherit" model="ir.ui.view">
+        <field name="name">stock.lot.inherit</field>
+        <field name="model">stock.lot</field>
+        <field name="inherit_id" ref="stock.view_production_lot_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='product_id']" position="after">
+                <field name="is_linked" widget="boolean_toggle" readonly="1" invisible="purchase_type != 'tracking_device'"/>
+                <field name="is_tracking_device" invisible="1"/>
+                <field name="is_spare_parts" invisible="1"/>
+                <field name="purchase_type" string="Type"/>
+            </xpath>
+            <xpath expr="//sheet" position="before">
+                <header>
+                    <field name="state" widget="statusbar" options="{'clickable': '1'}"
+                           invisible="purchase_type != 'tracking_device'"/>
+                </header>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_production_lot_form_a" model="ir.actions.act_window">
+        <field name="name">Tracking Device</field>
+        <field name="res_model">stock.lot</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('purchase_type','=','tracking_device')]</field>
+    </record>
+
+    <menuitem id="menu_tracking_device" name="Tracking Devices" parent="fleet.menu_root" action="action_production_lot_form_a" />
+
+
+    <record id="vehicle_tracking_device_view_tree" model="ir.ui.view">
+        <field name="name">vehicle_tracking_device_view_tree</field>
+        <field name="model">vehicle.tracking.device</field>
+        <field name="arch" type="xml">
+            <list string="Vehicle Tracking Device" editable="top">
+                <field name="vehicle_id"/>
+                <field name="tracking_device_ids" widget="many2many_tags" domain="[('purchase_type', '=', 'tracking_device'),('is_linked', '=', False),('state', 'in', ['new', 'used'])]"/>
+                <field name="card_number"/>
+                <field name="device_state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="vehicle_tracking_device_action" model="ir.actions.act_window">
+        <field name="name">Vehicle Tracking Device</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">vehicle.tracking.device</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <menuitem id="menu_vehicle_tracking_device" name="Vehicle Tracking Devices" parent="fleet.menu_root" action="vehicle_tracking_device_action" />
+
+
+</odoo>

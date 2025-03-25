@@ -1,0 +1,20 @@
+<odoo>
+
+    <menuitem id="branch_route_configuration_root_menu"
+        name="Branch Routs"
+        web_icon="branch_routs,static/description/icon.png"
+        sequence="10" />
+
+    <menuitem id="branch_routs_configuration_menu"
+        name="Branches"
+        action="branch_routs.branch_route_action" groups="base.group_user"
+        parent="branch_route_configuration_root_menu"
+        sequence="10" />
+
+    <menuitem id="vehicle_routs_configuration_menu"
+        name="Vehicles"
+        action="branch_routs.vehicle_route_action" groups="base.group_user"
+        parent="branch_route_configuration_root_menu"
+        sequence="20" />
+
+</odoo>

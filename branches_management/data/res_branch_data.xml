@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="main_branch" model="res.branch">
+            <field name="name">My Branch</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="currency_id" ref="base.EUR"/>
+        </record>
+
+        <record model="res.users" id="base.user_root">
+            <field name="branch_ids" eval="[(4, ref('main_branch'))]"/>
+            <field name="branch_id" ref="main_branch"/>
+        </record>
+
+        <record id="base.user_admin" model="res.users">
+            <field name="branch_ids" eval="[(4, ref('main_branch'))]"/>
+            <field name="branch_id" ref="main_branch"/>
+        </record>
+
+        <record id="base.public_user" model="res.users">
+            <field name="branch_ids" eval="[(4, ref('main_branch'))]"/>
+            <field name="branch_id" ref="main_branch"/>
+        </record>
+        <record id="base.default_user" model="res.users">
+            <field name="branch_ids" eval="[(4, ref('main_branch'))]"/>
+            <field name="branch_id" ref="main_branch"/>
+        </record>
+
+        <record id="base.template_portal_user_id" model="res.users">
+            <field name="branch_ids" eval="[(4, ref('main_branch'))]"/>
+            <field name="branch_id" ref="main_branch"/>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,17 @@
+<odoo>
+
+    <!-- Inherit Form View to Modify it -->
+    <record id="product_category_form_inherit" model="ir.ui.view">
+        <field name="name">product.category.inherit</field>
+        <field name="model">product.category</field>
+        <field name="inherit_id" ref="product.product_category_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='parent_id']" position="after">
+<!--                <field name="is_tracking_device" />-->
+<!--                <field name="is_spare_parts" />-->
+                <field name="purchase_type" widget="radio" class="oe_inline" options="{'horizontal': true}"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

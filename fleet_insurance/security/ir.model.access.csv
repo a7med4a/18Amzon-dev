@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_insurance_policy,insurance_policy,model_insurance_policy,,1,1,1,1
+access_insurance_policy_line,access_insurance_policy_line,model_insurance_policy_line,,1,1,1,1
+access_insurance_policy_terminate_wizard,access_insurance_policy_terminate_wizard,model_insurance_policy_terminate_wizard,,1,1,1,1
+access_insurance_config_settings,insurance.config.settings,model_insurance_config_settings,,1,1,1,1
+access_termination_log,termination.log,model_termination_log,,1,1,1,1
+access_insurance_policy_terminate_line,insurance.policy.terminate.line,model_insurance_policy_terminate_line,,1,1,1,1
+access_import.vehicle,import.vehicle,model_import_vehicle,,1,1,1,1

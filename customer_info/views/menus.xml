@@ -1,0 +1,6 @@
+<odoo>
+    <data>
+       <menuitem name="Individual Customers" id="menu_individual_customers" parent="rental_customization.menu_customer_data"
+                  action="customer_info.rental_individual_customers_action"/>
+    </data>
+</odoo>

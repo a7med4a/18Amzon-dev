@@ -1,0 +1,30 @@
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="fleet.res_config_settings_view_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//block[@id='end_contract_setting']" position="after">
+
+                <block title="Vehicle Information" id="vehicle_info_setting_block">
+                    <setting id="vehicle_info_setting" string="Vehicle Information" company_dependent="1"
+                     help="Set Max Numbers of Vehicle License Plate and Chassis NO.">
+                        <div class="content-group">
+                            <div class="row mt16">
+                                <label string="Chassis NO/SN Length." for="vin_sn_length" class="col-lg-6 o_light_label" />
+                                <field name="vin_sn_length"/>
+                            </div>
+                            <br/>
+                            <div class="row">
+                                <label string="License Plate Length'" for="license_plate_length" class="col-lg-6 o_light_label" />
+                                <field name="license_plate_length" />
+                            </div>
+                        </div>
+                    </setting>
+                </block>
+
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

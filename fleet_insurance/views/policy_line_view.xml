@@ -1,0 +1,44 @@
+<odoo>
+    <record id="view_insurance_policy_line_form" model="ir.ui.view">
+        <field name="name">insurance.policy.line</field>
+        <field name="model">insurance.policy.line</field>
+        <field name="mode">primary</field>
+        <field name="arch" type="xml">
+            <form string="">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="bill_status" invisible="1"/>
+                            <field name="vehicle_id"
+                               options="{'no_create': True, 'no_open': True, 'no_edit': True}"
+                               readonly="bill_status == 'true'"/>
+                        <field name="plat_number" />
+                        <field name="model" />
+                        <field name="purchase_market_value" 
+                               readonly="bill_status == 'true'"/>
+                        <field name="insurance_rate" widget="percentage" 
+                               readonly="bill_status == 'true'"/>
+                        <field name="minimum_insurance_rate" 
+                               readonly="bill_status == 'true'"/>
+                        </group>
+                        <group>
+                        <field name="insurance_amount" />
+                        <field name="start_date"  readonly="bill_status == 'true'"/>
+                        <field name="end_date" />
+                        <field name="endurance_rate" 
+                               readonly="bill_status == 'true'"/>
+                        <field name="endurance_customer" 
+                               readonly="bill_status == 'true'"/>
+                        <field name="insurance_duration" />
+                        <field name="daily_rate" />
+                        <field name="bill_status" />
+                        <field name="insurance_status"  readonly="1"/>
+                    </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+   
+</odoo>

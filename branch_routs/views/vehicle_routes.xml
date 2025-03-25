@@ -1,0 +1,325 @@
+<odoo>
+
+    <record id="vehicle_route_view_form"
+        model="ir.ui.view">
+        <field name="name">vehicle.route.view.form</field>
+        <field name="model">vehicle.route</field>
+        <field name="arch"
+            type="xml">
+            <form string="Branches Routes"
+                create="0"
+                delete="0">
+                <header invisible="context.get('exit_permits') or context.get('entry_permits')">
+                    <field name="state"
+                        widget="statusbar"
+                        statusbar_visible="draft,exit_check,exit_done,entry_check,entry_done" />
+                </header>
+                <header invisible="not context.get('exit_permits')">
+                    <button name="action_exit_done"
+                        type="object"
+                        string="Done"
+                        class="oe_highlight"
+                        invisible="exit_checklist_status != 'under_check'" />
+                    <field name="exit_checklist_status"
+                        widget="statusbar"
+                        statusbar_visible="under_check,in_transfer" />
+                </header>
+                <header invisible="not context.get('entry_permits')">
+                    <button name="action_entry_done"
+                        type="object"
+                        string="Done"
+                        class="oe_highlight"
+                        invisible="entry_checklist_status != 'in_transfer'" />
+                    <field name="entry_checklist_status"
+                        widget="statusbar"
+                        statusbar_visible="in_transfer,done" />
+                </header>
+                <sheet>
+
+                    <div class="oe_title">
+                        <label for="fleet_vehicle_id"
+                            class="oe_edit_only" />
+                        <h1>
+                            <field name="fleet_vehicle_id"
+                                readonly="1" />
+                        </h1>
+                    </div>
+                    <group
+                        invisible="context.get('exit_permits') or context.get('entry_permits')">
+                        <field name='destination_type'
+                            invisible="1" />
+                        <group>
+                            <label for="source_branch_id"
+                                string="Source Branch / Workshop" />
+                            <field name="source_branch_id"
+                                nolabel="1"
+                                readonly="1" />
+                            <field name="exist_under_check_date"
+                                readonly="1" />
+                            <field name="exist_in_transfer_date"
+                                readonly="1" />
+                        </group>
+                        <group>
+                            <label for="destination_branch_id"
+                                string="Destination Branch"
+                                invisible="destination_type != 'branch'" />
+                            <label for="destination_branch_id"
+                                string="Destination Workshop"
+                                invisible="destination_type != 'workshop'" />
+                            <field name="destination_branch_id"
+                                nolabel="1"
+                                invisible="not destination_type"
+                                readonly="1" />
+                            <field name="entry_in_transfer_date"
+                                readonly="1" />
+                            <field name="entry_done_date"
+                                readonly="1" />
+                        </group>
+                    </group>
+                    <group invisible="context.get('exit_permits') or context.get('entry_permits')">
+                        <group name="exit_checklist"
+                            string="Exit CheckList">
+                            <field name="exit_odometer"
+                                readonly="1" />
+                            <field name="exit_ac"
+                                readonly="1" />
+                            <field name="exit_radio_stereo"
+                                readonly="1" />
+                            <field name="exit_screen"
+                                readonly="1" />
+                            <field name="exit_spare_tire_tools"
+                                readonly="1" />
+                            <field name="exit_tires"
+                                readonly="1" />
+                            <field name="exit_spare_tires"
+                                readonly="1" />
+                            <field name="exit_speedometer"
+                                readonly="1" />
+                            <field name="exit_keys"
+                                readonly="1" />
+                            <field name="exit_care_seats"
+                                readonly="1" />
+                            <field name="exit_oil_change_km"
+                                readonly="1" />
+                            <field name="exit_fuel_type_code"
+                                readonly="1" />
+                            <field name="exit_keys_number"
+                                readonly="1" />
+                            <field name="exit_safety_triangle"
+                                readonly="1" />
+                            <field name="exit_fire_extinguisher"
+                                readonly="1" />
+                            <field name="exit_first_aid_kit"
+                                readonly="1" />
+                            <field name="exit_oil_type"
+                                readonly="1" />
+                            <field name="exit_oil_change_date"
+                                readonly="1" />
+                            <field name="exit_vehicle_status"
+                                readonly="1" />
+                        </group>
+                        <group name="entry_checklist"
+                            string="Entry CheckList">
+                            <field name="entry_odometer"
+                                readonly="1" />
+                            <field name="entry_ac"
+                                readonly="1" />
+                            <field name="entry_radio_stereo"
+                                readonly="1" />
+                            <field name="entry_screen"
+                                readonly="1" />
+                            <field name="entry_spare_tire_tools"
+                                readonly="1" />
+                            <field name="entry_tires"
+                                readonly="1" />
+                            <field name="entry_spare_tires"
+                                readonly="1" />
+                            <field name="entry_speedometer"
+                                readonly="1" />
+                            <field name="entry_keys"
+                                readonly="1" />
+                            <field name="entry_care_seats"
+                                readonly="1" />
+                            <field name="entry_oil_change_km"
+                                readonly="1" />
+                            <field name="entry_fuel_type_code"
+                                readonly="1" />
+                            <field name="entry_keys_number"
+                                readonly="1" />
+                            <field name="entry_safety_triangle"
+                                readonly="1" />
+                            <field name="entry_fire_extinguisher"
+                                readonly="1" />
+                            <field name="entry_first_aid_kit"
+                                readonly="1" />
+                            <field name="entry_oil_type"
+                                readonly="1" />
+                            <field name="entry_oil_change_date"
+                                readonly="1" />
+                            <field name="entry_vehicle_status"
+                                readonly="1" />
+                        </group>
+                    </group>
+                    <group name="exit_checklist"
+                        string="Exit CheckList"
+                        invisible="not context.get('exit_permits')">
+                        <group>
+                            <field name="exit_odometer"
+                                readonly="1" />
+                            <field name="exit_ac"
+                                readonly="exit_checklist_status != 'under_check'" />
+                            <field name="exit_radio_stereo"
+                                readonly="exit_checklist_status != 'under_check'" />
+                            <field name="exit_screen"
+                                readonly="exit_checklist_status != 'under_check'" />
+                            <field name="exit_spare_tire_tools"
+                                readonly="exit_checklist_status != 'under_check'" />
+                            <field name="exit_tires"
+                                readonly="exit_checklist_status != 'under_check'" />
+                            <field name="exit_spare_tires"
+                                readonly="exit_checklist_status != 'under_check'" />
+                        </group>
+                        <group>
+                            <field name="exit_speedometer"
+                                readonly="exit_checklist_status != 'under_check'" />
+                            <field name="exit_keys"
+                                readonly="exit_checklist_status != 'under_check'" />
+                            <field name="exit_care_seats"
+                                readonly="exit_checklist_status != 'under_check'" />
+                            <field name="exit_oil_change_km"
+                                readonly="exit_checklist_status != 'under_check'" />
+                            <field name="exit_fuel_type_code"
+                                readonly="exit_checklist_status != 'under_check'" />
+                            <field name="exit_keys_number"
+                                readonly="exit_checklist_status != 'under_check'" />
+                        </group>
+                        <group>
+                            <field name="exit_safety_triangle"
+                                readonly="exit_checklist_status != 'under_check'" />
+                            <field name="exit_fire_extinguisher"
+                                readonly="exit_checklist_status != 'under_check'" />
+                            <field name="exit_first_aid_kit"
+                                readonly="exit_checklist_status != 'under_check'" />
+                            <field name="exit_oil_type"
+                                readonly="exit_checklist_status != 'under_check'" />
+                            <field name="exit_oil_change_date"
+                                readonly="exit_checklist_status != 'under_check'" />
+                            <field name="exit_vehicle_status"
+                                readonly="exit_checklist_status != 'under_check'" />
+                        </group>
+                    </group>
+                    <group name="entry_checklist"
+                        string="Entry CheckList"
+                        invisible="not context.get('entry_permits')">
+                        <group>
+                            <field name="entry_odometer"
+                                readonly="entry_checklist_status != 'in_transfer'"
+                                required="entry_checklist_status == 'in_transfer'" />
+                            <field name="entry_ac"
+                                readonly="entry_checklist_status != 'in_transfer'" />
+                            <field name="entry_radio_stereo"
+                                readonly="entry_checklist_status != 'in_transfer'" />
+                            <field name="entry_screen"
+                                readonly="entry_checklist_status != 'in_transfer'" />
+                            <field name="entry_spare_tire_tools"
+                                readonly="entry_checklist_status != 'in_transfer'" />
+                            <field name="entry_tires"
+                                readonly="entry_checklist_status != 'in_transfer'" />
+                            <field name="entry_spare_tires"
+                                readonly="entry_checklist_status != 'in_transfer'" />
+                        </group>
+                        <group>
+                            <field name="entry_speedometer"
+                                readonly="entry_checklist_status != 'in_transfer'" />
+                            <field name="entry_keys"
+                                readonly="entry_checklist_status != 'in_transfer'" />
+                            <field name="entry_care_seats"
+                                readonly="entry_checklist_status != 'in_transfer'" />
+                            <field name="entry_oil_change_km"
+                                readonly="entry_checklist_status != 'in_transfer'" />
+                            <field name="entry_fuel_type_code"
+                                readonly="entry_checklist_status != 'in_transfer'" />
+                            <field name="entry_keys_number"
+                                readonly="entry_checklist_status != 'in_transfer'" />
+                        </group>
+                        <group>
+                            <field name="entry_safety_triangle"
+                                readonly="entry_checklist_status != 'in_transfer'" />
+                            <field name="entry_fire_extinguisher"
+                                readonly="entry_checklist_status != 'in_transfer'" />
+                            <field name="entry_first_aid_kit"
+                                readonly="entry_checklist_status != 'in_transfer'" />
+                            <field name="entry_oil_type"
+                                readonly="entry_checklist_status != 'in_transfer'" />
+                            <field name="entry_oil_change_date"
+                                readonly="entry_checklist_status != 'in_transfer'" />
+                            <field name="entry_vehicle_status"
+                                readonly="entry_checklist_status != 'in_transfer'" />
+                        </group>
+                    </group>
+                </sheet>
+                <chatter />
+            </form>
+        </field>
+    </record>
+    <record id="vehicle_route_tree"
+        model="ir.ui.view">
+        <field name="name">vehicle.route.list</field>
+        <field name="model">vehicle.route</field>
+        <field name="arch"
+            type="xml">
+            <list create="0"
+                delete="0">
+                <field name="fleet_vehicle_id" />
+                <field name="exit_checklist_status"
+                    column_invisible="not context.get('exit_permits')" />
+                <field name="entry_checklist_status"
+                    column_invisible="not context.get('entry_permits')" />
+                <field name="state"
+                    column_invisible="context.get('exit_permits') or context.get('entry_permits')" />
+            </list>
+        </field>
+    </record>
+    <record id="vehicle_route_search"
+        model="ir.ui.view">
+        <field name="name">vehicle.route.search</field>
+        <field name="model">vehicle.route</field>
+        <field name="arch"
+            type="xml">
+            <search>
+                <field name="fleet_vehicle_id" />
+                <field name="state" />
+            </search>
+        </field>
+    </record>
+
+    <record id="vehicle_route_action"
+        model="ir.actions.act_window">
+        <field name="name">Vehicle Routes</field>
+        <field name="res_model">vehicle.route</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+
+
+    <!-- Smart Buttons Actions -->
+
+    <record id="vehicle_route_exit_permits_action"
+        model="ir.actions.act_window">
+        <field name="name">Exit Permits</field>
+        <field name="res_model">vehicle.route</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('exit_checklist_status', 'in', ['under_check', 'in_transfer']), ('branch_route_id', 'in', active_ids)]</field>
+        <field name="context">{'exit_permits': True}</field>
+    </record>
+
+    <record id="vehicle_route_entry_permits_action"
+        model="ir.actions.act_window">
+        <field name="name">Entry Permits</field>
+        <field name="res_model">vehicle.route</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('entry_checklist_status', 'in', ['done', 'in_transfer']), ('branch_route_id', 'in', active_ids)]</field>
+        <field name="context">{'entry_permits': True}</field>
+    </record>
+
+</odoo>

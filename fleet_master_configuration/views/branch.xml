@@ -1,0 +1,66 @@
+<odoo>
+
+    <!-- Inherit Form View to Modify it -->
+    <record id="fleet_branch_form" model="ir.ui.view">
+            <field name="name">res.branch.form</field>
+            <field name="model">res.branch</field>
+        <field name="inherit_id" ref="branches_management.branch_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='currency_id']" position="before">
+                    <field name="naql_id" />
+                    <field name="branch_type" />
+                    <field name="color" widget="color_picker"/>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                        <page name="accounting_tab"
+                            string="Accounting">
+                            <group>
+                                <group name="journals"
+                                    string="Journals">
+                                    <field name="sales_journal_ids"
+                                        widget="many2many_tags" />
+                                    <field name="purchase_journal_ids"
+                                        widget="many2many_tags" />
+                                    <field name="cash_journal_ids"
+                                        widget="many2many_tags" />
+                                    <field name="bank_journal_ids"
+                                        widget="many2many_tags" />
+                                    <field name="misc_journal_ids"
+                                        widget="many2many_tags" />
+                                    <field name="transfer_journal_ids"
+                                        widget="many2many_tags" />
+                                </group>
+                                <group name="analytic"
+                                    string="Analytic">
+                                    <field name="analytic_plan_ids"
+                                        widget="many2many_tags" />
+                                    <field name="analytic_account_ids"
+                                        widget="many2many_tags" />
+                                </group>
+                            </group>
+                        </page>
+
+<!--                        <page name="access_permissions" string="Access Permissions">-->
+<!--                            <group>-->
+<!--                                <field name="allowed_user_ids" widget="many2many_tags"/>-->
+<!--                            </group>-->
+<!--                        </page>-->
+            </xpath>
+
+        </field>
+    </record>
+     <record id="fleet_branch_tree" model="ir.ui.view">
+            <field name="name">res.branch.form</field>
+            <field name="model">res.branch</field>
+        <field name="inherit_id" ref="branches_management.branch_tree"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='area_id']" position="after">
+                <field name="naql_id" />
+                <field name="branch_type" />
+            </xpath>
+
+        </field>
+    </record>
+</odoo>

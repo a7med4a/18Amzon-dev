@@ -1,0 +1,11 @@
+<odoo>
+    <!-- Smart Button Action -->
+    <record id="fleet_accident_entry_action"
+        model="ir.actions.act_window">
+        <field name="name">Journal Entry</field>
+        <field name="res_model">account.move</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('accident_due_amount_line_id.accident_id', 'in', active_ids)]</field>
+        <field name="context">{'entry_permits': True}</field>
+    </record>
+</odoo>

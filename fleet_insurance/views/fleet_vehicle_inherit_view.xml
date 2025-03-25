@@ -1,0 +1,114 @@
+<odoo>
+
+    <record id="view_insurance_policy_kanban" model="ir.ui.view">
+    <field name="name">insurance.policy.kanban</field>
+    <field name="model">insurance.policy.line</field>  <!-- Change this to the correct model -->
+    <field name="arch" type="xml">
+        <kanban>
+            <templates>
+                <t t-name="kanban-box">
+                    <div class="oe_kanban_card">
+                        <div class="o_kanban_image">
+                            <t t-if="record.vehicle_id.raw_value">
+                                <img t-att-src="'/web/image?model=fleet.vehicle&amp;id=%s&amp;field=image_1920' % record.vehicle_id.raw_value"/>
+                            </t>
+                        </div>
+                        <div class="o_kanban_details">
+                            <strong>Vehicle:</strong> <span t-esc="record.vehicle_id.value"/>
+                            <div><strong>Plate Number:</strong> <span t-esc="record.plat_number.value"/></div>
+                            <div><strong>Model:</strong> <span t-esc="record.model.value"/></div>
+                            <div><strong>Purchase Value:</strong> <span t-esc="record.purchase_market_value.value"/></div>
+                            <div><strong>Insurance Rate:</strong> <span t-esc="record.insurance_rate.value"/></div>
+                            <div><strong>Min Insurance Rate:</strong> <span t-esc="record.minimum_insurance_rate.value"/></div>
+                            <div><strong>Insurance Amount:</strong> <span t-esc="record.insurance_amount.value"/></div>
+                            <div><strong>Start Date:</strong> <span t-esc="record.start_date.value"/></div>
+                            <div><strong>End Date:</strong> <span t-esc="record.end_date.value"/></div>
+                            <div><strong>Endurance Rate:</strong> <span t-esc="record.endurance_rate.value"/></div>
+                            <div><strong>Endurance Customer:</strong> <span t-esc="record.endurance_customer.value"/></div>
+                            <div><strong>Daily Rate:</strong> <span t-esc="record.daily_rate.value"/></div>
+                            <div><strong>Bill Status:</strong> <span t-esc="record.bill_status.value"/></div>
+                            <div><strong>Insurance Status:</strong> <span t-esc="record.insurance_status.value"/></div>
+                        </div>
+                    </div>
+                </t>
+            </templates>
+        </kanban>
+    </field>
+</record>
+    <record id="view_fleet_vehicle_form_inherit" model="ir.ui.view">
+        <field name="name">fleet.vehicle.form.inherit</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='open_assignation_logs']" position="before">
+                <button name="policy_log" type="object" class="oe_stat_button" icon="fa-history">
+                    Policy log
+                </button>
+            </xpath>
+            <xpath expr="//field[@name='next_assignation_date']" position="after">
+                    <field name="owner_name"/>
+                    <field name="owner_id"/>
+            </xpath>
+            <xpath expr="//field[@name='vehicle_color']" position="after">
+                    <field name="vehicle_color2" widget="color"/>
+            </xpath>
+            <xpath expr="//page[@name='note']" position="after">
+    <page string="Vehicles Info">
+        <field name="insurance_policy_line_ids" mode="kanban" readonly="1" context="{'view_mode': 'kanban'}">
+            <list/>
+            <kanban>
+    <field name="vehicle_id"/>
+    <field name="plat_number"/>
+    <field name="model"/>
+    <field name="purchase_market_value"/>
+    <field name="insurance_rate"/>
+    <field name="minimum_insurance_rate"/>
+    <field name="insurance_amount"/>
+    <field name="start_date"/>
+    <field name="end_date"/>
+    <field name="endurance_rate"/>
+    <field name="endurance_customer"/>
+    <field name="daily_rate"/>
+    <field name="bill_status"/>
+    <field name="insurance_status"/>
+
+    <templates>
+        <t t-name="kanban-box">
+            <div class="o_kanban_record">
+                <div class="o_kanban_card">
+                    <div class="o_kanban_image">
+                        <t t-if="record.vehicle_id.raw_value">
+                             <img t-att-src="kanban_image('fleet.vehicle', 'image_128', record.vehicle_id.raw_value)"
+                                             t-att-title="record.vehicle_id.value" t-att-alt="record.vehicle_id.value"
+                                             class="o_image_64_cover float-start mr4"/>
+                        </t>
+                    </div>
+                    <div class="o_kanban_details">
+                        <strong>Vehicle:</strong> <span t-esc="record.vehicle_id.value"/>
+                        <div><strong>Plate Number:</strong> <span t-esc="record.plat_number.value"/></div>
+                        <div><strong>Model:</strong> <span t-esc="record.model.value"/></div>
+                        <div><strong>Purchase Value:</strong> <span t-esc="record.purchase_market_value.value"/></div>
+                        <div><strong>Insurance Rate:</strong> <span t-esc="record.insurance_rate.value"/></div>
+                        <div><strong>Min Insurance Rate:</strong> <span t-esc="record.minimum_insurance_rate.value"/></div>
+                        <div><strong>Insurance Amount:</strong> <span t-esc="record.insurance_amount.value"/></div>
+                        <div><strong>Start Date:</strong> <span t-esc="record.start_date.value"/></div>
+                        <div><strong>End Date:</strong> <span t-esc="record.end_date.value"/></div>
+                        <div><strong>Endurance Rate:</strong> <span t-esc="record.endurance_rate.value"/></div>
+                        <div><strong>Endurance Customer:</strong> <span t-esc="record.endurance_customer.value"/></div>
+                        <div><strong>Daily Rate:</strong> <span t-esc="record.daily_rate.value"/></div>
+                        <div><strong>Bill Status:</strong> <span t-esc="record.bill_status.value"/></div>
+                        <div><strong>Insurance Status:</strong> <span t-esc="record.insurance_status.value"/></div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </templates>
+</kanban>
+
+        </field>
+    </page>
+</xpath>
+
+        </field>
+    </record>
+</odoo>

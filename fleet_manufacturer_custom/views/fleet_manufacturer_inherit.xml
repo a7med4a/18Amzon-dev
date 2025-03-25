@@ -1,0 +1,42 @@
+<odoo>
+    <data>
+        <record id="fleet_vehicle_model_brand_view_form_inherit" model="ir.ui.view">
+            <field name="name">fleet.vehicle.model.brand.form.inherit</field>
+            <field name="model">fleet.vehicle.model.brand</field>
+            <field name="inherit_id" ref="fleet.fleet_vehicle_model_brand_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//sheet" position="after">
+                    <chatter/>
+                </xpath>
+                <xpath expr="//group" position="after">
+                    <notebook>
+                        <page string="Vehicle Details">
+                            <field name="vehicle_detail_ids">
+                                <list editable="bottom">
+                                    <field name="fleet_vehicle_model_id" domain="[('id', 'in',model_ids )]"/>
+                                    <field name="free_kilometers"/>
+                                    <field name="extra_kilometers_cost"/>
+                                    <field name="number_delay_hours_allowed"/>
+                                    <field name="normal_day_price"/>
+                                    <field name="monthly_day_price"/>
+                                    <field name="full_tank_cost"/>
+                                    <field name="start_date"/>
+                                    <field name="end_date"/>
+                                    <field name="branch_id"/>
+                                    <field name="state"/>
+                                    <button name="action_confirm" type="object" class="fa fa-check btn-success"/>
+                                    <button name="action_set_draft" type="object" class="fa fa-backward btn-warning"/>
+                                    <button name="action_expire" type="object" class="fa fa-ban btn-danger"/>
+                                </list>
+                            </field>
+
+                            <field name="last_update" invisible="0"/>
+                            <field name="last_changes" invisible="0"/>
+                        </page>
+                    </notebook>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>

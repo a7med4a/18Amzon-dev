@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_purchase_type,purchase.type,model_purchase_type,,1,1,1,1
+access_vehicle_tracking_device,vehicle.tracking.device,model_vehicle_tracking_device,,1,1,1,1
+

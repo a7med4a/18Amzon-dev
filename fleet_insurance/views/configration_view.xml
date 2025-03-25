@@ -1,0 +1,38 @@
+<odoo>
+    <record id="view_insurance_config_form" model="ir.ui.view">
+        <field name="name">insurance.config.settings.form</field>
+        <field name="model">insurance.config.settings</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="insurance_journal_id"/>
+                            <field name="insurance_expense_account_id"/>
+                            <field name="account_pay_id"/>
+                        </group>
+                        <group>
+                            <field name="refund_insurance_account_id"/>
+                            <field name="refund_insurance_journal_id"/>
+                            <field name="category_id" widget="many2many_tags"/>
+                            <field name="tax_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="insurance_config_action" model="ir.actions.act_window">
+        <field name="name">Insurance Configuration</field>
+        <field name="res_model">insurance.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+    </record>
+
+    <menuitem id="menu_insurance_config" name="Configuration"
+              parent="fleet_insurance.menu_insurance_root"/>
+
+    <menuitem id="set_default_insurance" name="Set Default Insurance"
+              parent="fleet_insurance.menu_insurance_config" action="insurance_config_action"/>
+</odoo>

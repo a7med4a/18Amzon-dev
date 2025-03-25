@@ -1,0 +1,214 @@
+<odoo>
+    <record id="fleet_accident_view_form" model="ir.ui.view">
+        <field name="name">fleet.accident.view.form</field>
+        <field name="model">fleet.accident</field>
+        <field name="arch" type="xml">
+            <form string="Accident Card">
+                <header>
+                    <!-- announcement state -->
+                    <button string="To Accident Report" class="btn-primary" type="object" name="button_accident_report" invisible="state != 'announcement'"/>
+                    
+                    <!-- Accident Report -->
+                    <button string="To Evaluation" class="btn-primary" type="object" name="button_evaluation" invisible="state != 'accident_report'"/>
+                    <button string="Back To Announcement" class="btn-secondary" type="object" name="button_announcement" invisible="state != 'accident_report'"/>
+
+                    <!-- Waiting Evaluation -->
+                    <button string="To Insurance Approve" class="btn-primary" type="object" name="button_insurance_approve" invisible="state != 'evaluation'"/>
+                    <button string="Back To Report" class="btn-secondary" type="object" name="button_accident_report" invisible="state != 'evaluation'"/>
+
+                    <!-- Waiting Insurance Approve -->
+                    <button string="To Invoicing" class="btn-primary" type="object" name="button_invoicing" invisible="state != 'insurance_approve'"/>
+                    <button string="Compute Due Amount" class="btn-primary" type="object" name="compute_due_amount" invisible="state != 'insurance_approve'"/>
+                    <button string="Recompute Due Amount" class="btn-primary" type="object" name="recompute_due_amount" invisible="state != 'insurance_approve'"/>
+                    <button string="Back To Evaluation" class="btn-secondary" type="object" name="button_evaluation" invisible="state != 'insurance_approve'"/>
+
+                    <!-- Waiting Invoicing -->
+                    <button string="Close " class="btn-primary" type="object" name="button_closed" invisible="state != 'invoicing'"/>
+
+                    <!-- Cancel -->
+                    <button string="Set to announcement " class="btn-primary" type="object" name="button_announcement" invisible="state != 'cancel'"/>
+
+
+                    <button string="Cancel" class="btn-secondary" type="object" name="button_cancel" invisible="state not in ['announcement', 'accident_report', 'evaluation']"/>
+                    <field name="state" widget="statusbar" statusbar_visible="announcement,accident_report,evaluation,insurance_approve,invoicing,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button"
+                            type="action"
+                            name="%(fleet_accident.fleet_accident_entry_action)d"
+                            invisible="invoice_count &lt; 1"
+                            icon="fa-dollar">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value">
+                                <field name="invoice_count" />
+                                </span>
+                                <span class="o_stat_text">Invoices</span>
+                            </div>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+                    <field name="image_128" widget="image" class="oe_avatar"/>
+                    <div class="oe_title">
+                        <label for="fleet_vehicle_id"/>
+                        <h1>
+                            <field name="fleet_vehicle_id" class="w-100"/>
+                        </h1>
+                    </div>
+                    <group col="2">
+                        <group string="Accident Information">
+                            <field name="accident_category"/>
+                            <field name="partner_id"/>
+                            <field name="rental_contract_no"/>
+                            <field name="endurance_rate"/>
+                            <field name="endurance_customer"/>
+                            <field name="insurance_type"/>
+                            <field name="create_date" string="Creation Date"/>
+                            <field name="create_uid" string="Created By"/>
+                        </group>
+                    </group>
+                    <group col="2">
+                        <group string="Announcement">
+                            <field name="city_id" required="1"/>
+                            <field name="report_source"  required="1"/>
+                            <field name="other_report_source" invisible="report_source != 'other'" required="report_source == 'other'"/>
+                            <field name="announcement_date"  required="1"/>
+                            <field name="accident_date" required="1" />
+                        </group>
+                        <group string="Reporting" invisible="state == 'announcement'">
+                            <field name="accident_type" required="state != 'announcement'"/>
+                            <field name="accident_report_no" required="state != 'announcement'"/>
+                            <field name="report_date" required="state != 'announcement'"/>
+                            <field name="customer_percentage" required="state != 'announcement'" readonly="accident_type == 'not_covered'"/>
+                            <field name="other_party_no" invisible="accident_type == 'not_covered'" required="accident_type != 'not_covered' and state != 'announcement'"/>
+                            <field name="other_party1_id" invisible="accident_type == 'not_covered' or other_party_no &lt; 1" 
+                                required="accident_type != 'not_covered' and state != 'announcement' and other_party_no &gt; 0"/>
+                            <field name="other_party2_id" invisible="accident_type == 'not_covered' or other_party_no &lt; 2" 
+                                required="accident_type != 'not_covered' and state != 'announcement' and other_party_no &gt; 1"/>
+                            <field name="other_party3_id" invisible="accident_type == 'not_covered' or other_party_no &lt; 3" 
+                                required="accident_type != 'not_covered' and state != 'announcement' and other_party_no &gt; 2"/>
+                            <field name="other_party4_id" invisible="accident_type == 'not_covered' or other_party_no &lt; 4" 
+                                required="accident_type != 'not_covered' and state != 'announcement' and other_party_no &gt; 3"/>
+
+                            <label for="other_party1_percentage" invisible="accident_type == 'not_covered' or other_party_no &lt; 1" 
+                                required="accident_type != 'not_covered' and state != 'announcement' and other_party_no &gt; 0"/>
+                            <div class="o_row o_hr_narrow_field" invisible="accident_type == 'not_covered' or other_party_no &lt; 1">
+                                <field name="other_party1_percentage" 
+                                required="accident_type != 'not_covered' and state != 'announcement' and other_party_no &gt; 0"/>
+                                <span class="oe_inline">%</span>
+                            </div>
+                            <label for="other_party2_percentage" invisible="accident_type == 'not_covered' or other_party_no &lt; 2"
+                                required="accident_type != 'not_covered' and state != 'announcement' and other_party_no &gt; 1"/>
+                            <div class="o_row o_hr_narrow_field" invisible="accident_type == 'not_covered' or other_party_no &lt; 2">
+                                <field name="other_party2_percentage"
+                                required="accident_type != 'not_covered' and state != 'announcement' and other_party_no &gt; 1"/>
+                                <span class="oe_inline">%</span>
+                            </div>
+                            <label for="other_party3_percentage" invisible="accident_type == 'not_covered' or other_party_no &lt; 3"
+                                required="accident_type != 'not_covered' and state != 'announcement' and other_party_no &gt; 2"/>
+                            <div class="o_row o_hr_narrow_field" invisible="accident_type == 'not_covered' or other_party_no &lt; 3">
+                                <field name="other_party3_percentage"
+                                required="accident_type != 'not_covered' and state != 'announcement' and other_party_no &gt; 2"/>
+                                <span class="oe_inline">%</span>
+                            </div>
+                            <label for="other_party4_percentage" invisible="accident_type == 'not_covered' or other_party_no &lt; 4"
+                                required="accident_type != 'not_covered' and state != 'announcement' and other_party_no &gt; 3"/>
+                            <div class="o_row o_hr_narrow_field" invisible="accident_type == 'not_covered' or other_party_no &lt; 4">
+                                <field name="other_party4_percentage"
+                                required="accident_type != 'not_covered' and state != 'announcement' and other_party_no &gt; 31"/>
+                                <span class="oe_inline">%</span>
+                            </div>
+                            
+
+                        </group>
+                    </group>
+                    
+                    <notebook invisible="state in ['announcement', 'accident_report']">
+                        <page string="Evaluation" name="evaluation">
+                            <group>
+                                <group>
+                                    <field name="evaluation_type" required="state not in ['announcement', 'accident_report']"/>
+                                    <field name="evaluation_party_id" domain="[('type', '=', evaluation_type)]" options="{'no_create': True, 'no_open': True}"
+                                        required="state not in ['announcement', 'accident_report']"/>
+                                </group>
+                            </group>
+                            <field name="evaluation_item_ids">
+                                <list editable="bottom">
+                                    <field name="evaluation_item_id" options="{'no_create': True, 'no_open': True}"/>
+                                    <field name="evaluation_item_value" sum="Total"/>
+                                </list>
+                            </field>
+                            <group>
+                                <group>
+                                    <field name="compensation_type" required="state not in ['announcement', 'accident_report']"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page name="due_amounts" string="Due Amount" invisible="state in ['announcement', 'accident_report', 'evaluation']">
+                            <field name="due_amount_line_ids">
+                                <list editable="bottom">
+                                    <field name="accident_item_type" column_invisible="1"/>
+                                    <field name="name"/>
+                                    <field name="is_endurance" column_invisible="parent.accident_type != 'shared'" invisible="accident_item_type != 'customer'" widget="boolean_toggle"/>
+                                    <field name="computation_type" invisible="accident_item_type == 'amazon' or is_endurance or parent.accident_type != 'shared'"/>
+                                    <field name="amount" readonly="computation_type != 'fixed'" sum="Total Amount"/>
+                                    <field name="partner_id" readonly="1"/>
+                                    <field name="remaining_amount" readonly="1" sum="Total Remaining"/>
+                                    <field name="invoiced_amount" readonly="1" sum="Total Invoiced"/>
+                                    <field name="is_tax_active" widget="boolean_toggle"/>
+                                    <field name="tax_ids" widget="many2many_tags"/>
+                                    <button name="create_invoice" type="object" string="Create Invoice" class="btn btn-sm btn-primary" invisible="remaining_amount == 0.0"
+                                        column_invisible="parent.state != 'invoicing'" confirm="Are you sure you want to create invoice ?"/>
+                                </list>
+                            </field>
+                            
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="fleet_accident_view_list" model="ir.ui.view">
+        <field name="name">fleet.accident.view.list</field>
+        <field name="model">fleet.accident</field>
+        <field name="arch" type="xml">
+            <list string="Accident Card">
+                <field name="fleet_vehicle_id"/>
+                <field name="accident_category"/>
+                <field name="partner_id"/>
+                <field name="rental_contract_no"/>
+                <field name="endurance_rate"/>
+                <field name="endurance_customer"/>
+                <field name="insurance_type"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="fleet_accident_search" model="ir.ui.view">
+    <field name="name">fleet.accident.search</field>
+    <field name="model">fleet.accident</field>
+    <field name="arch" type="xml">
+      <search>
+        <field name="fleet_vehicle_id" />
+        <field name="state" />
+
+        <filter string="Fleet"
+          name="fleet_vehicle_id_group"
+          context="{'group_by':'fleet_vehicle_id'}" />
+
+        <filter string="Status"
+          name="state_group"
+          context="{'group_by':'state'}" />
+      </search>
+    </field>
+  </record>
+
+    <record id="fleet_accident_action" model="ir.actions.act_window">
+        <field name="name">Accident Card</field>
+        <field name="res_model">fleet.accident</field>
+        <field name="search_view_id" ref="fleet_accident_search"/>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

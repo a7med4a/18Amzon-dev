@@ -18,6 +18,7 @@
                                     <field name="extra_kilometers_cost"/>
                                     <field name="number_delay_hours_allowed"/>
                                     <field name="normal_day_price"/>
+                                    <field name="weekly_day_price"/>
                                     <field name="monthly_day_price"/>
                                     <field name="full_tank_cost"/>
                                     <field name="start_date"/>

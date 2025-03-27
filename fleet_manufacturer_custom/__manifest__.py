@@ -8,7 +8,7 @@
 
     'author': "",
     'version': '0.1',
-    'depends': ['base','fleet','mail'],
+    'depends': ['base', 'fleet', 'mail', 'branches_management'],
 
     'data': [
         'security/ir.model.access.csv',
@@ -16,4 +16,3 @@
         'views/fleet_manufacturer_cron_inherit.xml',
     ],
 }
-

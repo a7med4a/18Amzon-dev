@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_rental_contract,rental.contract,model_rental_contract,base.group_user,1,1,1,1
+access_rental_contract_payment_register,rental.contract.payment.register,model_rental_contract_payment_register,base.group_user,1,1,1,1

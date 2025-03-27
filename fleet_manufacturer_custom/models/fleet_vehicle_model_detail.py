@@ -9,7 +9,7 @@ from odoo.exceptions import ValidationError
 class VehicleModelDetail(models.Model):
     _name = 'fleet.vehicle.model.detail'
     _description = 'Vehicle Model Detail'
-    _inherit = ['mail.thread','mail.activity.mixin',]
+    _inherit = ['mail.thread', 'mail.activity.mixin',]
 
     name = fields.Char(tracking=True)
     vehicle_model_brand_id = fields.Many2one(
@@ -27,55 +27,55 @@ class VehicleModelDetail(models.Model):
         required=False)
     free_kilometers = fields.Float(
         string='Free Kilometers',
-        required=True,tracking=True)
+        required=True, tracking=True)
     extra_kilometers_cost = fields.Float(
         string='Extra kilometers cost',
         required=True)
     number_delay_hours_allowed = fields.Float(required=True)
     normal_day_price = fields.Float(required=True)
+    weekly_day_price = fields.Float(required=True)
     monthly_day_price = fields.Float(required=True)
     full_tank_cost = fields.Float(required=True)
     start_date = fields.Date(required=True)
     end_date = fields.Date()
     # branch = fields.Char(tracking=True)
-    branch_id = fields.Many2one(comodel_name='res.branch',string='Branch',tracking=True)
+    branch_id = fields.Many2one(
+        comodel_name='res.branch', string='Branch', tracking=True)
     state = fields.Selection(
         string='State',
-        selection=[('draft', 'Draft'),('running', 'Running'), ('expired', 'Expired')],
+        selection=[('draft', 'Draft'), ('running', 'Running'),
+                   ('expired', 'Expired')],
         default='draft', readonly=True)
-        
 
     def action_confirm(self):
         for rec in self:
-            if rec.state != 'running' :
+            if rec.state != 'running':
                 self.message_post_body("Running")
                 rec.state = 'running'
 
     def action_expire(self):
         for rec in self:
-            if rec.state!= 'expired' :
+            if rec.state != 'expired':
                 self.message_post_body("Expired")
                 rec.state = 'expired'
 
-
     def action_set_draft(self):
         for rec in self:
-            if rec.state!= 'draft' :
+            if rec.state != 'draft':
                 self.message_post_body("Draft")
                 rec.state = 'draft'
 
-
     def _update_expired_state(self):
         today = date.today()
-        expired_records = self.search([('end_date', '<', today), ('state', '!=', 'expired'), ('state', '!=', 'running')])
+        expired_records = self.search(
+            [('end_date', '<', today), ('state', '!=', 'expired'), ('state', '!=', 'running')])
         expired_records.write({'state': 'expired'})
-
 
     def message_post_body(self, new_state):
         self.vehicle_model_brand_id.message_post(
-            body=Markup(f"<b>Vehicle Details Updated</b>:<br/> State changed changed from {self.state} to <i>{new_state}<i>"),
+            body=Markup(
+                f"<b>Vehicle Details Updated</b>:<br/> State changed changed from {self.state} to <i>{new_state}<i>"),
             subtype_xmlid="mail.mt_comment")
-
 
     def _check_duplicate_and_overlap(self):
         """ تحقق من عدم وجود تداخل زمني مع نفس الموديل والفرع """
@@ -90,21 +90,21 @@ class VehicleModelDetail(models.Model):
             ]
 
             overlapping_ids = self.search(domain)
-            print("**** overlapping_ids ==>",overlapping_ids)
+            print("**** overlapping_ids ==>", overlapping_ids)
             overlapping = False
-            print("**** rec.start_date ==>",rec.start_date)
-            print("**** rec.end_date ==>",rec.end_date)
+            print("**** rec.start_date ==>", rec.start_date)
+            print("**** rec.end_date ==>", rec.end_date)
             for line in overlapping_ids:
-                if not line.end_date and not rec.end_date :
+                if not line.end_date and not rec.end_date:
                     overlapping = True
                     break
-                if rec.end_date and  rec.end_date>=line.start_date and not line.end_date:
+                if rec.end_date and rec.end_date >= line.start_date and not line.end_date:
                     overlapping = True
                     break
                 elif line.end_date and not rec.end_date and rec.start_date <= line.end_date:
                     overlapping = True
                     break
-                elif line.end_date and rec.end_date :
+                elif line.end_date and rec.end_date:
                     if (line.start_date <= rec.start_date <= line.end_date) or (line.start_date <= rec.end_date <= line.end_date):
                         overlapping = True
                         break
@@ -113,7 +113,8 @@ class VehicleModelDetail(models.Model):
                         break
 
             if overlapping:
-                raise ValidationError(f"There is a time overlap for the same model '{rec.fleet_vehicle_model_id.name}' and branch '{rec.branch_id.name}'.")
+                raise ValidationError(
+                    f"There is a time overlap for the same model '{rec.fleet_vehicle_model_id.name}' and branch '{rec.branch_id.name}'.")
 
     @api.model_create_multi
     def create(self, vals):

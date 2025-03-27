@@ -1,0 +1,38 @@
+<odoo>
+    <record id="fleet_vehicle_model_pricing_view_form" model="ir.ui.view">
+        <field name="name">fleet.vehicle.model.detail.view.form</field>
+        <field name="model">fleet.vehicle.model.detail</field>
+        <field name="arch" type="xml">
+            <form string="Vehicle Model Pricing" create="false" edit="false">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="fleet_vehicle_model_id" class="oe_edit_only" />
+                        <h1>
+                            <field name="fleet_vehicle_model_id"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="free_kilometers" />
+                            <field name="extra_kilometers_cost" />
+                            <field name="number_delay_hours_allowed" />
+                            <field name="normal_day_price" />
+                            <field name="weekly_day_price" />
+                            <field name="monthly_day_price" />
+                            <field name="full_tank_cost" />
+                        </group>
+                        <group>
+                            <field name="start_date" />
+                            <field name="end_date" />
+                            <field name="branch_id" />
+                            <field name="state" />
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button string="Close" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

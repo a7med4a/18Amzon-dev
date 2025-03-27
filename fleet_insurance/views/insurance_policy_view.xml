@@ -74,7 +74,7 @@
                             <field name="description" readonly="status == 'approved'"/>
                             <field name="category_id" widget="many2many_tags" string="Tag" invisible="1"/>
                             <field name="show_create_bill" invisible="1"/>
-                            <field name="vendor_bill_ids" widget="many2many_tags"/>
+<!--                            <field name="vendor_bill_ids" widget="many2many_tags"/>-->
                         </group>
                     </group>
                     <notebook>

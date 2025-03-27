@@ -7,6 +7,20 @@ class InheritResPartner(models.Model):
 
     is_insurance_company=fields.Boolean('Is Insurance Company ?')
 
+    @api.model
+    def default_get(self, fields_list):
+        defaults = super().default_get(fields_list)
+        config = self.env["insurance.config.settings"].search([], order="id desc", limit=1)
+        if config:
+            # Only apply these defaults if the context matches your action
+            if self.env.context.get('default_is_insurance_company'):
+                defaults.update({
+                    'company_type': 'company',
+                    'property_account_payable_id': config.account_pay_id.id if config.account_pay_id else False,
+                    'category_id': [(6, 0, config.category_id.ids)] if config.category_id else [(6, 0, [])],
+                    'is_insurance_company': True,
+                })
+        return defaults
 
     @api.model
     def get_view(self, view_id=None, view_type='form', **options):
@@ -22,7 +36,6 @@ class InheritResPartner(models.Model):
             }
             domain=[('company_type','=','company'),('is_insurance_company','=',True)]
             partner_action_form.write({"context": context, "domain": domain})
-
         if view_type == 'form' and options.get('action_id') == partner_action_form.id:
             doc = etree.XML(res['arch'])
             company_type_fields = doc.xpath("//div/field[@name='company_type']")

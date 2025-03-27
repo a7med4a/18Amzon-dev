@@ -6,11 +6,12 @@
         <field name="arch" type="xml">
             <form>
                 <field name="policy_id"/>
+                <field name="used_vehicle_ids" widget="many2many_tags" invisible="1"/>
                 <field name="line_ids" context="{'default_policy_id':policy_id}">
                     <list editable="bottom"  create="true" edit="true">
                         <field name="policy_id" column_invisible="1"/>
                         <field name="vehicle_id" options="{'no_open': True, 'no_create': True}"
-                              domain='[("bill_status", "=", "true"), ("insurance_status", "=", "running"), ("policy_id", "=",policy_id)]'/>
+                              domain='[("bill_status", "=", "true"), ("insurance_status", "=", "running"), ("policy_id", "=",policy_id),("id", "not in", parent.used_vehicle_ids)]'/>
                         <field name="stop_date"/>
                     </list>
                 </field>

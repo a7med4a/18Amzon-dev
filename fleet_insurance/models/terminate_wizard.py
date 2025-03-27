@@ -13,6 +13,12 @@ class InsurancePolicyTerminateWizard(models.TransientModel):
 
     line_ids = fields.One2many('insurance.policy.terminate.line', 'wizard_id', string="Termination Details")
     policy_id = fields.Many2one('insurance.policy', string="Policy", readonly=True)
+    used_vehicle_ids = fields.Many2many('insurance.policy.line', string="Used Vehicle",compute='_compute_used_vehicle_ids',)
+
+    @api.depends('line_ids.vehicle_id')
+    def _compute_used_vehicle_ids(self):
+        for vehicle in self:
+            vehicle.used_vehicle_ids = vehicle.line_ids.mapped('vehicle_id').ids
 
     def action_confirm_termination(self):
         terminates=[]

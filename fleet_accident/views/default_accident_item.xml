@@ -12,7 +12,7 @@
                 <field name="compensation_type"/>
                 <field name="journal_id"/>
                 <field name="account_id"/>
-                <field name="tax_ids" widget="many2many_tags"/>
+                <field name="tax_ids" widget="many2many_tags" domain="[('type_tax_use', '=', 'sale')]"/>
             </list>
         </field>
     </record>

@@ -1,0 +1,26 @@
+<odoo>
+    <record id="rental_contract_fines_discount_line_view_tree" model="ir.ui.view">
+        <field name="name">rental.contract.fines.discount.line.view.tree</field>
+        <field name="model">rental.contract.fines.discount.line</field>
+        <field name="arch" type="xml">
+            <list string="Rental Contract Fines - Discount Line" create="false" edit="false" delete="false">
+                <field name="fines_discount_id" string="Item"/>
+                <field name="type"/>
+                <field name="price"/>
+                <field name="name"/>
+                <field name="create_uid"/>
+                <field name="create_date"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="rental_contract_fines_discount_line_action" model="ir.actions.act_window">
+        <field name="name">Rental Contract Fines - Discount</field>
+        <field name="res_model">rental.contract.fines.discount.line</field>
+        <field name="view_mode">list</field>
+        <field name="domain">[('rental_contract_id', 'in', active_ids)]</field>
+        <field name="context">{'default_rental_contract_id': active_id}</field>
+    </record>
+
+
+</odoo>

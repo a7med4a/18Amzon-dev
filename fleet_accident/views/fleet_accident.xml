@@ -52,14 +52,14 @@
                     <div class="oe_title">
                         <label for="fleet_vehicle_id"/>
                         <h1>
-                            <field name="fleet_vehicle_id" class="w-100"/>
+                            <field name="fleet_vehicle_id" class="w-100" readonly="state in ['invoicing', 'closed', 'cancel']"/>
                         </h1>
                     </div>
                     <group col="2">
                         <group string="Accident Information">
-                            <field name="accident_category"/>
-                            <field name="partner_id"/>
-                            <field name="rental_contract_no"/>
+                            <field name="accident_category" readonly="state in ['invoicing', 'closed', 'cancel']"/>
+                            <field name="partner_id" readonly="state in ['invoicing', 'closed', 'cancel']"/>
+                            <field name="rental_contract_no" readonly="state in ['invoicing', 'closed', 'cancel']"/>
                             <field name="endurance_rate"/>
                             <field name="endurance_customer"/>
                             <field name="insurance_type"/>
@@ -69,52 +69,62 @@
                     </group>
                     <group col="2">
                         <group string="Announcement">
-                            <field name="city_id" required="1"/>
-                            <field name="report_source"  required="1"/>
-                            <field name="other_report_source" invisible="report_source != 'other'" required="report_source == 'other'"/>
-                            <field name="announcement_date"  required="1"/>
-                            <field name="accident_date" required="1" />
+                            <field name="city_id" required="1" readonly="state in ['invoicing', 'closed', 'cancel']"/>
+                            <field name="report_source"  required="1" readonly="state in ['invoicing', 'closed', 'cancel']"/>
+                            <field name="other_report_source" invisible="report_source != 'other'" required="report_source == 'other'"  readonly="state in ['invoicing', 'closed', 'cancel']"/>
+                            <field name="announcement_date"  required="1" readonly="state in ['invoicing', 'closed', 'cancel']"/>
+                            <field name="accident_date" required="1" readonly="state in ['invoicing', 'closed', 'cancel']" />
                         </group>
                         <group string="Reporting" invisible="state == 'announcement'">
-                            <field name="accident_type" required="state != 'announcement'"/>
-                            <field name="accident_report_no" required="state != 'announcement'"/>
-                            <field name="report_date" required="state != 'announcement'"/>
-                            <field name="customer_percentage" required="state != 'announcement'" readonly="accident_type == 'not_covered'"/>
-                            <field name="other_party_no" invisible="accident_type == 'not_covered'" required="accident_type != 'not_covered' and state != 'announcement'"/>
+                            <field name="other_party_partner_ids" invisible="1"/>
+                            <field name="accident_type" required="state != 'announcement'" readonly="state in ['invoicing', 'closed', 'cancel']"/>
+                            <field name="accident_report_no" required="state != 'announcement'" readonly="state in ['invoicing', 'closed', 'cancel']"/>
+                            <field name="report_date" required="state != 'announcement'" readonly="state in ['invoicing', 'closed', 'cancel']"/>
+                            <label for="customer_percentage" required="state != 'announcement'"/>
+                            <div class="o_row o_hr_narrow_field">
+                                <field name="customer_percentage" readonly="accident_type == 'not_covered' or state in ['invoicing', 'closed', 'cancel']" required="state != 'announcement'"/>
+                                <span class="oe_inline">%</span>
+                            </div>
+                            <field name="customer_percentage"/>
+                            <field name="other_party_no" invisible="accident_type == 'not_covered'" required="accident_type != 'not_covered' and state != 'announcement'" readonly="state in ['invoicing', 'closed', 'cancel']"/>
                             <field name="other_party1_id" invisible="accident_type == 'not_covered' or other_party_no &lt; 1" 
-                                required="accident_type != 'not_covered' and state != 'announcement' and other_party_no &gt; 0"/>
+                                required="accident_type != 'not_covered' and state != 'announcement' and other_party_no &gt; 0"
+                                domain="[('id', 'not in', other_party_partner_ids)]" readonly="state in ['invoicing', 'closed', 'cancel']"/>
                             <field name="other_party2_id" invisible="accident_type == 'not_covered' or other_party_no &lt; 2" 
-                                required="accident_type != 'not_covered' and state != 'announcement' and other_party_no &gt; 1"/>
+                                required="accident_type != 'not_covered' and state != 'announcement' and other_party_no &gt; 1"
+                                domain="[('id', 'not in', other_party_partner_ids)]" readonly="state in ['invoicing', 'closed', 'cancel']"/>
                             <field name="other_party3_id" invisible="accident_type == 'not_covered' or other_party_no &lt; 3" 
-                                required="accident_type != 'not_covered' and state != 'announcement' and other_party_no &gt; 2"/>
+                                required="accident_type != 'not_covered' and state != 'announcement' and other_party_no &gt; 2"
+                                domain="[('id', 'not in', other_party_partner_ids)]" readonly="state in ['invoicing', 'closed', 'cancel']"/>
                             <field name="other_party4_id" invisible="accident_type == 'not_covered' or other_party_no &lt; 4" 
-                                required="accident_type != 'not_covered' and state != 'announcement' and other_party_no &gt; 3"/>
+                                required="accident_type != 'not_covered' and state != 'announcement' and other_party_no &gt; 3"
+                                domain="[('id', 'not in', other_party_partner_ids)]" readonly="state in ['invoicing', 'closed', 'cancel']"/>
 
                             <label for="other_party1_percentage" invisible="accident_type == 'not_covered' or other_party_no &lt; 1" 
                                 required="accident_type != 'not_covered' and state != 'announcement' and other_party_no &gt; 0"/>
                             <div class="o_row o_hr_narrow_field" invisible="accident_type == 'not_covered' or other_party_no &lt; 1">
-                                <field name="other_party1_percentage" 
+                                <field name="other_party1_percentage"  readonly="state in ['invoicing', 'closed', 'cancel']"
                                 required="accident_type != 'not_covered' and state != 'announcement' and other_party_no &gt; 0"/>
                                 <span class="oe_inline">%</span>
                             </div>
                             <label for="other_party2_percentage" invisible="accident_type == 'not_covered' or other_party_no &lt; 2"
                                 required="accident_type != 'not_covered' and state != 'announcement' and other_party_no &gt; 1"/>
                             <div class="o_row o_hr_narrow_field" invisible="accident_type == 'not_covered' or other_party_no &lt; 2">
-                                <field name="other_party2_percentage"
+                                <field name="other_party2_percentage" readonly="state in ['invoicing', 'closed', 'cancel']"
                                 required="accident_type != 'not_covered' and state != 'announcement' and other_party_no &gt; 1"/>
                                 <span class="oe_inline">%</span>
                             </div>
                             <label for="other_party3_percentage" invisible="accident_type == 'not_covered' or other_party_no &lt; 3"
                                 required="accident_type != 'not_covered' and state != 'announcement' and other_party_no &gt; 2"/>
                             <div class="o_row o_hr_narrow_field" invisible="accident_type == 'not_covered' or other_party_no &lt; 3">
-                                <field name="other_party3_percentage"
+                                <field name="other_party3_percentage" readonly="state in ['invoicing', 'closed', 'cancel']"
                                 required="accident_type != 'not_covered' and state != 'announcement' and other_party_no &gt; 2"/>
                                 <span class="oe_inline">%</span>
                             </div>
                             <label for="other_party4_percentage" invisible="accident_type == 'not_covered' or other_party_no &lt; 4"
                                 required="accident_type != 'not_covered' and state != 'announcement' and other_party_no &gt; 3"/>
                             <div class="o_row o_hr_narrow_field" invisible="accident_type == 'not_covered' or other_party_no &lt; 4">
-                                <field name="other_party4_percentage"
+                                <field name="other_party4_percentage" readonly="state in ['invoicing', 'closed', 'cancel']"
                                 required="accident_type != 'not_covered' and state != 'announcement' and other_party_no &gt; 31"/>
                                 <span class="oe_inline">%</span>
                             </div>
@@ -127,12 +137,13 @@
                         <page string="Evaluation" name="evaluation">
                             <group>
                                 <group>
-                                    <field name="evaluation_type" required="state not in ['announcement', 'accident_report']"/>
+                                    <field name="evaluation_type" required="state not in ['announcement', 'accident_report']" readonly="state in ['invoicing', 'closed', 'cancel']"/>
                                     <field name="evaluation_party_id" domain="[('type', '=', evaluation_type)]" options="{'no_create': True, 'no_open': True}"
+                                        readonly="state in ['invoicing', 'closed', 'cancel']"
                                         required="state not in ['announcement', 'accident_report']"/>
                                 </group>
                             </group>
-                            <field name="evaluation_item_ids">
+                            <field name="evaluation_item_ids"  readonly="state in ['invoicing', 'closed', 'cancel']">
                                 <list editable="bottom">
                                     <field name="evaluation_item_id" options="{'no_create': True, 'no_open': True}"/>
                                     <field name="evaluation_item_value" sum="Total"/>
@@ -140,12 +151,12 @@
                             </field>
                             <group>
                                 <group>
-                                    <field name="compensation_type" required="state not in ['announcement', 'accident_report']"/>
+                                    <field name="compensation_type" required="state not in ['announcement', 'accident_report']" readonly="state in ['invoicing', 'closed', 'cancel']"/>
                                 </group>
                             </group>
                         </page>
                         <page name="due_amounts" string="Due Amount" invisible="state in ['announcement', 'accident_report', 'evaluation']">
-                            <field name="due_amount_line_ids">
+                            <field name="due_amount_line_ids" readonly="state in ['closed', 'cancel']">
                                 <list editable="bottom">
                                     <field name="accident_item_type" column_invisible="1"/>
                                     <field name="name"/>
@@ -154,11 +165,13 @@
                                     <field name="amount" readonly="computation_type != 'fixed'" sum="Total Amount"/>
                                     <field name="partner_id" readonly="1"/>
                                     <field name="remaining_amount" readonly="1" sum="Total Remaining"/>
+                                    <field name="to_invoice_amount" sum="Total To Invoice"/>
                                     <field name="invoiced_amount" readonly="1" sum="Total Invoiced"/>
-                                    <field name="is_tax_active" widget="boolean_toggle"/>
-                                    <field name="tax_ids" widget="many2many_tags"/>
-                                    <button name="create_invoice" type="object" string="Create Invoice" class="btn btn-sm btn-primary" invisible="remaining_amount == 0.0"
-                                        column_invisible="parent.state != 'invoicing'" confirm="Are you sure you want to create invoice ?"/>
+                                    <field name="is_tax_active"/>
+                                    <field name="tax_ids" widget="many2many_tags" domain="[('type_tax_use', '=', 'sale')]"/>
+                                    <button name="create_invoice" type="object" string="Create Invoice" class="btn btn-sm btn-primary" invisible="remaining_amount == 0.0 or to_invoice_amount == 0.0"
+                                        column_invisible="parent.state != 'invoicing'" confirm="Are you sure you want to create invoice ?" style="margin:2px;"/>
+                                    <field name="tax_ids" widget="many2many_tags" invisible="1" nolabel="1"/>
                                 </list>
                             </field>
                             

@@ -6,7 +6,7 @@ import re
 from odoo import models, fields, api, _
 from odoo.addons.vehicle_info.models.fleet_vehicle import VEHICLE_STATUS, VEHICLE_PARTS_STATUS, AVAILABILITY, WORKING_CONDITION, FUEL_TYPE_STATUS, CAR_SEATS_STATUS
 
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 
 class RentalContract(models.Model):
@@ -162,6 +162,65 @@ class RentalContract(models.Model):
     payment_count = fields.Integer(
         'Payment Count', compute='_compute_payment_count', store=True)
 
+    # Current Due Amount
+
+    display_actual_days = fields.Integer(
+        'Actual Days', compute='_compute_display_open_state_fields')
+    display_actual_hours = fields.Integer(
+        'Actual Hours', compute='_compute_display_open_state_fields')
+    actual_days = fields.Integer('Actual Days', default=0)
+    actual_hours = fields.Integer('Actual Hours', default=0)
+
+    display_current_days = fields.Integer(
+        'Current Days', compute='_compute_display_open_state_fields')
+    display_current_hours = fields.Integer(
+        'Current Hours', compute='_compute_display_open_state_fields')
+    current_days = fields.Integer('Current Days', default=0)
+    current_hours = fields.Integer('Current Hours', default=0)
+    assumed_amount = fields.Monetary(
+        compute='_compute_assumed_amount', store=True, currency_field='company_currency_id')
+    display_current_amount = fields.Monetary(
+        'Current Amount', compute='_compute_display_current_amount', currency_field='company_currency_id')
+    current_amount = fields.Monetary(
+        'Current Amount', currency_field='company_currency_id')
+
+    fines_discount_count = fields.Integer(
+        'Discount Count', compute='_compute_fines_discount_count', store=True)
+    fines_discount_line_ids = fields.One2many(
+        'rental.contract.fines.discount.line', 'rental_contract_id', string='Fines/Discount Lines')
+    current_fines_amount = fields.Monetary(
+        'Current Fines Amount', currency_field='company_currency_id', compute="_compute_current_fines_amount", store=True)
+    current_accident_damage_amount = fields.Monetary(
+        'Current Accident Damage Amount', currency_field='company_currency_id')
+    discount_voucher_amount = fields.Monetary(
+        'Discount Voucher Amount', currency_field='company_currency_id', compute="_compute_discount_voucher_amount", store=True)
+    current_km_extra_amount = fields.Monetary(
+        'Current KM Extra Amount', currency_field='company_currency_id')
+
+    # Calculate KM Popup Fields
+    odometer_km_in = fields.Float('KM In')
+    free_km_per_day = fields.Float(
+        related='vehicle_model_datail_id.free_kilometers', store=True)
+    total_free_km = fields.Float(compute="_compute_total_free_km")
+    consumed_km = fields.Float(
+        compute='_compute_consumed_extra_km')
+    total_extra_km = fields.Float(
+        compute='_compute_consumed_extra_km')
+    extra_km_cost = fields.Float(
+        related='vehicle_model_datail_id.extra_kilometers_cost', store=True)
+    display_current_km_extra_amount = fields.Monetary(
+        'Current KM Extra Amount', currency_field='company_currency_id', compute="_compute_display_current_km_extra_amount")
+
+    current_due_amount = fields.Monetary(
+        'Current KM Extra Amount', currency_field='company_currency_id', compute='_compute_current_due_amount', store=True)
+
+    account_move_ids = fields.One2many(
+        'account.move', 'rental_contract_id', string='Related Moves')
+    invoice_count = fields.Integer(
+        'invoice_count', compute="_compute_move_count")
+    credit_note_count = fields.Integer(
+        'invoice_count', compute="_compute_move_count")
+
     # Status Fields
     state = fields.Selection([
         ('draft', 'Draft'),
@@ -288,7 +347,7 @@ class RentalContract(models.Model):
     @api.depends('total_amount', 'paid_amount')
     def _compute_due_amount(self):
         for record in self:
-            record.due_amount = record.paid_amount - record.total_amount
+            record.due_amount = record.total_amount - record.paid_amount
 
     @api.depends('account_payment_ids', 'account_payment_ids.state', 'account_payment_ids.amount')
     def _compute_payment_amount(self):
@@ -300,6 +359,106 @@ class RentalContract(models.Model):
     def _compute_payment_count(self):
         for record in self:
             record.payment_count = len(record.account_payment_ids)
+
+    @api.depends('state', 'pickup_date')
+    def _compute_display_open_state_fields(self):
+        for record in self:
+            if record.state == 'opened':
+                display_actual_days = record.pickup_date and ((
+                    datetime.datetime.now() - record.pickup_date).days + 1) or 0
+                display_hours = record.pickup_date and (
+                    datetime.datetime.now() - record.pickup_date).seconds // 3600 or 0
+                display_actual_hours = 0 \
+                    if record.vehicle_model_datail_id and display_hours < record.vehicle_model_datail_id.number_delay_hours_allowed\
+                    else display_hours
+
+                display_current_days = display_actual_days if display_actual_hours < 4 else display_actual_days + 1
+                display_current_hours = display_actual_hours if display_actual_hours < 4 else 0
+
+                record.actual_days = display_actual_days
+                record.actual_hours = display_actual_hours
+                record.current_days = display_current_days
+                record.current_hours = display_current_hours
+
+            else:
+                display_actual_days = 0
+                display_actual_hours = 0
+                display_current_days = 0
+                display_current_hours = 0
+
+            record.display_actual_days = display_actual_days
+            record.display_actual_hours = display_actual_hours
+            record.display_current_days = display_current_days
+            record.display_current_hours = display_current_hours
+
+    @api.depends('total_per_day', 'duration')
+    def _compute_assumed_amount(self):
+        for record in self:
+            if record.total_per_day and record.duration:
+                record.assumed_amount = record.total_per_day * record.duration
+            else:
+                record.assumed_amount = 0.0
+
+    @api.depends('total_per_day', 'display_current_days', 'display_current_hours', 'state')
+    def _compute_display_current_amount(self):
+        for record in self:
+            if record.total_per_day and (record.display_current_days or record.display_current_hours) and record.state == 'opened':
+                display_current_amount = (record.total_per_day * record.display_current_days) + \
+                    (record.total_per_day / 24) * record.display_current_hours
+                record.display_current_amount = display_current_amount
+                record.current_amount = display_current_amount
+            else:
+                record.display_current_amount = 0.0
+
+    @api.depends('fines_discount_line_ids')
+    def _compute_fines_discount_count(self):
+        for record in self:
+            record.fines_discount_count = len(record.fines_discount_line_ids)
+
+    @api.depends('fines_discount_line_ids', 'fines_discount_line_ids.price', 'fines_discount_line_ids.type')
+    def _compute_current_fines_amount(self):
+        for record in self:
+            record.current_fines_amount = sum(record.fines_discount_line_ids.filtered(
+                lambda l: l.type == 'fine').mapped('price'))
+
+    @api.depends('fines_discount_line_ids', 'fines_discount_line_ids.price', 'fines_discount_line_ids.type')
+    def _compute_discount_voucher_amount(self):
+        for record in self:
+            record.discount_voucher_amount = sum(record.fines_discount_line_ids.filtered(
+                lambda l: l.type == 'discount').mapped('price'))
+
+    @api.depends('free_km_per_day', 'display_current_days')
+    def _compute_total_free_km(self):
+        for record in self:
+            record.total_free_km = record.free_km_per_day * record.display_current_days
+
+    @api.depends('odometer_km_in', 'odometer', 'total_free_km')
+    def _compute_consumed_extra_km(self):
+        for record in self:
+            consumed_km = record.odometer_km_in - record.odometer
+            record.consumed_km = consumed_km
+            record.total_extra_km = consumed_km - \
+                record.total_free_km if record.total_free_km < consumed_km else 0.0
+
+    @api.depends('total_extra_km', 'extra_km_cost')
+    def _compute_display_current_km_extra_amount(self):
+        for record in self:
+            record.display_current_km_extra_amount = record.total_extra_km * record.extra_km_cost
+
+    @api.depends('current_amount', 'current_fines_amount', 'current_accident_damage_amount', 'discount_voucher_amount', 'current_km_extra_amount', 'paid_amount')
+    def _compute_current_due_amount(self):
+        for record in self:
+            record.current_due_amount = record.current_amount + record.current_fines_amount\
+                + record.current_accident_damage_amount + record.current_km_extra_amount\
+                - (record.discount_voucher_amount + record.paid_amount)
+
+    @api.depends('account_move_ids', 'account_move_ids.move_type')
+    def _compute_move_count(self):
+        for record in self:
+            record.invoice_count = len(record.account_move_ids.filtered(
+                lambda move: move.move_type == 'out_invoice'))
+            record.credit_note_count = len(record.account_move_ids.filtered(
+                lambda move: move.move_type == 'out_refund'))
 
     def next_draft_state(self):
         if self.draft_state == 'customer_info':
@@ -325,10 +484,31 @@ class RentalContract(models.Model):
         if not all(record.due_amount <= 0 for record in self):
             raise UserError(
                 _('You cannot open this contract because due amount must be less or equal zero.'))
+
+        rental_vehicle_state = self.env['fleet.vehicle.state'].search(
+            [('type', '=', 'rented')], limit=1)
+
+        if not rental_vehicle_state:
+            raise ValidationError(
+                _("Please configure Rent state in vehicle states."))
+
+        self.vehicle_id.write({'state_id': rental_vehicle_state.id})
+
+        for rec in self:
+            rec.name = self.env['ir.sequence'].next_by_code(
+                'rental.contract.seq')
+
         self.write({'state': 'opened'})
 
     def action_delivered_pending(self):
         self.write({'state': 'delivered_pending'})
+
+    def set_current_km_extra_amount(self):
+        self.ensure_one()
+        if self.odometer > self.odometer_km_in:
+            raise ValidationError(_('KM In Must Be greater Than KM Out'))
+        self.current_km_extra_amount = self.display_current_km_extra_amount
+        return {'type': 'ir.actions.act_window_close'}
 
     def action_delivered_debit(self):
         self.write({'state': 'delivered_debit'})
@@ -368,6 +548,21 @@ class RentalContract(models.Model):
             'views': [[view_id, 'form']]
         }
 
+    def view_calculate_km(self):
+        view_id = self.env.ref(
+            'rental_contract.view_rental_contract_calculate_km_form').id
+        if not self.odometer_km_in:
+            self.odometer_km_in = self.odometer
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Calculate KM'),
+            'res_model': 'rental.contract',
+            'target': 'new',
+            'view_mode': 'form',
+            'res_id': self.id,
+            'views': [[view_id, 'form']]
+        }
+
     def view_related_payments(self):
         return {
             'type': 'ir.actions.act_window',
@@ -376,3 +571,39 @@ class RentalContract(models.Model):
             'view_mode': 'list,form',
             'domain': [('rental_contract_id', '=', self.id)]
         }
+
+    def view_related_invoices(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Invoices'),
+            'res_model': 'account.move',
+            'view_mode': 'list,form',
+            'domain': [('rental_contract_id', '=', self.id), ('move_type', '=', 'out_invoice')]
+        }
+
+    def view_related_credit_note(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Credit Note'),
+            'res_model': 'account.move',
+            'view_mode': 'list,form',
+            'domain': [('rental_contract_id', '=', self.id), ('move_type', '=', 'out_refund')]
+        }
+
+
+class RentalContractFinesDiscountLine(models.Model):
+    _name = 'rental.contract.fines.discount.line'
+    _description = 'Rental Contract Fines Discount Line'
+    _rec_name = 'name'
+
+    fines_discount_id = fields.Many2one(
+        'contract.fines.discount.config', string='Fines/Discount', required=True)
+    rental_contract_id = fields.Many2one(
+        'rental.contract', string='Rental Contract', required=True)
+    name = fields.Char(string='Description', required=True)
+    price = fields.Float(
+        string='Price', related='fines_discount_id.price', store=True)
+    type = fields.Selection([
+        ('fine', 'Fine'),
+        ('discount', 'Discount'),
+    ], string='Type', required=True)

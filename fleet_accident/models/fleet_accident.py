@@ -2,6 +2,13 @@
 
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
+PERCENTAGE_values = [
+    ('0', '0'),
+    ('25', '25'),
+    ('50', '50'),
+    ('75', '75'),
+    ('100', '100')
+]
 
 
 class FleetAccident(models.Model):
@@ -13,7 +20,7 @@ class FleetAccident(models.Model):
     accident_category = fields.Selection([
         ('received_accident', 'Received Accident'),
         ('discovered_accident', 'Discovered Accident'),
-    ], string='Accident Category', required=True)
+    ], string='Accident Category', required=True, default='received_accident')
     partner_id = fields.Many2one(
         'res.partner', string='Customer', domain="[('create_from_rental', '=', True)]", required=True)
     rental_contract_no = fields.Char('Rental Contract Number', required=True)
@@ -31,7 +38,8 @@ class FleetAccident(models.Model):
         string="Insurance Type", related='vehicle_insurance_line_id.policy_id.insurance_type')
 
     # Announcement Field
-    city_id = fields.Many2one('res.country.state', string='City')
+    city_id = fields.Many2one(
+        'res.country.state', string='City', domain="[('country_id.code', '=', 'SA')]")
     report_source = fields.Selection([
         ('negm', 'Negm'),
         ('morror', 'Morror'),
@@ -49,22 +57,24 @@ class FleetAccident(models.Model):
     ], string='Accident Type', default='shared')
     accident_report_no = fields.Float('Accident Report NO.')
     report_date = fields.Date('Report Date')
-    customer_percentage = fields.Selection([
-        ('0', '0'),
-        ('25', '25'),
-        ('50', '50'),
-        ('75', '75'),
-        ('100', '100')
-    ], string='Customer Percentage', default='0')
+    customer_percentage = fields.Selection(PERCENTAGE_values, string='Customer Percentage',
+                                           default='0', compute="_compute_customer_percentage",
+                                           store=True, readonly=False)
     other_party_no = fields.Integer(string='Number of other party', default=0)
     other_party1_id = fields.Many2one('res.partner', string='Other Party1')
     other_party2_id = fields.Many2one('res.partner', string='Other Party2')
     other_party3_id = fields.Many2one('res.partner', string='Other Party3')
     other_party4_id = fields.Many2one('res.partner', string='Other Party4')
-    other_party1_percentage = fields.Float('Other Party Percentage1')
-    other_party2_percentage = fields.Float('Other Party Percentage2')
-    other_party3_percentage = fields.Float('Other Party Percentage3')
-    other_party4_percentage = fields.Float('Other Party Percentage4')
+    other_party1_percentage = fields.Selection(
+        PERCENTAGE_values, 'Other Party Percentage1')
+    other_party2_percentage = fields.Selection(
+        PERCENTAGE_values, 'Other Party Percentage2')
+    other_party3_percentage = fields.Selection(
+        PERCENTAGE_values, 'Other Party Percentage3')
+    other_party4_percentage = fields.Selection(
+        PERCENTAGE_values, 'Other Party Percentage4')
+    other_party_partner_ids = fields.Many2many(
+        'res.partner', string='Selected Partner', compute="_compute_other_party_partner_ids")
 
     # Evaluation Page Fields
     evaluation_type = fields.Selection([
@@ -112,46 +122,62 @@ class FleetAccident(models.Model):
             rec.total_evaluation = sum(
                 rec.evaluation_item_ids.mapped('evaluation_item_value'))
 
+    @api.depends('other_party1_id', 'other_party2_id', 'other_party3_id', 'other_party4_id')
+    def _compute_other_party_partner_ids(self):
+        for rec in self:
+            rec.other_party_partner_ids = rec.other_party1_id | rec.other_party2_id | rec.other_party3_id | rec.other_party4_id
+
     @api.depends('due_amount_line_ids', 'due_amount_line_ids.invoice_ids')
     def _compute_invoice_count(self):
         for rec in self:
             rec.invoice_count = len(rec.due_amount_line_ids.invoice_ids)
 
+    @api.depends('accident_type')
+    def _compute_customer_percentage(self):
+        for rec in self:
+            if rec.accident_type == 'not_covered':
+                rec.customer_percentage = '100'
+
+    @api.constrains('fleet_vehicle_id')
+    def _check_fleet_vehicle_id(self):
+        for rec in self:
+            if self.search([('fleet_vehicle_id', '=', rec.fleet_vehicle_id.id), ('id', '!=', rec.id), ('state', 'not in', ['closed', 'cancel'])], limit=1):
+                raise ValidationError(
+                    _("This Vehicle has existing accident card"))
+
     @api.constrains('accident_date', 'announcement_date', 'report_date')
     def _check_accident_date(self):
         for rec in self:
-            if rec.announcement_date and rec.accident_date and rec.announcement_date > rec.accident_date:
+            if rec.announcement_date and rec.accident_date and rec.announcement_date < rec.accident_date:
                 raise ValidationError(
-                    "Announcement Date must be less than Accident Date")
+                    "Accident Date must be less than Announcement Date")
             if rec.accident_date and rec.report_date and rec.accident_date > rec.report_date:
                 raise ValidationError(
-                    "Report Date must be less than Accident Date")
+                    "Accident Date must be less than Report Date")
 
-    @api.constrains('other_party_no', 'state')
+    @api.constrains('other_party_no', 'state', 'accident_type')
     def _check_other_party_no(self):
         for rec in self:
-            if (rec.other_party_no > 4 or rec.other_party_no <= 0) and rec.state not in ['announcement', 'accident_report']:
+            if (rec.other_party_no > 4 or rec.other_party_no <= 0) and rec.state not in ['announcement', 'accident_report'] and rec.accident_type != 'not_covered':
                 raise ValidationError(
                     "Number of Other Party must be less than 4 and not equal 0")
 
-    @api.constrains('other_party1_percentage', 'other_party2_percentage', 'other_party3_percentage', 'other_party4_percentage', 'state')
+    @api.constrains('other_party1_percentage', 'other_party2_percentage', 'other_party3_percentage', 'other_party4_percentage', 'customer_percentage')
     def _check_percentage(self):
         for rec in self:
-            if float(rec.customer_percentage) + rec.other_party1_percentage +\
-                rec.other_party2_percentage + rec.other_party3_percentage + rec.other_party4_percentage != 100\
-                    and rec.state not in ['announcement', 'accident_report']:
+            if float(rec.customer_percentage) + float(rec.other_party1_percentage) +\
+                float(rec.other_party2_percentage) + float(rec.other_party3_percentage) + float(rec.other_party4_percentage) != 100\
+                    and rec.state not in ['announcement']:
                 raise ValidationError(
-                    "Total of Other Party Percentage must be equal 100%")
+                    "Total Percentages must be equal 100%")
 
     @api.onchange('accident_type')
     def _onchange_accident_type(self):
         for i in range(1, 5):
             self['other_party%s_id' % i] = False
-            self['other_party%s_percentage' % i] = 0
+            self['other_party%s_percentage' % i] = '0'
 
         self.other_party_no = 0
-        if self.accident_type == 'not_covered':
-            self.customer_percentage = '100'
 
     @api.onchange('evaluation_type')
     def _onchange_evaluation_type(self):
@@ -173,7 +199,10 @@ class FleetAccident(models.Model):
         for rec in self:
             compensation_type = rec.compensation_type
             matched_items = default_accident_items.filtered(
-                lambda x: x.compensation_type in ['both', compensation_type])
+                lambda x: x.accident_item == 'customer')
+            if rec.accident_type == 'shared':
+                matched_items |= default_accident_items.filtered(
+                    lambda x: x.compensation_type in ['both', compensation_type])
             for item in matched_items:
                 partner_id = self.env['res.partner']
                 partner_percentage_list = []
@@ -184,11 +213,11 @@ class FleetAccident(models.Model):
                     if partner_id:
                         partner_percentage_list.append(
                             (partner_id, float(rec.customer_percentage)))
-                elif item.accident_item == 'other_party' and rec.accident_type == 'shared':
+                elif item.accident_item == 'other_party':
                     for i in range(1, rec.other_party_no + 1):
                         partner_id = rec['other_party%s_id' % i]
                         partner_percentage_list.append(
-                            (partner_id, rec['other_party%s_percentage' % i]))
+                            (partner_id, float(rec['other_party%s_percentage' % i])))
                 elif item.accident_item == 'amazon':
                     partner_id = rec.vehicle_insurance_line_id.policy_id.insurance_company
                     partner_percentage_list.append(
@@ -221,6 +250,8 @@ class FleetAccident(models.Model):
         self.state = 'evaluation'
 
     def button_insurance_approve(self):
+        if any(rec.total_evaluation <= 0.0 for rec in self):
+            raise ValidationError(_("Please fill evaluation table "))
         self.state = 'insurance_approve'
 
     def button_invoicing(self):
@@ -238,6 +269,23 @@ class FleetAccident(models.Model):
 
     def recompute_due_amount(self):
         self.due_amount_line_ids.calculate_amount()
+
+    def create(self, vals_list):
+        accidents = super().create(vals_list=vals_list)
+        damage_state = self.env['fleet.vehicle.state'].search(
+            [('type', '=', 'accident_or_damage')], limit=1)
+        if not damage_state:
+            raise ValidationError(
+                _("Please configure accident in vehicle states."))
+        accidents.fleet_vehicle_id.write({
+            'state_id': damage_state.id
+        })
+        return accidents
+
+    def write(self, vals):
+        if vals.get('state'):
+            self._check_percentage()
+        return super().write(vals)
 
 
 class AccidentEvaluationItemLine(models.Model):
@@ -274,6 +322,7 @@ class AccidentDueAmountLine(models.Model):
     partner_id = fields.Many2one('res.partner', string='Partner')
     remaining_amount = fields.Float(
         'Remaining Amount', compute='_compute_amounts', store=True)
+    to_invoice_amount = fields.Float('To Invoice Amount')
     invoiced_amount = fields.Float(
         'Invoiced', compute='_compute_amounts', store=True)
     is_tax_active = fields.Boolean('Tax Active', default=False)
@@ -291,7 +340,7 @@ class AccidentDueAmountLine(models.Model):
     def _compute_amounts(self):
         for rec in self:
             invoiced_amount = sum(
-                rec.invoice_ids.filtered(lambda inv: inv.state == 'posted').mapped('invoice_line_ids.price_subtotal'))
+                rec.invoice_ids.mapped('invoice_line_ids.price_subtotal'))
             rec.invoiced_amount = invoiced_amount
             rec.remaining_amount = rec.amount - invoiced_amount
 
@@ -309,6 +358,13 @@ class AccidentDueAmountLine(models.Model):
             if rec.amount > rec.accident_id.total_evaluation:
                 raise ValidationError(
                     _(f"{rec.name} Amount can't be Greater than Total Evaluation"))
+
+    @api.constrains('to_invoice_amount')
+    def _check_to_invoice_amount(self):
+        for rec in self:
+            if rec.to_invoice_amount > rec.remaining_amount:
+                raise ValidationError(
+                    _("To Invoice amount can't be greater than remaining amount"))
 
     def calculate_amount(self):
         for rec in self:
@@ -331,6 +387,7 @@ class AccidentDueAmountLine(models.Model):
         account_move_obj = self.env['account.move']
         vals_list = []
         for rec in self:
+            total_line_tax_percentage = sum(rec.tax_ids.mapped('amount'))
             vals_list.append({
                 'move_type': 'out_invoice',
                 'partner_id': rec.partner_id.id,
@@ -340,8 +397,10 @@ class AccidentDueAmountLine(models.Model):
                 'invoice_line_ids': [(0, 0, {
                     'account_id': rec.default_accident_item_id.account_id.id,
                     'quantity': 1,
-                    'price_unit': rec.remaining_amount,
+                    'price_unit': rec.to_invoice_amount / (1 + (total_line_tax_percentage / 100)),
+                    'analytic_distribution': {rec.accident_id.fleet_vehicle_id.analytic_account_id.id: 100},
                     'tax_ids': [(6, 0, rec.tax_ids.ids)] if rec.is_tax_active else False
                 })]
             })
+            rec.to_invoice_amount = 0.0
         account_move_obj.sudo().create(vals_list)

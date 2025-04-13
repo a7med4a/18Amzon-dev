@@ -1,3 +1,7 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_rental_contract,rental.contract,model_rental_contract,base.group_user,1,1,1,1
 access_rental_contract_payment_register,rental.contract.payment.register,model_rental_contract_payment_register,base.group_user,1,1,1,1
+access_contract_fines_discount_config,contract.fines.discount.config,model_contract_fines_discount_config,base.group_user,1,1,1,1
+access_rental_contract_fines_discount_line,rental.contract.fines.discount.line,model_rental_contract_fines_discount_line,base.group_user,1,1,1,1
+access_rental_contract_fines_discount_wiz,rental.contract.fines.discount.wiz,model_rental_contract_fines_discount_wiz,base.group_user,1,1,1,1
+access_rental_contract_fines_discount_wiz_line,rental.contract.fines.discount.wiz.line,model_rental_contract_fines_discount_wiz_line,base.group_user,1,1,1,1

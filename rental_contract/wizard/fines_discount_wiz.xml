@@ -1,0 +1,44 @@
+<odoo>
+    <record id="rental_contract_fines_discount_wiz_view_form" model="ir.ui.view">
+        <field name="name">rental.contract.fines.discount.wiz.view.form</field>
+        <field name="model">rental.contract.fines.discount.wiz</field>
+        <field name="arch" type="xml">
+            <form string="Fines - Discount Wizard">
+                <sheet>
+                    <group>
+                        <field name="rental_contract_id" invisible="1"/>
+                        <field name="type" invisible="1"/>
+                        <field name="lines">
+                            <list editable="bottom">
+                                <field name="config_id" string="Item" domain="[('type', '=', parent.type)]"/>
+                                <field name="price"/>
+                                <field name="name"/>
+                                <field name="tax_ids" widget="many2many_tags" required="1"/>
+                            </list>
+                        </field>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="add_fines_discount" string="Add" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="rental_contract_fines_wiz_action" model="ir.actions.act_window">
+        <field name="name">Add Fines</field>
+        <field name="res_model">rental.contract.fines.discount.wiz</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_type': 'fine', 'default_rental_contract_id': active_id}</field>
+    </record>
+
+    <record id="rental_contract_discount_wiz_action" model="ir.actions.act_window">
+        <field name="name">Add Discount Voucher</field>
+        <field name="res_model">rental.contract.fines.discount.wiz</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_type': 'discount', 'default_rental_contract_id': active_id}</field>
+    </record>
+</odoo>

@@ -1,0 +1,220 @@
+<odoo>
+    <record id="view_vehicle_purchase_order_list" model="ir.ui.view">
+        <field name="name">vehicle.purchase.order.order.list</field>
+        <field name="model">vehicle.purchase.order</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <!--                <field name="state_color" widget="color_picker"/>-->
+                <field name="company_id"/>
+                <field name="vendor_id"/>
+                <field name="payment_method"/>
+                <field name="state" widget="badge" decoration-info="state == 'confirmed'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_vehicle_purchase_order_form" model="ir.ui.view">
+        <field name="name">vehicle.purchase.order.order.form</field>
+        <field name="model">vehicle.purchase.order</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_create_installment_board" string="Calculate Installments" type="object"
+                            confirm="Are you sure you want to Calculate Installments ?"
+                            class="btn-primary" invisible="state not in  ('confirmed') or installment_board_ids"/>
+                    <button name="action_create_installment_payment" string="Create Installment Payment" type="object"
+                            confirm="Are you sure you want to Create Installment Payment  ?"
+                            class="btn-primary" invisible="state not in  ('confirmed') or total_advanced_payment == 0"/>
+                    <button name="action_create_advance_payment" string="Create Advance Payment " type="object"
+                            confirm="Are you sure you want to Create Advance Payment  ?"
+                            class="btn-primary" invisible="state not in  ('confirmed') or total_advanced_payment > 0 "/>
+                    <button name="action_create_vehicle" string="Create Vehicle" type="object"
+                            confirm="Are you sure you want to Create Vehicle?"
+                            class="btn-primary" invisible="state not in  ('confirmed')"/>
+                    <button name="action_create_bill" string="Create Bill" type="object"
+                            confirm="Are you sure you want to Create Bill ?"
+                            class="btn-primary" invisible="state not in  ('confirmed')"/>
+                    <button name="action_reset_draft" string="Reset To Draft" type="object"
+                            confirm="Are you sure you want to reset back to draft state ?"
+                            class="btn-primary" invisible="state not in  ('cancelled','refused')"/>
+                    <button name="action_under_review" string="Request Validation" type="object"
+                            confirm="Are you sure you want to transfer to under review state ?"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_confirm" string="Confirm" type="object"
+                            class="btn-success" invisible="state != 'under_review'"
+                            confirm="Are you sure you want to Confirm PR Request ?"/>
+                    <button name="action_refuse" string="Reject" type="object"
+                            class="btn-danger" invisible="state != 'under_review'"
+                            confirm="Are you sure you want to Refuse PR Request ?"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            confirm="Are you sure you want to Cancel PR Request ?"
+                            class="btn-secondary" invisible="state not in ('under_review')"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_vehicle" icon="fa-bars" type="object"
+                                help="Show Vehicles related">
+                            <div class="o_stat_widget">
+<!--                                <field name="vehicle_purchase_order_count" class="o_stat_value"/>-->
+                                <span class="o_stat_text"> Vehicles</span>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="PO Info">
+                            <field name="company_id" readonly="state != 'draft'"/>
+                            <field name="description" readonly="state != 'draft'"/>
+                        </group>
+                        <group string="Vendor Info">
+                            <field name="vendor_id"/>
+                            <field name="payment_method"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="PO lines">
+                            <field name="vehicle_purchase_order_line_ids" readonly="state != 'draft'">
+                                <list editable="bottom" create="false" edit="true">
+                                    <field name="model_id" optional='show'/>
+                                    <field name="color" widget="color" optional='show'/>
+                                    <field name="quantity" optional='show'/>
+                                    <field name="vehicle_cost" optional='show'/>
+                                    <field name="shipping_cost" optional='show'/>
+                                    <field name="admin_fees" optional='show'/>
+                                    <field name="insurance_cost" optional='show'/>
+                                    <field name="plate_fees" optional='show'/>
+                                    <field name="tax_ids" optional='show' widget="many2many_tags"/>
+                                    <field name="tax_cost" optional='show'/>
+                                    <field name="total_per_model" optional='show'/>
+                                    <field name="advanced_payment_per_model" optional='show'/>
+                                    <field name="interest_rate" optional='show'/>
+                                    <field name="interest_cost_per_model" optional='show'/>
+                                    <field name="ownership_value" optional='show'/>
+                                </list>
+                            </field>
+                            <div class="row">
+                                <div class="col-7"/>
+                                <div class="col-3">
+                                    <h4 style="padding-bottom:7px;font-weight:bold">Untaxed Amount :</h4>
+                                    <h4 style="padding-bottom:7px;font-weight:bold">Tax 15%:</h4>
+                                    <h4 style="font-weight:bold">Total Vehicles Cost :</h4>
+                                    <h4 style="padding-bottom:7px;font-weight:bold">Total Advanced Payment :</h4>
+                                    <h4 style="padding-bottom:7px;font-weight:bold">Total Financing Amount :</h4>
+                                    <h4 style="padding-bottom:7px;font-weight:bold">Total Interest Cost :</h4>
+                                    <h4 style="padding-bottom:7px;font-weight:bold">Total installment Cost  :</h4>
+                                    <h4 style="padding-bottom:7px;font-weight:bold">Number of Installment  :</h4>
+                                    <h4 style="padding-bottom:7px;font-weight:bold">Installment Cost  :</h4>
+                                    <h4 style="padding-bottom:7px;font-weight:bold">Date  :</h4>
+                                </div>
+                                <div class="col-2">
+                                    <h4>
+                                        <field name="total_without_tax"
+                                               style="font-weight:bold;border-bottom:1px solid black"
+                                               readonly="1"/>
+                                    </h4>
+                                    <h4>
+                                        <field name="tax_15"
+                                               style="font-weight:bold;border-bottom:1px solid black"
+                                               readonly="1"/>
+                                    </h4>
+                                    <h4>
+                                        <field name="total_vehicle_tax"
+                                               style="font-weight:bold;border-bottom:1px solid black"
+                                               readonly="1"/>
+                                    </h4>
+                                    <h4>
+                                        <field name="total_advanced_payment"
+                                               style="font-weight:bold;border-bottom:1px solid black"
+                                               readonly="1"/>
+                                    </h4>
+                                    <h4>
+                                        <field name="total_financial_amount"
+                                               style="font-weight:bold;border-bottom:1px solid black"
+                                               readonly="1"/>
+                                    </h4>
+                                    <h4>
+                                        <field name="total_interest_cost"
+                                               style="font-weight:bold;border-bottom:1px solid black"
+                                               readonly="1"/>
+                                    </h4>
+                                    <h4>
+                                        <field name="total_installment_cost"
+                                               style="font-weight:bold;border-bottom:1px solid black"
+                                               readonly="1"/>
+                                    </h4>
+                                    <h4>
+                                        <field name="number_of_installment"
+                                               style="font-weight:bold;border-bottom:1px solid black"
+                                               required="payment_method == 'settlement'"/>
+                                    </h4>
+                                    <h4>
+                                        <field name="installment_cost"
+                                               style="font-weight:bold;border-bottom:1px solid black"
+                                               readonly="1"/>
+                                    </h4>
+                                    <h4>
+                                        <field name="date"
+                                               style="font-weight:bold;border-bottom:1px solid black"/>
+                                    </h4>
+                                </div>
+                            </div>
+                        </page>
+                        <page string="Installments Board">
+                            <field name="installment_board_ids" readonly="state != 'draft'">
+                                <list editable="bottom" create="false" edit="true">
+                                    <field name="date" optional='show'/>
+                                    <field name="amount" optional='show'/>
+                                    <field name="paid_amount" optional='show'/>
+                                    <field name="remaining_amount" optional='show'/>
+                                    <field name="state" optional='show'/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_vehicle_purchase_order" model="ir.actions.act_window">
+        <field name="name">Vehicle Purchase Order</field>
+        <field name="res_model">vehicle.purchase.order</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- This Menu Item must have a parent and an action -->
+    <!--    <menuitem id="menu_vehicle_purchase_order" name="RFQ Menu" parent="menu_vehicle_purchase_root" action="" sequence=""/>-->
+    <menuitem id="menu_vehicle_purchase_order_data" name="PO Vehicles"
+              parent="vehicle_purchase.menu_vehicle_purchase_root" action="action_vehicle_purchase_order" sequence="2"/>
+
+    <record id="view_vehicle_purchase_order_line_form" model="ir.ui.view">
+        <field name="name">vehicle.purchase.order.line.order.form</field>
+        <field name="model">vehicle.purchase.order.line</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group string="RFQ Info">
+                            <field name="model_id" readonly="1"/>
+                            <field name="color" readonly="1"/>
+                            <field name="quantity" readonly="1"/>
+                        </group>
+                        <group string="Vendor Info">
+                            <field name="tax_ids" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+</odoo>

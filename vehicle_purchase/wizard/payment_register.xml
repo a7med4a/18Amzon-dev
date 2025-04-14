@@ -1,0 +1,38 @@
+<odoo>
+    <data>
+        <record id="view_rental_contract_payment_register_form" model="ir.ui.view">
+            <field name="name">vehicle.purchase.payment.register.form</field>
+            <field name="model">vehicle.purchase.payment.register</field>
+            <field name="arch" type="xml">
+                <form string="Pay">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="available_payment_method_line_ids" invisible="1"/>
+                                <field name="pay_type" invisible="1"/>
+                                <field name="journal_id" domain="[('type', 'in', ['bank', 'cash'])]"/>
+                                <field name="payment_method_line_id" domain="[('id', 'in', available_payment_method_line_ids)]"/>
+                            </group>
+                            <group>
+                                <field name="payment_date" />
+                                <label for="amount"/>
+                                <div name="amount_div" class="o_row">
+                                    <field name="amount" force_save="1"/>
+                                    <field name="currency_id"/>
+                                </div>
+                                <field name="communication"/>
+                            </group>
+                        </group>
+                    </sheet>
+                    <footer>
+                        <button name="action_register_payment" string="Pay" type="object" class="btn-primary"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+
+
+    </data>
+</odoo>

@@ -1,5 +1,15 @@
 <odoo>
     <data noupdate="1">
+        <record id="fleet_vehicle_state_under_preparation" model="fleet.vehicle.state">
+            <field name="name">Under Preparation</field>
+            <field name="sequence">130</field>
+            <field name="type">under_preparation</field>
+        </record>
+        <record id="fleet_vehicle_state_job_task" model="fleet.vehicle.state">
+            <field name="name">Job Task</field>
+            <field name="sequence">140</field>
+            <field name="type">job_task</field>
+        </record>
         <record id="fleet_vehicle_state_rented" model="fleet.vehicle.state">
             <field name="name">Rented</field>
             <field name="sequence">10</field>

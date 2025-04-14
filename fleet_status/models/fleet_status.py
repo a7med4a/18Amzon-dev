@@ -21,7 +21,9 @@ class VehicleStatus(models.Model):
         ('for_sale', 'For Sale'),
         ('for_sale', 'For Sale'),
         ('total_loss', 'Total Loss'),
-        ('sold', 'Sold')
+        ('sold', 'Sold'),
+        ('under_preparation', 'Under Preparation'),
+        ('job_task', 'Job Task'),
     ], string='Type')
     
     @api.constrains('type')

@@ -1,0 +1,152 @@
+<odoo>
+    <record id="view_vehicle_purchase_quotation_list" model="ir.ui.view">
+        <field name="name">vehicle.purchase.quotation.quotation.list</field>
+        <field name="model">vehicle.purchase.quotation</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+<!--                <field name="state_color" widget="color_picker"/>-->
+                <field name="company_id"/>
+                <field name="vendor_id"/>
+                <field name="expiration_date"/>
+                <field name="vehicle_purchase_id"/>
+                <field name="total_include_tax"/>
+                <field name="state" widget="badge" decoration-info="state == 'confirmed'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_vehicle_purchase_quotation_form" model="ir.ui.view">
+        <field name="name">vehicle.purchase.quotation.quotation.form</field>
+        <field name="model">vehicle.purchase.quotation</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_create_po" string="Create PO" type="object"
+                            confirm="Are you sure you want to create po ?"
+                            class="btn-primary" invisible="state != 'confirmed'"/>
+                    <button name="action_reset_draft" string="Reset To Draft" type="object"
+                            confirm="Are you sure you want to reset back to draft state ?"
+                            class="btn-primary" invisible="state not in  ('cancelled','refused')"/>
+                    <button name="action_under_review" string="Request Validation" type="object"
+                            confirm="Are you sure you want to transfer to under review state ?"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_confirm" string="Confirm" type="object"
+                            class="btn-success" invisible="state != 'under_review'"
+                            confirm="Are you sure you want to Confirm PR Request ?"/>
+                    <button name="action_refuse" string="Reject" type="object"
+                            class="btn-danger" invisible="state != 'under_review'"
+                            confirm="Are you sure you want to Refuse PR Request ?"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            confirm="Are you sure you want to Cancel PR Request ?"
+                            class="btn-secondary" invisible="state not in ('under_review')"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box" invisible="vehicle_purchase_order_count == 0">
+                        <button name="action_view_vehicle_purchase_order" icon="fa-bars" type="object"
+                                help="Show RFQ related">
+                            <div class="o_stat_widget">
+                                <field name="vehicle_purchase_order_count" class="o_stat_value"/>
+                                <span class="o_stat_text"> PO</span>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="RFQ Info">
+                            <field name="company_id" readonly="state != 'draft'"/>
+                            <field name="description" readonly="state != 'draft'"/>
+                        </group>
+                        <group string="Vendor Info">
+                            <field name="vendor_id"/>
+                            <field name="vehicle_purchase_id"/>
+                            <field name="expiration_date" readonly="state != 'draft'"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="RFQ lines">
+                            <field name="vehicle_purchase_quotation_line_ids" readonly="state != 'draft'">
+                                <list editable="bottom" create="false" edit="true">
+                                    <field name="model_id" optional='show'/>
+                                    <field name="color" widget="color" optional='show'/>
+                                    <field name="quantity" optional='show' />
+                                    <field name="unit_price" optional='show' />
+                                    <field name="total_amount" optional='show' />
+                                    <field name="tax_ids" widget="many2many_tags" optional='show' />
+                                    <field name="amount_taxed" optional='show' />
+                                </list>
+                            </field>
+                            <div class="row">
+                                <div class="col-7"/>
+                                <div class="col-3">
+                                    <h4 style="padding-bottom:7px;font-weight:bold">Total Without Tax :</h4>
+                                    <h4 style="padding-bottom:7px;font-weight:bold">Total Tax :</h4>
+                                    <h4 style="font-weight:bold">Total Include Tax :</h4>
+                                </div>
+                                <div class="col-2">
+                                    <h4>
+                                        <field name="total_without_tax"
+                                               style="font-weight:bold;border-bottom:1px solid black"
+                                               readonly="1"/>
+                                    </h4>
+                                    <h4>
+                                        <field name="total_tax"
+                                               style="font-weight:bold;border-bottom:1px solid black"
+                                               readonly="1"/>
+                                    </h4>
+                                    <h4>
+                                        <field name="total_include_tax"
+                                               style="font-weight:bold;border-bottom:1px solid black"
+                                               readonly="1"/>
+                                    </h4>
+                                </div>
+                            </div>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_vehicle_purchase_quotation" model="ir.actions.act_window">
+        <field name="name">Vehicle Purchase Quotation Action</field>
+        <field name="res_model">vehicle.purchase.quotation</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- This Menu Item must have a parent and an action -->
+<!--    <menuitem id="menu_vehicle_purchase_quotation" name="RFQ Menu" parent="menu_vehicle_purchase_root" action="" sequence=""/>-->
+    <menuitem id="menu_vehicle_purchase_quotation_data" name="RFQ"
+              parent="vehicle_purchase.menu_vehicle_purchase_root" action="action_vehicle_purchase_quotation" sequence="2"/>
+
+        <record id="view_vehicle_purchase_quotation_line_form" model="ir.ui.view">
+        <field name="name">vehicle.purchase.quotation.line.quotation.form</field>
+        <field name="model">vehicle.purchase.quotation.line</field>
+        <field name="arch" type="xml">
+                <form>
+                <sheet>
+                    <group>
+                        <group string="RFQ Info">
+                            <field name="model_id" readonly="1"/>
+                            <field name="color" readonly="1"/>
+                            <field name="quantity" readonly="1"/>
+                            <field name="unit_price" readonly="1"/>
+                        </group>
+                        <group string="Vendor Info">
+                            <field name="tax_ids" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+                </form>
+        </field>
+        </record>
+
+</odoo>

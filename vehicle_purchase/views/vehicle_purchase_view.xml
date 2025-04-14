@@ -1,0 +1,101 @@
+<odoo>
+    <record id="view_vehicle_purchase_list" model="ir.ui.view">
+        <field name="name">vehicle.purchase.list</field>
+        <field name="model">vehicle.purchase</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <!--                <field name="state_color" widget="color_picker"/>-->
+                <field name="company_id"/>
+                <field name="request_date"/>
+                <field name="request_by_id"/>
+                <field name="expected_delivery_date"/>
+                <field name="state" widget="badge" decoration-info="state == 'confirmed'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_vehicle_purchase_form" model="ir.ui.view">
+        <field name="name">vehicle.purchase.form</field>
+        <field name="model">vehicle.purchase</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_create_RFQ" string="Create RFQ" type="object"
+                            confirm="Are you sure you want to create RFQ ?"
+                            class="btn-success" invisible="state not in  ('confirmed')"/>
+                    <button name="action_reset_draft" string="Reset To Draft" type="object"
+                            confirm="Are you sure you want to reset back to draft state ?"
+                            class="btn-primary" invisible="state not in  ('cancelled','refused')"/>
+                    <button name="action_under_review" string="Request Validation" type="object"
+                            confirm="Are you sure you want to transfer to under review state ?"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_confirm" string="Confirm" type="object"
+                            class="btn-success" invisible="state != 'under_review'"
+                            confirm="Are you sure you want to Confirm PR Request ?"/>
+                    <button name="action_refuse" string="Reject" type="object"
+                            class="btn-danger" invisible="state != 'under_review'"
+                            confirm="Are you sure you want to Refuse PR Request ?"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            confirm="Are you sure you want to Cancel PR Request ?"
+                            class="btn-secondary" invisible="state not in ('under_review')"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <field name="vehicle_purchase_quotation_count" invisible="1"/>
+                    <div class="oe_button_box" name="button_box" invisible="vehicle_purchase_quotation_count == 0">
+                        <button name="action_view_RFQ" icon="fa-bars" type="object"
+                                help="Show RFQ related">
+                            <div class="o_stat_widget">
+                                <field name="vehicle_purchase_quotation_count" class="o_stat_value"/>
+                                <span class="o_stat_text"> RFQs</span>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="PR Info">
+                            <field name="company_id" readonly="state != 'draft'"/>
+                            <field name="description" readonly="state != 'draft'"/>
+                        </group>
+                        <group string="Time Info">
+                            <field name="request_date"/>
+                            <field name="request_by_id"/>
+                            <field name="expected_delivery_date" readonly="state != 'draft'"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="PR lines">
+                            <field name="vehicle_purchase_line_ids" readonly="state != 'draft'">
+                                <list editable="bottom" create="true" edit="true">
+                                    <field name="model_id" optional='show'/>
+                                    <field name="color" widget="color" optional='show'/>
+                                    <field name="quantity" optional='show'/>
+                                    <field name="branch_ids" optional='show' widget="many2many_tags"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_vehicle_purchase" model="ir.actions.act_window">
+        <field name="name">Vehicle Purchase Action</field>
+        <field name="res_model">vehicle.purchase</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_vehicle_purchase_root" name="Vehicle Purchase"/>
+
+    <menuitem id="menu_vehicle_purchase_data" name="PR Request"
+              parent="menu_vehicle_purchase_root" action="action_vehicle_purchase" sequence="1"/>
+
+</odoo>

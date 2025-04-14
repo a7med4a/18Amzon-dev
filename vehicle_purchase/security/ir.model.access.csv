@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_vehicle_purchase,vehicle.purchase,model_vehicle_purchase,,1,1,1,1
+access_vehicle_purchase_line,vehicle.purchase.line,model_vehicle_purchase_line,,1,1,1,1
+access_vehicle_purchase_quotation,vehicle.purchase.quotation,model_vehicle_purchase_quotation,,1,1,1,1
+access_vehicle_purchase_quotation_line,vehicle.purchase.quotation.line,model_vehicle_purchase_quotation_line,,1,1,1,1
+access_vehicle_purchase_order,vehicle.purchase.order,model_vehicle_purchase_order,,1,1,1,1
+access_vehicle_purchase_order_line,vehicle.purchase.order.line,model_vehicle_purchase_order_line,,1,1,1,1
+access_installments_board,installments.board,model_installments_board,,1,1,1,1
+access_vehicle_purchase_payment_register,vehicle.purchase.payment.register,model_vehicle_purchase_payment_register,,1,1,1,1

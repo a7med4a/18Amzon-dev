@@ -17,7 +17,7 @@
                                 <field name="payment_date" />
                                 <label for="amount"/>
                                 <div name="amount_div" class="o_row">
-                                    <field name="amount" force_save="1"/>
+                                    <field name="amount" readonly="pay_type == 'advance'" force_save="1"/>
                                     <field name="currency_id"/>
                                 </div>
                                 <field name="communication"/>

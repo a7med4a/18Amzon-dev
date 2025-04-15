@@ -38,77 +38,77 @@ CAR_SEATS_STATUS = [('clean', 'Clean'), ('dirty', 'Dirty')]
 class vehicle_info(models.Model):
     _inherit = 'fleet.vehicle'
 
-    vin_sn = fields.Char()
-    model_year = fields.Char()
+    vin_sn = fields.Char(required=True)
+    model_year = fields.Char(required=True)
     category_id = fields.Many2one(
-        'fleet.vehicle.model.category')
+        'fleet.vehicle.model.category', required=True)
 
     # Vehicle Information
-    serial_number = fields.Char('Serial Number')
-    card_number = fields.Char('Card Number')
+    serial_number = fields.Char('Serial Number', required=True)
+    card_number = fields.Char('Card Number', required=True)
     usage_type = fields.Selection(
         selection=[('rental', 'Rental'), ('limousine', 'Limousine')],
-        string='Usage Type')
+        string='Usage Type', required=True)
     license_type = fields.Selection(
         selection=[('special_transportation', 'Special Transportation'),
                    ('private', 'Private'),
                    ('public_transportation', 'Public Transportation')
                    ],
-        string='License Type')
+        string='License Type', required=True)
     branch_id = fields.Many2one(
-        'res.branch', string='Location')
+        'res.branch', string='Location', required=True)
 
     # Chick List Information
     # Group 1
     ac = fields.Selection(
         selection=VEHICLE_PARTS_STATUS,
-        string='Ac')
+        string='Ac', required=True)
     radio_stereo = fields.Selection(
         selection=VEHICLE_PARTS_STATUS,
-        string='Radio Stereo')
+        string='Radio Stereo', required=True)
     screen = fields.Selection(
         selection=VEHICLE_PARTS_STATUS,
-        string='Screen')
+        string='Screen', required=True)
     spare_tire_tools = fields.Selection(
         selection=AVAILABILITY,
-        string='Spare Tire Tools')
+        string='Spare Tire Tools', required=True)
     tires = fields.Selection(
         selection=VEHICLE_PARTS_STATUS,
-        string='Tires')
+        string='Tires', required=True)
     spare_tires = fields.Selection(
         selection=VEHICLE_PARTS_STATUS,
-        string='Spare Tires')
+        string='Spare Tires', required=True)
 
     # Group 2
     speedometer = fields.Selection(
         selection=WORKING_CONDITION,
-        string='Speedometer')
+        string='Speedometer', required=True)
     keys = fields.Selection(
         selection=WORKING_CONDITION,
-        string='Keys')
+        string='Keys', required=True)
     care_seats = fields.Selection(
         selection=CAR_SEATS_STATUS,
-        string='Care Seats')
-    oil_change_km = fields.Float('Oil Change KM Distance')
+        string='Care Seats', required=True)
+    oil_change_km = fields.Float('Oil Change KM Distance', required=True)
     fuel_type_code = fields.Selection(
-        FUEL_TYPE_STATUS, string='Fuel Type Code')
-    keys_number = fields.Integer('Number Of Keys')
+        FUEL_TYPE_STATUS, string='Fuel Type Code', required=True)
+    keys_number = fields.Integer('Number Of Keys', required=True)
 
     # Group 3
     safety_triangle = fields.Selection(
         selection=AVAILABILITY,
-        string='Safety Triangle')
+        string='Safety Triangle', required=True)
     fire_extinguisher = fields.Selection(
         selection=AVAILABILITY,
-        string='Fire Extinguisher')
+        string='Fire Extinguisher', required=True)
     first_aid_kit = fields.Selection(
         selection=AVAILABILITY,
-        string='First Aid Kit')
-    oil_type = fields.Char('Oil Type')
-    oil_change_date = fields.Date('Oil Change Date')
+        string='First Aid Kit', required=True)
+    oil_type = fields.Char('Oil Type', required=True)
+    oil_change_date = fields.Date('Oil Change Date', required=True)
     vehicle_status = fields.Selection(
         selection=VEHICLE_STATUS,
-        string='Vehicle Status')
+        string='Vehicle Status', required=True)
 
     vehicle_color = fields.Integer('Color')
 

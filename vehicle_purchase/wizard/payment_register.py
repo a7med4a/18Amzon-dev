@@ -54,12 +54,14 @@ class VehiclePaymentRegister(models.TransientModel):
             'journal_id': self.journal_id.id,
             'amount': self.amount,
             'currency_id': self.currency_id.id,
-            'memo': self.communication,
+            'memo': po.name,
             'company_id': po.company_id.id,
             'date': self.payment_date,
             'state': 'draft',
             'payment_method_line_id': self.payment_method_line_id.id,
         })
+
+        payment.action_validate()
         if payment and self.pay_type == 'advance':
             po.write({'is_advanced_payment_paid': True})
         if payment and self.pay_type == 'installment':

@@ -22,10 +22,10 @@
                 <header>
                     <button name="action_create_installment_board" string="Calculate Installments" type="object"
                             confirm="Are you sure you want to Calculate Installments ?"
-                            class="btn-primary" invisible="state not in  ('confirmed') or installment_board_ids"/>
+                            class="btn-primary" invisible="state not in  ('draft') or installment_board_ids"/>
                     <button name="action_create_installment_payment" string="Create Installment Payment" type="object"
                             confirm="Are you sure you want to Create Installment Payment  ?"
-                            class="btn-primary" invisible="state not in  ('confirmed') or is_advanced_payment_paid == False "/>
+                            class="btn-primary" invisible="state not in  ('confirmed') or is_advanced_payment_paid == True"/>
                     <button name="action_create_advance_payment" string="Create Advance Payment " type="object"
                             confirm="Are you sure you want to Create Advance Payment  ?"
                             class="btn-primary" invisible="state not in  ('confirmed') or is_advanced_payment_paid == True"/>
@@ -34,7 +34,7 @@
                             class="btn-primary" invisible="state not in  ('confirmed') or vehicle_ids"/>
                     <button name="action_create_bill" string="Create Bill" type="object"
                             confirm="Are you sure you want to Create Bill ?"
-                            class="btn-primary" invisible="state not in  ('confirmed')"/>
+                            class="btn-primary" invisible="state not in  ('confirmed') or is_advanced_payment_paid == False"/>
                     <button name="action_reset_draft" string="Reset To Draft" type="object"
                             confirm="Are you sure you want to reset back to draft state ?"
                             class="btn-primary" invisible="state not in  ('cancelled','refused')"/>
@@ -74,8 +74,8 @@
                             <field name="description" readonly="state != 'draft'"/>
                         </group>
                         <group string="Vendor Info">
-                            <field name="vendor_id"/>
-                            <field name="payment_method"/>
+                            <field name="vendor_id" readonly="state != 'draft'"/>
+                            <field name="payment_method" readonly="state != 'draft'"/>
                         </group>
                     </group>
                     <notebook>

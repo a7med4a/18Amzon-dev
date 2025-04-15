@@ -213,7 +213,7 @@ class VehiclePurchaseOrderLine(models.Model):
     total_per_model = fields.Float(string='Total Per Model',compute="_compute_total_per_model")
     advanced_payment_per_model = fields.Float(string='Advanced Payment Per Model')
     financing_amount_per_model = fields.Float(string='Financing Amount Per Model',compute="_compute_financing_amount_per_model")
-    interest_rate = fields.Float(string='Interest Rate')
+    interest_rate = fields.Float(string='Interest(%)')
     interest_cost_per_model = fields.Float(string='Interest Cost Per Model',compute="_compute_interest_cost_per_model")
     ownership_value = fields.Float(string='Ownership Value')
 
@@ -248,12 +248,12 @@ class VehiclePurchaseOrderLine(models.Model):
     @api.depends('total_per_model', 'advanced_payment_per_model')
     def _compute_financing_amount_per_model(self):
         for rec in self:
-            rec.financing_amount_per_model = rec.total_per_model + rec.advanced_payment_per_model
+            rec.financing_amount_per_model = rec.total_per_model - rec.advanced_payment_per_model
 
     @api.depends('financing_amount_per_model', 'interest_rate')
     def _compute_interest_cost_per_model(self):
         for rec in self:
-            rec.interest_cost_per_model = rec.financing_amount_per_model + rec.interest_rate
+            rec.interest_cost_per_model = rec.financing_amount_per_model * rec.interest_rate/100.0
 
 class InstallmentBoard(models.Model):
     _name = 'installments.board'

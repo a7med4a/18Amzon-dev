@@ -340,7 +340,7 @@ class AccidentDueAmountLine(models.Model):
     def _compute_amounts(self):
         for rec in self:
             invoiced_amount = sum(
-                rec.invoice_ids.mapped('invoice_line_ids.price_subtotal'))
+                rec.invoice_ids.mapped('invoice_line_ids.price_total'))
             rec.invoiced_amount = invoiced_amount
             rec.remaining_amount = rec.amount - invoiced_amount
 

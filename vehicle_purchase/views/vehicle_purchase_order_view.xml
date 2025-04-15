@@ -25,13 +25,13 @@
                             class="btn-primary" invisible="state not in  ('confirmed') or installment_board_ids"/>
                     <button name="action_create_installment_payment" string="Create Installment Payment" type="object"
                             confirm="Are you sure you want to Create Installment Payment  ?"
-                            class="btn-primary" invisible="state not in  ('confirmed') or total_advanced_payment == 0"/>
+                            class="btn-primary" invisible="state not in  ('confirmed') or is_advanced_payment_paid == False "/>
                     <button name="action_create_advance_payment" string="Create Advance Payment " type="object"
                             confirm="Are you sure you want to Create Advance Payment  ?"
-                            class="btn-primary" invisible="state not in  ('confirmed') or total_advanced_payment > 0 "/>
+                            class="btn-primary" invisible="state not in  ('confirmed') or is_advanced_payment_paid == True"/>
                     <button name="action_create_vehicle" string="Create Vehicle" type="object"
                             confirm="Are you sure you want to Create Vehicle?"
-                            class="btn-primary" invisible="state not in  ('confirmed')"/>
+                            class="btn-primary" invisible="state not in  ('confirmed') or vehicle_ids"/>
                     <button name="action_create_bill" string="Create Bill" type="object"
                             confirm="Are you sure you want to Create Bill ?"
                             class="btn-primary" invisible="state not in  ('confirmed')"/>
@@ -94,6 +94,7 @@
                                     <field name="tax_cost" optional='show'/>
                                     <field name="total_per_model" optional='show'/>
                                     <field name="advanced_payment_per_model" optional='show'/>
+                                    <field name="financing_amount_per_model" optional='show'/>
                                     <field name="interest_rate" optional='show'/>
                                     <field name="interest_cost_per_model" optional='show'/>
                                     <field name="ownership_value" optional='show'/>

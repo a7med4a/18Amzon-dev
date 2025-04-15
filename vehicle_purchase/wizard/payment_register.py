@@ -58,10 +58,10 @@ class VehiclePaymentRegister(models.TransientModel):
             'company_id': po.company_id.id,
             'date': self.payment_date,
             'state': 'draft',
-            # 'payment_method_line_id': self.payment_method_line_id.id,
+            'payment_method_line_id': self.payment_method_line_id.id,
         })
         if payment and self.pay_type == 'advance':
-            po.write({'total_advanced_payment': self.amount})
+            po.write({'is_advanced_payment_paid': True})
         if payment and self.pay_type == 'installment':
             not_paid_installments=po.installment_board_ids.filtered(lambda x : x.state in ('not_paid','partial_paid'))
             print("not_paid_installments",not_paid_installments)

@@ -5,7 +5,7 @@
     'summary': 'Manage Vehicle Purchase',
     'author': '',
     'version': '18.0.0.1',
-    'depends': ['base','fleet','purchase','contacts','accountant'],
+    'depends': ['base','fleet','purchase','contacts','accountant','fleet_status'],
     'data': [
         'security/ir.model.access.csv',
         'data/vehicle_purchase_sequence.xml',

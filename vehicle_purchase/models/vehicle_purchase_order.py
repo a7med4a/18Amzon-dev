@@ -28,14 +28,15 @@ class VehiclePurchaseOrder(models.Model):
     tax_15 = fields.Float( string='Tax 15%',compute="_compute_tax_15")
     total_include_tax = fields.Float( string='Total Tax')
     total_vehicle_tax = fields.Float( string='Total Vehicles Cost',compute="_compute_total_vehicle_tax")
-    total_advanced_payment = fields.Float( string='Total Advanced Payment')
+    total_advanced_payment = fields.Float( string='Total Advanced Payment',compute="_compute_total_advanced_payment")
     total_financial_amount = fields.Float( string='Total Financing Amount',compute="_compute_total_financial_amount")
     total_interest_cost = fields.Float( string='Total interest Cost',compute="_compute_total_interest_cost")
     total_installment_cost = fields.Float( string='Total installment Cost ',compute="_compute_total_installment_cost")
     number_of_installment = fields.Integer( string='Number of Installment')
     installment_cost = fields.Integer( string='Installment Cost',compute="_compute_installment_cost")
     date = fields.Date(string='Date',required=False)
-
+    is_advanced_payment_paid = fields.Boolean(string='Advanced Payment Paid',default=False)
+    vehicle_ids=fields.One2many('fleet.vehicle','po_id')
         
     state = fields.Selection(
         string='State',
@@ -73,21 +74,29 @@ class VehiclePurchaseOrder(models.Model):
                  "vehicle_purchase_order_line_ids.plate_fees", "vehicle_purchase_order_line_ids.insurance_cost")
     def _compute_total_without_tax(self):
         for po in self:
-            admin_fees= sum(po.vehicle_purchase_order_line_ids.mapped('admin_fees'))
-            vehicle_cost= sum(po.vehicle_purchase_order_line_ids.mapped('vehicle_cost'))
-            shipping_cost= sum(po.vehicle_purchase_order_line_ids.mapped('shipping_cost'))
-            plate_fees= sum(po.vehicle_purchase_order_line_ids.mapped('plate_fees'))
-            insurance_cost= sum(po.vehicle_purchase_order_line_ids.mapped('insurance_cost'))
-            quantities = sum(po.vehicle_purchase_order_line_ids.mapped('quantity'))
-            po.total_without_tax = quantities *(admin_fees + vehicle_cost + shipping_cost + plate_fees + insurance_cost)
+            total_without_tax = 0
+            for line in po.vehicle_purchase_order_line_ids:
+                total_without_tax += (line.admin_fees + line.vehicle_cost + line.shipping_cost + line.plate_fees + line.insurance_cost)*line.quantity
+            po.total_without_tax = total_without_tax
+            # admin_fees= sum(po.vehicle_purchase_order_line_ids.mapped('admin_fees'))
+            # vehicle_cost= sum(po.vehicle_purchase_order_line_ids.mapped('vehicle_cost'))
+            # shipping_cost= sum(po.vehicle_purchase_order_line_ids.mapped('shipping_cost'))
+            # plate_fees= sum(po.vehicle_purchase_order_line_ids.mapped('plate_fees'))
+            # insurance_cost= sum(po.vehicle_purchase_order_line_ids.mapped('insurance_cost'))
+            # quantities = sum(po.vehicle_purchase_order_line_ids.mapped('quantity'))
+            # po.total_without_tax = quantities *(admin_fees + vehicle_cost + shipping_cost + plate_fees + insurance_cost)
 
 
     @api.depends("vehicle_purchase_order_line_ids", "vehicle_purchase_order_line_ids.tax_cost","vehicle_purchase_order_line_ids.quantity",)
     def _compute_tax_15(self):
         for po in self:
-            quantities = sum(po.vehicle_purchase_order_line_ids.mapped('quantity'))
-            tax_cost = sum(po.vehicle_purchase_order_line_ids.mapped('tax_cost'))
-            po.tax_15 = quantities * tax_cost
+            tax_15 = 0
+            for line in po.vehicle_purchase_order_line_ids:
+                tax_15 += line.tax_cost * line.quantity
+            po.tax_15 = tax_15
+            # quantities = sum(po.vehicle_purchase_order_line_ids.mapped('quantity'))
+            # tax_cost = sum(po.vehicle_purchase_order_line_ids.mapped('tax_cost'))
+            # po.tax_15 = quantities * tax_cost
 
     @api.depends("total_without_tax", "total_without_tax",)
     def _compute_total_vehicle_tax(self):
@@ -98,6 +107,11 @@ class VehiclePurchaseOrder(models.Model):
     def _compute_total_financial_amount(self):
         for po in self:
             po.total_financial_amount = sum(po.vehicle_purchase_order_line_ids.mapped('financing_amount_per_model'))
+
+    @api.depends("vehicle_purchase_order_line_ids", "vehicle_purchase_order_line_ids.advanced_payment_per_model")
+    def _compute_total_advanced_payment(self):
+        for po in self:
+            po.total_advanced_payment = sum(po.vehicle_purchase_order_line_ids.mapped('advanced_payment_per_model'))
 
     @api.depends("vehicle_purchase_order_line_ids", "vehicle_purchase_order_line_ids.interest_cost_per_model")
     def _compute_total_interest_cost(self):
@@ -133,7 +147,6 @@ class VehiclePurchaseOrder(models.Model):
             pass
 
     def action_create_advance_payment(self):
-
             return {
                 'type': 'ir.actions.act_window',
                 'name': _('Pay'),
@@ -142,11 +155,12 @@ class VehiclePurchaseOrder(models.Model):
                 'target': 'new',
                 'context': {
                 'default_pay_type': 'advance',
+                'default_amount': self.total_advanced_payment,
             },
             }
     def action_create_installment_payment(self):
         for rec in self:
-            if rec.total_advanced_payment <1 :
+            if not rec.is_advanced_payment_paid  :
                  raise ValidationError(_(f'Calculate Advanced payment first'))
         for rec in self:
             return {
@@ -162,7 +176,8 @@ class VehiclePurchaseOrder(models.Model):
     def action_create_vehicle(self):
         for rec in self:
             for line in rec.vehicle_purchase_order_line_ids:
-                self.env['fleet.vehicle'].create({'po_id':rec.id,'model_id':line.model_id.id,'state_id':self.env.ref('fleet_status.fleet_vehicle_state_under_preparation').id})
+                vehicle_id = self.env['fleet.vehicle'].create({'po_id':rec.id,'model_id':line.model_id.id,'state_id':self.env.ref('fleet_status.fleet_vehicle_state_under_preparation').id})
+                rec.vehicle_ids = [(4, vehicle_id.id)]
 
     def action_view_vehicle(self):
         for rec in self:

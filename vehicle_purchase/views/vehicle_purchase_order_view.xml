@@ -25,10 +25,11 @@
                             class="btn-primary" invisible="state not in  ('draft') or installment_board_ids"/>
                     <button name="action_create_installment_payment" string="Create Installment Payment" type="object"
                             confirm="Are you sure you want to Create Installment Payment  ?"
-                            class="btn-primary" invisible="state not in  ('confirmed') or is_advanced_payment_paid == True"/>
+                            class="btn-primary" invisible="state not in  ('confirmed')"/>
+<!--                            class="btn-primary" invisible="state not in  ('confirmed') or is_advanced_payment_paid == True"/>-->
                     <button name="action_create_advance_payment" string="Create Advance Payment " type="object"
                             confirm="Are you sure you want to Create Advance Payment  ?"
-                            class="btn-primary" invisible="state not in  ('confirmed') or is_advanced_payment_paid == True"/>
+                            class="btn-primary" invisible="state not in  ('confirmed') or is_advanced_payment_paid == True or total_advanced_payment == 0"/>
                     <button name="action_create_vehicle" string="Create Vehicle" type="object"
                             confirm="Are you sure you want to Create Vehicle?"
                             class="btn-primary" invisible="state not in  ('confirmed') or vehicle_ids"/>
@@ -54,10 +55,24 @@
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
+                        <button name="action_view_payments" icon="fa-book" type="object"
+                                help="Show Payments related">
+                            <div class="o_stat_widget">
+                                <field name="account_payment_count" class="o_stat_value"/>
+                                <span class="o_stat_text"> Payments</span>
+                            </div>
+                        </button>
+                        <button name="action_view_bills" icon="fa-usd" type="object"
+                                help="Show Payments related">
+                            <div class="o_stat_widget">
+<!--                                <field name="account_payment_count" class="o_stat_value"/>-->
+                                <span class="o_stat_text"> Bills</span>
+                            </div>
+                        </button>
                         <button name="action_view_vehicle" icon="fa-bars" type="object"
                                 help="Show Vehicles related">
                             <div class="o_stat_widget">
-<!--                                <field name="vehicle_purchase_order_count" class="o_stat_value"/>-->
+                                <field name="vehicle_count" class="o_stat_value"/>
                                 <span class="o_stat_text"> Vehicles</span>
                             </div>
                         </button>

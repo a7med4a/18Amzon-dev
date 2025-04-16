@@ -24,6 +24,8 @@ class VehiclePurchaseOrder(models.Model):
     vehicle_purchase_quotation_id = fields.Many2one('vehicle.purchase.quotation', string='PO')
     vehicle_purchase_order_line_ids=fields.One2many('vehicle.purchase.order.line','vehicle_purchase_order_id')
     installment_board_ids=fields.One2many('installments.board','vehicle_purchase_order_id')
+    account_payment_ids=fields.One2many('account.payment','vehicle_po_id')
+    account_payment_count=fields.Integer(compute="_compute_account_payment_count")
     total_without_tax = fields.Float( string='UnTaxed Amount',compute="_compute_total_without_tax")
     tax_15 = fields.Float( string='Tax 15%',compute="_compute_tax_15")
     total_include_tax = fields.Float( string='Total Tax')
@@ -37,7 +39,7 @@ class VehiclePurchaseOrder(models.Model):
     date = fields.Date(string='Date',required=False)
     is_advanced_payment_paid = fields.Boolean(string='Advanced Payment Paid',default=False)
     vehicle_ids=fields.One2many('fleet.vehicle','po_id')
-        
+    vehicle_count=fields.Integer(compute="_compute_vehicle_count")
     state = fields.Selection(
         string='State',
         selection=[('draft', 'Draft'),('under_review', 'Under Review'), ('confirmed', 'Confirmed'), ('refused', 'Refused'), ('cancelled', 'Cancelled'), ],
@@ -49,7 +51,6 @@ class VehiclePurchaseOrder(models.Model):
         for vals in vals_list:
             vals['name'] = self.env['ir.sequence'].next_by_code('vehicle.purchase.order.seq')
         return super().create(vals_list)
-
 
     def action_under_review(self):
         for rec in self:
@@ -78,14 +79,6 @@ class VehiclePurchaseOrder(models.Model):
             for line in po.vehicle_purchase_order_line_ids:
                 total_without_tax += (line.admin_fees + line.vehicle_cost + line.shipping_cost + line.plate_fees + line.insurance_cost)*line.quantity
             po.total_without_tax = total_without_tax
-            # admin_fees= sum(po.vehicle_purchase_order_line_ids.mapped('admin_fees'))
-            # vehicle_cost= sum(po.vehicle_purchase_order_line_ids.mapped('vehicle_cost'))
-            # shipping_cost= sum(po.vehicle_purchase_order_line_ids.mapped('shipping_cost'))
-            # plate_fees= sum(po.vehicle_purchase_order_line_ids.mapped('plate_fees'))
-            # insurance_cost= sum(po.vehicle_purchase_order_line_ids.mapped('insurance_cost'))
-            # quantities = sum(po.vehicle_purchase_order_line_ids.mapped('quantity'))
-            # po.total_without_tax = quantities *(admin_fees + vehicle_cost + shipping_cost + plate_fees + insurance_cost)
-
 
     @api.depends("vehicle_purchase_order_line_ids", "vehicle_purchase_order_line_ids.tax_cost","vehicle_purchase_order_line_ids.quantity",)
     def _compute_tax_15(self):
@@ -94,9 +87,6 @@ class VehiclePurchaseOrder(models.Model):
             for line in po.vehicle_purchase_order_line_ids:
                 tax_15 += line.tax_cost * line.quantity
             po.tax_15 = tax_15
-            # quantities = sum(po.vehicle_purchase_order_line_ids.mapped('quantity'))
-            # tax_cost = sum(po.vehicle_purchase_order_line_ids.mapped('tax_cost'))
-            # po.tax_15 = quantities * tax_cost
 
     @api.depends("total_without_tax", "total_without_tax",)
     def _compute_total_vehicle_tax(self):
@@ -130,6 +120,16 @@ class VehiclePurchaseOrder(models.Model):
                 po.installment_cost = po.total_installment_cost / po.number_of_installment
             else:
                 po.installment_cost = 0
+    
+    @api.depends("account_payment_ids")
+    def _compute_account_payment_count(self):
+        for po in self:
+            po.account_payment_count = len(po.account_payment_ids)
+
+    @api.depends("vehicle_ids")
+    def _compute_vehicle_count(self):
+        for po in self:
+            po.vehicle_count = len(po.vehicle_ids)
 
     def action_create_installment_board(self):
         for rec in self:
@@ -142,6 +142,7 @@ class VehiclePurchaseOrder(models.Model):
                     'date': first_installment + relativedelta(months=installment),
                     'vehicle_purchase_order_id': rec.id
                 })
+
     def action_create_bill(self):
         for rec in self:
             pass
@@ -158,11 +159,11 @@ class VehiclePurchaseOrder(models.Model):
                 'default_amount': self.total_advanced_payment,
             },
             }
+
     def action_create_installment_payment(self):
         for rec in self:
-            if not rec.is_advanced_payment_paid  :
+            if not rec.is_advanced_payment_paid and rec.total_advanced_payment != 0:
                  raise ValidationError(_(f'Calculate Advanced payment first'))
-        for rec in self:
             return {
                 'type': 'ir.actions.act_window',
                 'name': _('Pay'),
@@ -173,6 +174,7 @@ class VehiclePurchaseOrder(models.Model):
                 'default_pay_type': 'installment',
             },
             }
+
     def action_create_vehicle(self):
         for rec in self:
             for line in rec.vehicle_purchase_order_line_ids:
@@ -183,6 +185,17 @@ class VehiclePurchaseOrder(models.Model):
         for rec in self:
             action = self.env['ir.actions.actions']._for_xml_id('fleet.fleet_vehicle_action')
             action['domain']=[('po_id','=',rec.id)]
+            return action
+
+    def action_view_payments(self):
+        for rec in self:
+            action = self.env['ir.actions.actions']._for_xml_id('account.action_account_payments_payable')
+            action['domain']=[('vehicle_po_id','=',rec.id)]
+            return action
+
+    def action_view_bills(self):
+        for rec in self:
+            action = self.env['ir.actions.actions']._for_xml_id('account.action_move_in_invoice')
             return action
 
 class VehiclePurchaseOrderLine(models.Model):

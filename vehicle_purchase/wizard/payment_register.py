@@ -31,8 +31,7 @@ class VehiclePaymentRegister(models.TransientModel):
                    ('installment', 'Pay Installment'), ],
         required=False, )
 
-    available_payment_method_line_ids = fields.Many2many(
-        'account.payment.method.line', compute='_compute_payment_method_line_fields')
+    available_payment_method_line_ids = fields.Many2many('account.payment.method.line', compute='_compute_payment_method_line_fields')
 
     @api.depends('journal_id', 'currency_id')
     def _compute_payment_method_line_fields(self):
@@ -45,8 +44,7 @@ class VehiclePaymentRegister(models.TransientModel):
 
 
     def action_register_payment(self):
-        po = self.env['vehicle.purchase.order'].browse(
-            self._context.get('active_id'))
+        po = self.env['vehicle.purchase.order'].browse(self._context.get('active_id'))
         payment = self.env['account.payment'].create({
             'payment_type': 'outbound',
             'partner_type': 'supplier',
@@ -59,6 +57,7 @@ class VehiclePaymentRegister(models.TransientModel):
             'date': self.payment_date,
             'state': 'draft',
             'payment_method_line_id': self.payment_method_line_id.id,
+            'vehicle_po_id': po.id,
         })
 
         payment.action_validate()
@@ -66,7 +65,6 @@ class VehiclePaymentRegister(models.TransientModel):
             po.write({'is_advanced_payment_paid': True})
         if payment and self.pay_type == 'installment':
             not_paid_installments=po.installment_board_ids.filtered(lambda x : x.state in ('not_paid','partial_paid'))
-            print("not_paid_installments",not_paid_installments)
             if not_paid_installments :
                 total_amount=self.amount
                 for install in not_paid_installments :

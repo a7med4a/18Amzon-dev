@@ -1,0 +1,21 @@
+<odoo>
+    <data>
+        <record id="vehicle_purchase_rule" model="ir.rule">
+            <field name="name">Vehicle Purchase Active Company</field>
+            <field name="model_id" ref="model_vehicle_purchase"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+
+        <record id="vehicle_purchase_quotation_rule" model="ir.rule">
+            <field name="name">Vehicle Purchase quotation Active Company</field>
+            <field name="model_id" ref="model_vehicle_purchase_quotation"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+
+        <record id="vehicle_purchase_order_rule" model="ir.rule">
+            <field name="name">Vehicle Purchase Order Active Company</field>
+            <field name="model_id" ref="model_vehicle_purchase_order"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+    </data>
+</odoo>

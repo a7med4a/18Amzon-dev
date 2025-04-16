@@ -8,6 +8,7 @@
     'depends': ['base','fleet','purchase','contacts','accountant','fleet_status'],
     'data': [
         'security/ir.model.access.csv',
+        'security/security.xml',
         'data/vehicle_purchase_sequence.xml',
         'views/vehicle_purchase_view.xml',
         'views/vehicle_purchase_quotation_view.xml',

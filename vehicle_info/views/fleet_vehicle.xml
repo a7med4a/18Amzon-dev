@@ -62,49 +62,58 @@
       <xpath expr="//group[@name='group_model']/following-sibling::group[1]" position="attributes">
         <attribute name="invisible">1</attribute>
       </xpath>
+      <xpath expr="//field[@name='vin_sn']" position="attributes">
+        <attribute name="required">state_id.type != 'under_preparation'</attribute>
+      </xpath>
+      <xpath expr="//field[@name='category_id']" position="attributes">
+        <attribute name="required">state_id.type != 'under_preparation'</attribute>
+      </xpath>
+      <xpath expr="//field[@name='manager_id']" position="attributes">
+        <attribute name="required">state_id.type != 'under_preparation'</attribute>
+      </xpath>
 
       <!-- New Fields -->
       <xpath expr="//label[@for='tag_ids']" position="before">
         <h3>
           <label for="analytic_account_id" class="me-3" />
-          <field name="analytic_account_id" />
+          <field name="analytic_account_id" required="state_id.type != 'under_preparation'"/>
         </h3>
       </xpath>
       <xpath expr="//field[@name='vin_sn']" position="after">
-        <field name="serial_number" />
-        <field name="card_number" />
-        <field name="usage_type" />
-        <field name="license_type" />
+        <field name="serial_number"  />
+        <field name="card_number" required="state_id.type != 'under_preparation'" />
+        <field name="usage_type" required="state_id.type != 'under_preparation'" />
+        <field name="license_type" required="state_id.type != 'under_preparation'" />
       </xpath>
        <xpath expr="//field[@name='location']" position="after">
-        <field name="branch_id"/>
+        <field name="branch_id" required="state_id.type != 'under_preparation'"/>
        </xpath>
       <xpath expr="//page[@name='note']" position="after">
         <page name="checklist" string="Checklist">
           <group>
             <group>
-              <field name="ac" />
-              <field name="radio_stereo" />
-              <field name="screen" />
-              <field name="spare_tire_tools" />
-              <field name="tires" />
-              <field name="spare_tires" />
+              <field name="ac" required="state_id.type != 'under_preparation'" />
+              <field name="radio_stereo" required="state_id.type != 'under_preparation'" />
+              <field name="screen" required="state_id.type != 'under_preparation'" />
+              <field name="spare_tire_tools" required="state_id.type != 'under_preparation'" />
+              <field name="tires" required="state_id.type != 'under_preparation'" />
+              <field name="spare_tires" required="state_id.type != 'under_preparation'" />
             </group>
             <group>
-              <field name="speedometer" />
-              <field name="keys" />
-              <field name="care_seats" />
-              <field name="oil_change_km" />
-              <field name="fuel_type_code" />
-              <field name="keys_number" />
+              <field name="speedometer" required="state_id.type != 'under_preparation'"/>
+              <field name="keys" required="state_id.type != 'under_preparation'" />
+              <field name="care_seats" required="state_id.type != 'under_preparation'" />
+              <field name="oil_change_km" required="state_id.type != 'under_preparation'" />
+              <field name="fuel_type_code" required="state_id.type != 'under_preparation'" />
+              <field name="keys_number" required="state_id.type != 'under_preparation'" />
             </group>
             <group>
-              <field name="safety_triangle" />
-              <field name="fire_extinguisher" />
-              <field name="first_aid_kit" />
-              <field name="oil_type" />
-              <field name="oil_change_date" />
-              <field name="vehicle_status" />
+              <field name="safety_triangle" required="state_id.type != 'under_preparation'" />
+              <field name="fire_extinguisher" required="state_id.type != 'under_preparation'" />
+              <field name="first_aid_kit"  required="state_id.type != 'under_preparation'"/>
+              <field name="oil_type" required="state_id.type != 'under_preparation'" />
+              <field name="oil_change_date" required="state_id.type != 'under_preparation'" />
+              <field name="vehicle_status" required="state_id.type != 'under_preparation'" />
             </group>
           </group>
         </page>
@@ -116,7 +125,7 @@
         <attribute name="invisible">1</attribute>
       </xpath>
       <xpath expr="//field[@name='color']" position="after">
-        <field name="vehicle_color" widget="color_picker" />
+        <field name="vehicle_color" widget="color_picker" required="state_id.type != 'under_preparation'" />
       </xpath>
 
     </field>

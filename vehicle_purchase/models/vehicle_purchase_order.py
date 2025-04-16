@@ -178,7 +178,7 @@ class VehiclePurchaseOrder(models.Model):
     def action_create_vehicle(self):
         for rec in self:
             for line in rec.vehicle_purchase_order_line_ids:
-                vehicle_id = self.env['fleet.vehicle'].create({'po_id':rec.id,'model_id':line.model_id.id,'state_id':self.env.ref('fleet_status.fleet_vehicle_state_under_preparation').id})
+                vehicle_id = self.env['fleet.vehicle'].create({'po_id':rec.id,'model_id':line.model_id.id,'vehicle_purchase_order_line_ids':[(4,line.id)],'state_id':self.env.ref('fleet_status.fleet_vehicle_state_under_preparation').id})
                 rec.vehicle_ids = [(4, vehicle_id.id)]
 
     def action_view_vehicle(self):
@@ -216,6 +216,7 @@ class VehiclePurchaseOrderLine(models.Model):
         string='Color',
         required=False)
     vehicle_purchase_order_id = fields.Many2one(comodel_name='vehicle.purchase.order')
+    vehicle_id = fields.Many2one(comodel_name='fleet.vehicle')
     vehicle_cost = fields.Float(string='Vehicle Cost',readonly=True)
     shipping_cost = fields.Float(string='Shipping Cost')
     admin_fees = fields.Float(string='Admin fees')
@@ -223,11 +224,15 @@ class VehiclePurchaseOrderLine(models.Model):
     insurance_cost = fields.Float(string='Insurance Cost')
     tax_ids = fields.Many2many('account.tax', string='Taxes',domain=[('type_tax_use','=','purchase')])
     tax_cost = fields.Float(string='Tax Cost',compute="_compute_tax_cost")
+    total = fields.Float(string='Total',compute="_compute_total_per_model")
     total_per_model = fields.Float(string='Total Per Model',compute="_compute_total_per_model")
     advanced_payment_per_model = fields.Float(string='Advanced Payment Per Model')
+    advanced_payment = fields.Float(string='Advanced Payment',compute="_compute_advanced_payment")
     financing_amount_per_model = fields.Float(string='Financing Amount Per Model',compute="_compute_financing_amount_per_model")
+    financing_amount = fields.Float(string='Financing Amount ',compute="_compute_financing_amount_per_model")
     interest_rate = fields.Float(string='Interest(%)')
     interest_cost_per_model = fields.Float(string='Interest Cost Per Model',compute="_compute_interest_cost_per_model")
+    interest_cost = fields.Float(string='Interest Cost',compute="_compute_interest_cost_per_model")
     ownership_value = fields.Float(string='Ownership Value')
 
 
@@ -257,16 +262,24 @@ class VehiclePurchaseOrderLine(models.Model):
     def _compute_total_per_model(self):
         for rec in self:
             rec.total_per_model = rec.quantity * (rec.shipping_cost + rec.vehicle_cost + rec.admin_fees + rec.insurance_cost+rec.plate_fees+rec.tax_cost)
+            rec.total = rec.shipping_cost + rec.vehicle_cost + rec.admin_fees + rec.insurance_cost+rec.plate_fees+rec.tax_cost
+
+    @api.depends('quantity', 'advanced_payment_per_model')
+    def _compute_advanced_payment(self):
+        for rec in self:
+            rec.advanced_payment = rec.advanced_payment_per_model / rec.quantity
 
     @api.depends('total_per_model', 'advanced_payment_per_model')
     def _compute_financing_amount_per_model(self):
         for rec in self:
             rec.financing_amount_per_model = rec.total_per_model - rec.advanced_payment_per_model
+            rec.financing_amount = rec.financing_amount_per_model / rec.quantity
 
     @api.depends('financing_amount_per_model', 'interest_rate')
     def _compute_interest_cost_per_model(self):
         for rec in self:
             rec.interest_cost_per_model = rec.financing_amount_per_model * rec.interest_rate/100.0
+            rec.interest_cost= rec.interest_cost_per_model / rec.quantity
 
 class InstallmentBoard(models.Model):
     _name = 'installments.board'

@@ -1,0 +1,130 @@
+<odoo>
+
+    <record id="view_fleet_vehicle_purchase_form_inherit" model="ir.ui.view">
+        <field name="name">fleet.vehicle.form.inherit</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='note']" position="after">
+                <page string="Purchase Vehicles Info">
+                    <field name="vehicle_purchase_order_line_ids" mode="kanban" readonly="1"
+                           context="{'view_mode': 'kanban'}">
+                        <list/>
+                        <kanban>
+                            <field name="model_id"/>
+                            <field name="vehicle_id"/>
+                            <field name="color" widget="color"/>
+                            <field name="quantity"/>
+                            <field name="vehicle_cost"/>
+                            <field name="shipping_cost"/>
+                            <field name="admin_fees"/>
+                            <field name="insurance_cost"/>
+                            <field name="plate_fees"/>
+                            <field name="tax_ids" widget="many2many_tags"/>
+                            <field name="tax_cost"/>
+                            <field name="total"/>
+                            <field name="advanced_payment"/>
+                            <field name="financing_amount"/>
+                            <field name="interest_rate"/>
+                            <field name="interest_cost"/>
+                            <field name="ownership_value"/>
+                            <templates>
+                                <t t-name="kanban-box">
+                                    <div class="o_kanban_record">
+                                        <div class="o_kanban_card">
+                                            <div class="o_kanban_image">
+                                                <t t-if="record.vehicle_id.raw_value">
+                                                    <img t-att-src="kanban_image('fleet.vehicle', 'image_128', record.vehicle_id.raw_value)"
+                                                         t-att-title="record.vehicle_id.value"
+                                                         t-att-alt="record.vehicle_id.value"
+                                                         class="o_image_64_cover float-start mr4"/>
+                                                </t>
+                                            </div>
+                                            <div class="o_kanban_details">
+                                                <strong>Model:</strong>
+                                                <span t-esc="record.model_id.value"/>
+                                                <div>
+                                                    <strong>Quantity:</strong>
+                                                    <span t-esc="record.quantity.value"/>
+                                                </div>
+                                                <div>
+                                                    <strong>Vehicle Cost:</strong>
+                                                    <span t-esc="record.vehicle_cost.value"/>
+                                                </div>
+                                                <div>
+                                                    <strong>Shipping Cost:</strong>
+                                                    <span t-esc="record.shipping_cost.value"/>
+                                                </div>
+                                                <div>
+                                                    <strong>Admin Fees:</strong>
+                                                    <span t-esc="record.admin_fees.value"/>
+                                                </div>
+                                                <div>
+                                                    <strong>Plate Fees:</strong>
+                                                    <span t-esc="record.plate_fees.value"/>
+                                                </div>
+                                                <div>
+                                                    <strong>Tax Cost:</strong>
+                                                    <span t-esc="record.tax_cost.value"/>
+                                                </div>
+                                                <div>
+                                                    <strong>Total Amount:</strong>
+                                                    <span t-esc="record.total.value"/>
+                                                </div>
+                                                <div>
+                                                    <strong>Advanced Payment:</strong>
+                                                    <span t-esc="record.advanced_payment.value"/>
+                                                </div>
+                                                <div>
+                                                    <strong>Financial Amount:</strong>
+                                                    <span t-esc="record.financing_amount.value"/>
+                                                </div>
+                                                <div>
+                                                    <strong>Interest % :</strong>
+                                                    <span t-esc="record.interest_rate.value"/>
+                                                </div>
+                                                <div>
+                                                    <strong>Interest Cost:</strong>
+                                                    <span t-esc="record.interest_cost.value"/>
+                                                </div>
+                                                <div>
+                                                    <strong>Owner ship:</strong>
+                                                    <span t-esc="record.ownership_value.value"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </t>
+                            </templates>
+                        </kanban>
+
+                    </field>
+                </page>
+<!--                <page string="Purchase Vehicles Info">-->
+<!--                    <field name="vehicle_purchase_order_line_ids" readonly="1"-->
+<!--                           context="{'view_mode': 'list'}">-->
+<!--                        <list>-->
+<!--                            <field name="model_id" optional='show'/>-->
+<!--                            <field name="color" widget="color" optional='show'/>-->
+<!--                            <field name="quantity" optional='show'/>-->
+<!--                            <field name="vehicle_cost" optional='show'/>-->
+<!--                            <field name="shipping_cost" optional='show'/>-->
+<!--                            <field name="admin_fees" optional='show'/>-->
+<!--                            <field name="insurance_cost" optional='show'/>-->
+<!--                            <field name="plate_fees" optional='show'/>-->
+<!--                            <field name="tax_ids" optional='show' widget="many2many_tags"/>-->
+<!--                            <field name="tax_cost" optional='show'/>-->
+<!--                            <field name="total" optional='show'/>-->
+<!--                            <field name="advanced_payment" optional='show'/>-->
+<!--                            <field name="financing_amount" optional='show'/>-->
+<!--                            <field name="interest_rate" optional='show'/>-->
+<!--                            <field name="interest_cost" optional='show'/>-->
+<!--                            <field name="ownership_value" optional='show'/>-->
+<!--                        </list>-->
+<!--                    </field>-->
+<!--                </page>-->
+            </xpath>
+
+        </field>
+    </record>
+</odoo>

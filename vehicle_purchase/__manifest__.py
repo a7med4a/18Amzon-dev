@@ -12,6 +12,7 @@
         'data/vehicle_purchase_sequence.xml',
         'views/vehicle_purchase_view.xml',
         'views/vehicle_purchase_quotation_view.xml',
+        'views/fleet_vehicle_inherit_view.xml',
         'views/vehicle_purchase_order_view.xml',
         'wizard/payment_register.xml',
     ],

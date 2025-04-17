@@ -178,8 +178,15 @@ class VehiclePurchaseOrder(models.Model):
     def action_create_vehicle(self):
         for rec in self:
             for line in rec.vehicle_purchase_order_line_ids:
-                vehicle_id = self.env['fleet.vehicle'].create({'po_id':rec.id,'model_id':line.model_id.id,'vehicle_purchase_order_line_ids':[(4,line.id)],'state_id':self.env.ref('fleet_status.fleet_vehicle_state_under_preparation').id})
-                rec.vehicle_ids = [(4, vehicle_id.id)]
+                quantity=line.quantity
+                while quantity > 0 :
+                    vehicle_id = self.env['fleet.vehicle'].create({'po_id': rec.id, 'model_id': line.model_id.id,
+                                                                   'vehicle_purchase_order_line_ids': [(6, 0, [line.id])],
+                                                                   'state_id': self.env.ref('fleet_status.fleet_vehicle_state_under_preparation').id})
+                    for vehicle in vehicle_id.vehicle_purchase_order_line_ids :
+                        vehicle.vehicle_id = vehicle_id.id
+                    rec.vehicle_ids = [(4, vehicle_id.id)]
+                    quantity -=1
 
     def action_view_vehicle(self):
         for rec in self:

@@ -1,0 +1,24 @@
+<odoo>
+        <data>
+                <record id="ir_cron_vehicle_documents_cron" model="ir.cron">
+                        <field name="name">Vehicle Documents Status</field>
+                        <field name="model_id" ref="model_vehicle_documents"/>
+                        <field name="state">code</field>
+                        <field name="code">model._cron_check_document_status()</field>
+                        <field name="user_id" ref="base.user_root"/>
+                        <field name="interval_number">1</field>
+                        <field name="interval_type">days</field>
+                        <field name="active" eval="True"/>
+                </record>
+                <record id="ir_cron_notify_user_vehicle_documents_cron" model="ir.cron">
+                        <field name="name">Notify Users before end Vehicle Documents</field>
+                        <field name="model_id" ref="model_vehicle_documents"/>
+                        <field name="state">code</field>
+                        <field name="code">model.notified_users_before()</field>
+                        <field name="user_id" ref="base.user_root"/>
+                        <field name="interval_number">1</field>
+                        <field name="interval_type">days</field>
+                        <field name="active" eval="True"/>
+                </record>
+        </data>
+</odoo>

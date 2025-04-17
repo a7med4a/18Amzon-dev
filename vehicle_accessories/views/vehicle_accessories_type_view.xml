@@ -1,0 +1,22 @@
+<odoo>
+    <record id="view_vehicle_accessories_type_list" model="ir.ui.view">
+        <field name="name">vehicle.accessories.type.list</field>
+        <field name="model">vehicle.accessories.type</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="name"/>
+            </list>
+        </field>
+    </record>
+
+
+    <record id="action_vehicle_accessories_type" model="ir.actions.act_window">
+        <field name="name">Vehicle Accessories Type</field>
+        <field name="res_model">vehicle.accessories.type</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <menuitem id="menu_vehicle_accessories_type_data" name="Vehicle Accessories Type"
+              parent="fleet.fleet_configuration" action="action_vehicle_accessories_type" sequence="100"/>
+
+</odoo>

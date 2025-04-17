@@ -1,0 +1,48 @@
+<odoo>
+    <record id="view_vehicle_documents_type_list" model="ir.ui.view">
+        <field name="name">vehicle.documents.type.list</field>
+        <field name="model">vehicle.documents.type</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="reminder_users"/>
+                <field name="send_notification_before"/>
+                <field name="notified_user_ids"/>
+                <field name="assign_date"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_vehicle_documents_type_form" model="ir.ui.view">
+        <field name="name">vehicle.documents.type.form</field>
+        <field name="model">vehicle.documents.type</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="assign_date"/>
+                        </group>
+                        <group>
+                            <field name="reminder_users"/>
+                            <field name="send_notification_before" invisible="reminder_users == False" required="reminder_users == True"/>
+                            <field name="notified_user_ids" widget="many2many_tags" invisible="reminder_users == False" required="reminder_users == True"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_vehicle_documents_type" model="ir.actions.act_window">
+        <field name="name">Vehicle Documents Type</field>
+        <field name="res_model">vehicle.documents.type</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_vehicle_documents_type_data" name="Vehicle Documents Type"
+              parent="fleet.fleet_configuration" action="action_vehicle_documents_type" sequence="100"/>
+
+</odoo>

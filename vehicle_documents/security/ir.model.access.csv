@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_vehicle_documents,vehicle.documents,model_vehicle_documents,,1,1,1,1
+access_vehicle_documents_type,vehicle.documents.type,model_vehicle_documents_type,,1,1,1,1
+

@@ -1,0 +1,99 @@
+<odoo>
+    <record id="view_vehicle_documents_list" model="ir.ui.view">
+        <field name="name">vehicle.documents.list</field>
+        <field name="model">vehicle.documents</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="vehicle_id"/>
+                <field name="vehicle_document_type_id"/>
+                <field name="description"/>
+                <field name="start_date"/>
+                <field name="end_date"/>
+                <field name="attachment_ids" widget="many2many_binary"/>
+                <field name="document_status" widget="badge"/>
+            </list>
+        </field>
+    </record>
+<record id="view_vehicle_documents_kanban" model="ir.ui.view">
+    <field name="name">vehicle.documents.kanban</field>
+    <field name="model">vehicle.documents</field>
+    <field name="arch" type="xml">
+        <kanban>
+            <field name="vehicle_id"/>
+            <field name="vehicle_document_type_id"/>
+            <field name="description"/>
+            <field name="start_date"/>
+            <field name="end_date"/>
+            <field name="document_status"/>
+            <templates>
+                <t t-name="kanban-box">
+                    <div class="o_kanban_record card shadow-sm p-3 mb-3 rounded"
+                         t-attf-style="background-color: #{record.document_status.raw_value == 'running' and '#d4edda' or
+                                                            record.document_status.raw_value == 'expired' and '#f8d7da' or
+                                                            '#fdfdfd'};">
+                        <div class="o_kanban_card">
+                            <div class="o_kanban_details">
+                                <div><strong>🚗 Vehicle:</strong> <span t-esc="record.vehicle_id.value"/></div>
+                                <div><strong>📄 Document Type:</strong> <span t-esc="record.vehicle_document_type_id.value"/></div>
+                                <div><strong>📝 Description:</strong> <span t-esc="record.description.value"/></div>
+                                <div><strong>📅 Start Date:</strong> <span t-esc="record.start_date.value"/></div>
+                                <div><strong>📅 End Date:</strong> <span t-esc="record.end_date.value"/></div>
+                                <div>
+                                    <strong style="color: #007bff;">📌 Status:</strong>
+                                    <span t-attf-class="badge
+                                                        #{record.document_status.raw_value == 'running' and 'badge-success' or
+                                                          record.document_status.raw_value == 'expired' and 'badge-danger'}"
+                                                                                              style="font-size: 14px;">
+                                        <span t-esc="record.document_status.value"/>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </templates>
+        </kanban>
+    </field>
+</record>
+
+    <record id="view_vehicle_documents_form" model="ir.ui.view">
+        <field name="name">vehicle.documents.form</field>
+        <field name="model">vehicle.documents</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <field name="document_status" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="vehicle_id"/>
+                            <field name="active" invisible="1"/>
+                            <field name="vehicle_document_type_id"/>
+                            <field name="assign_date" invisible="1"/>
+                            <field name="start_date" invisible="assign_date == False" required="assign_date != False"/>
+                            <field name="end_date" invisible="assign_date == False" required="assign_date != False"/>
+                            <field name="create_uid"/>
+                            <field name="create_date"/>
+                        </group>
+                        <group>
+                            <field name="description"/>
+                            <field name="attachment_ids" widget="many2many_binary"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_vehicle_documents" model="ir.actions.act_window">
+        <field name="name">Vehicle Documents</field>
+        <field name="res_model">vehicle.documents</field>
+        <field name="view_mode">list,form,kanban</field>
+    </record>
+
+    <menuitem id="menu_vehicle_documents_data" name="Vehicle Documents"
+              parent="fleet.menu_root" action="action_vehicle_documents"/>
+
+</odoo>

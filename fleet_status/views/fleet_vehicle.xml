@@ -10,7 +10,6 @@
                 <button class="oe_stat_button"
                     type="action"
                     name="%(fleet_status.fleet_status_log_smart_button_action)d"
-                    invisible="status_log_count == 0"
                     icon="fa-book">
                     <div class="o_stat_info">
                         <span class="o_stat_value">

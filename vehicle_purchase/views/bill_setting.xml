@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Form View for Bill Config Settings -->
+        <record id="view_bill_config_settings_form" model="ir.ui.view">
+            <field name="name">bill.config.settings.form</field>
+            <field name="model">bill.config.settings</field>
+            <field name="arch" type="xml">
+                <form string="Bill Configuration Settings">
+                    <sheet>
+                        <group>
+                            <field name="journal_id" options="{'no_create': True, 'no_open': True}"/>
+                            <field name="account_id" options="{'no_create': True, 'no_open': True}"/>
+                            <field name="tax_ids" widget="many2many_tags"/>
+                            <field name="is_bill" invisible="0" />
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Tree View for Bill Config Settings -->
+        <record id="view_bill_config_settings_tree" model="ir.ui.view">
+            <field name="name">bill.config.settings.tree</field>
+            <field name="model">bill.config.settings</field>
+            <field name="arch" type="xml">
+                <list string="Bill Configuration Settings">
+                    <field name="journal_id"/>
+                    <field name="account_id"/>
+                    <field name="tax_ids" widget="many2many_tags"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- Action for Bill Config Settings -->
+        <record id="action_bill_config_settings" model="ir.actions.act_window">
+            <field name="name">Bill Configuration</field>
+            <field name="res_model">bill.config.settings</field>
+            <field name="view_mode">list,form</field>
+            <field name="target">current</field>
+             <field name="context">{'default_is_bill': True}</field>
+            <field name="view_id" ref="view_bill_config_settings_tree"/>
+        </record>
+
+
+        <!-- Menu Item for Bill Config Settings -->
+        <!-- This Menu Item Must have a parent -->
+        <menuitem id="menu_root_config_settings" name="Configuration" parent="vehicle_purchase.menu_vehicle_purchase_root" sequence="10000"/>
+        <menuitem
+            id="menu_bill_config_settings"
+            name="Bill Configuration"
+            parent="vehicle_purchase.menu_root_config_settings"
+            action="action_bill_config_settings"
+            sequence="10"/>
+    </data>
+</odoo>

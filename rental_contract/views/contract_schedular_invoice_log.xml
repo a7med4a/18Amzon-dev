@@ -1,0 +1,21 @@
+<odoo>
+    <record id="rental_contract_schedular_invoice_log_view_list" model="ir.ui.view">
+        <field name="name">rental.contract.schedular.invoice.log.view.list</field>
+        <field name="model">rental.contract.schedular.invoice.log</field>
+        <field name="arch" type="xml">
+            <list string="Rental Contract Schedular Invoice Log" editable="bottom">
+                <field name="date_from" />
+                <field name="date_to" />
+                <field name="actual_days" readonly="1" force_save="1"/>
+                <field name="actual_hours" readonly="1" force_save="1"/>
+                <field name="current_days" readonly="1" force_save="1"/>
+                <field name="current_hours" readonly="1" force_save="1"/>
+                <field name="invoice_id" readonly="1" force_save="1"/>
+                <!-- <field name="rental_contract_id" invisible="1" nolabel="1" /> -->
+                <button name="create_invoice" type="object" string="Create Invoice" class="btn btn-sm btn-primary" invisible="invoice_id" confirm="Are you sure you want to create invoice ?" />
+
+            </list>
+        </field>
+    </record>
+
+</odoo>

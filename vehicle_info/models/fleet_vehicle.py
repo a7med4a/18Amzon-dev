@@ -38,18 +38,8 @@ CAR_SEATS_STATUS = [('clean', 'Clean'), ('dirty', 'Dirty')]
 class vehicle_info(models.Model):
     _inherit = 'fleet.vehicle'
 
-
-    def _get_default_state(self):
-        state = self.env.ref('fleet_status.fleet_vehicle_state_under_preparation', raise_if_not_found=False)
-        return state if state and state.id else False
-
-    state_id = fields.Many2one('fleet.vehicle.state', 'State',
-                               default=_get_default_state, group_expand='_read_group_expand_full',
-                               tracking=True,
-                               help='Current state of the vehicle', ondelete="set null")
-
     vin_sn = fields.Char()
-    model_year = fields.Char(readonly=True)
+    model_year = fields.Char()
     category_id = fields.Many2one(
         'fleet.vehicle.model.category')
 

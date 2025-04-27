@@ -7,3 +7,7 @@ access_vehicle_purchase_order,vehicle.purchase.order,model_vehicle_purchase_orde
 access_vehicle_purchase_order_line,vehicle.purchase.order.line,model_vehicle_purchase_order_line,,1,1,1,1
 access_installments_board,installments.board,model_installments_board,,1,1,1,1
 access_vehicle_purchase_payment_register,vehicle.purchase.payment.register,model_vehicle_purchase_payment_register,,1,1,1,1
+access_model_bill_config_settings,model_bill_config_settings,model_bill_config_settings,,1,1,1,1
+access_installments_import_wizard,access.installments.import.wizard,model_installments_import_wizard,,1,1,1,1
+access_bulk_installment_payment_wizard,access_bulk_installment_payment_wizard,model_bulk_installment_payment_wizard,,1,1,1,1
+access_bulk_installment_payment_line,access_bulk_installment_payment_line,model_bulk_installment_payment_line,,1,1,1,1

@@ -56,6 +56,10 @@
                                                     <span t-esc="record.admin_fees.value"/>
                                                 </div>
                                                 <div>
+                                                    <strong>Insurance Cost: </strong>
+                                                    <span t-esc="record.insurance_cost.value"/>
+                                                </div>
+                                                <div>
                                                     <strong>Plate Fees: </strong>
                                                     <span t-esc="record.plate_fees.value"/>
                                                 </div>

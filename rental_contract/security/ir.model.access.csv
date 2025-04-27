@@ -3,5 +3,8 @@ access_rental_contract,rental.contract,model_rental_contract,base.group_user,1,1
 access_rental_contract_payment_register,rental.contract.payment.register,model_rental_contract_payment_register,base.group_user,1,1,1,1
 access_contract_fines_discount_config,contract.fines.discount.config,model_contract_fines_discount_config,base.group_user,1,1,1,1
 access_rental_contract_fines_discount_line,rental.contract.fines.discount.line,model_rental_contract_fines_discount_line,base.group_user,1,1,1,1
+access_additional_supplementary_services_line,additional.supplementary.services.line,model_additional_supplementary_services_line,base.group_user,1,1,1,1
+access_rental_config_settings,rental.config.settings,model_rental_config_settings,base.group_user,1,1,1,1
+access_rental_contract_schedular_invoice_log,rental.contract.schedular.invoice.log,model_rental_contract_schedular_invoice_log,base.group_user,1,1,1,1
 access_rental_contract_fines_discount_wiz,rental.contract.fines.discount.wiz,model_rental_contract_fines_discount_wiz,base.group_user,1,1,1,1
 access_rental_contract_fines_discount_wiz_line,rental.contract.fines.discount.wiz.line,model_rental_contract_fines_discount_wiz_line,base.group_user,1,1,1,1

@@ -1,0 +1,24 @@
+<odoo>
+    <record id="view_import_installments_wizard_form" model="ir.ui.view">
+        <field name="name">installments.import.wizard.form</field>
+        <field name="model">installments.import.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Import Installments">
+                <group>
+                    <field name="file"/>
+                </group>
+                <footer>
+                    <button name="import_excel" context="{'create_from_btn': True}" type="object" string="Import" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_import_installments_wizard" model="ir.actions.act_window">
+        <field name="name">Import Installments</field>
+        <field name="res_model">installments.import.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

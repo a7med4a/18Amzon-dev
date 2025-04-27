@@ -47,7 +47,6 @@
                             <field name="category_id"/>
                         </group>
                         <group string="Customer Info">
-                            <field name="rental_customer_number" readonly="state != 'draft'"/>
                             <field name="customer_id" readonly="state != 'draft'"/>
                             <field name="id_no" readonly="state != 'draft'"/>
                         </group>

@@ -1,0 +1,49 @@
+<odoo>
+    <record id="view_installments_board_tree_custom" model="ir.ui.view">
+        <field name="name">installments.board.list.custom</field>
+        <field name="model">installments.board</field>
+        <field name="type">list</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="date"/>
+                <field name="amount" sum="Total"/>
+                <field name="paid_amount" sum="Paid"/>
+                <field name="remaining_amount" sum="Remaining"/>
+                <field name="state"/>
+                <field name="order_name"/>
+                <field name="vendor_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_installments_board_search" model="ir.ui.view">
+        <field name="name">installments.board.search</field>
+        <field name="model">installments.board</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="date"/>
+                <field name="vendor_id"/>
+                <field name="order_name"/>
+                <field name="state"/>
+                <group expand="1" string="Group By">
+                    <filter name="group_by_order" string="Order" context="{'group_by': 'order_name'}"/>
+                    <filter name="group_by_customer" string="Customer" context="{'group_by': 'vendor_id'}"/>
+                    <filter name="group_by_status" string="Status" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_installments_board_custom" model="ir.actions.act_window">
+        <field name="name">Installments</field>
+        <field name="res_model">installments.board</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_installments_board_search"/>
+    </record>
+
+    <menuitem id="menu_installments_board_custom"
+              name="Installments"
+              parent="vehicle_purchase.menu_vehicle_purchase_root"
+              action="action_installments_board_custom"
+              sequence="100"/>
+</odoo>

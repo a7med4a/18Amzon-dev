@@ -3,6 +3,11 @@ from odoo.exceptions import ValidationError
 from odoo import models, fields, api, _
 from dateutil.relativedelta import relativedelta
 
+from datetime import date
+import io
+import xlsxwriter
+import base64
+from datetime import datetime, date, timedelta
 
 class VehiclePurchaseOrder(models.Model):
     _name = 'vehicle.purchase.order'
@@ -39,12 +44,96 @@ class VehiclePurchaseOrder(models.Model):
     date = fields.Date(string='Date',required=False)
     is_advanced_payment_paid = fields.Boolean(string='Advanced Payment Paid',default=False)
     vehicle_ids=fields.One2many('fleet.vehicle','po_id')
+    bill_id = fields.Many2one(comodel_name="account.move", string="Bill", required=False, )
     vehicle_count=fields.Integer(compute="_compute_vehicle_count")
     state = fields.Selection(
         string='State',
         selection=[('draft', 'Draft'),('under_review', 'Under Review'), ('confirmed', 'Confirmed'), ('refused', 'Refused'), ('cancelled', 'Cancelled'), ],
         default='draft',copy=False)
 
+
+
+
+    installment_status = fields.Selection(
+            selection=[
+                ('not_paid', 'Not Paid'),
+                ('partial_paid', 'Partial Paid'),
+                ('paid', 'Paid')
+            ],
+            string="Installment Status",
+            compute="_compute_installment_status",
+            store=False
+        )
+
+    installment_status_class = fields.Char(compute="_compute_installment_status_helper")
+    installment_status_tooltip = fields.Char(compute="_compute_installment_status_helper")
+
+    def _compute_installment_status(self):
+        for rec in self:
+            paid = rec.installment_board_ids.filtered(lambda i: i.state != 'paid')
+            not_paid = rec.installment_board_ids.filtered(lambda i: i.state != 'not_paid')
+            partial_paid = rec.installment_board_ids.filtered(lambda i: i.state != 'partial_paid')
+            if not_paid and not paid and not partial_paid:
+                rec.installment_status = 'not_paid'
+            elif paid and not not_paid and not partial_paid:
+                rec.installment_status = 'paid'
+            elif paid and not_paid or partial_paid:
+                rec.installment_status = 'partial_paid'
+            else:
+                rec.installment_status = ''
+
+    @api.depends('installment_status')
+    def _compute_installment_status_helper(self):
+            for rec in self:
+                if rec.installment_status == 'not_paid':
+                    rec.installment_status_class = 'bg-danger text-white'
+                    rec.installment_status_tooltip = 'No payments made yet'
+                elif rec.installment_status == 'partial_paid':
+                    rec.installment_status_class = 'bg-warning text-dark'
+                    rec.installment_status_tooltip = 'Some installments are still unpaid'
+                elif rec.installment_status == 'paid':
+                    rec.installment_status_class = 'bg-success text-white'
+                    rec.installment_status_tooltip = 'All installments are fully paid'
+                else:
+                    rec.installment_status_class = 'bg-secondary text-white'
+                    rec.installment_status_tooltip = 'Installment status unknown'
+
+
+    def action_export_installments(self):
+        self.ensure_one()
+
+        output = io.BytesIO()
+        workbook = xlsxwriter.Workbook(output, {'in_memory': True})
+        sheet = workbook.add_worksheet('Installments')
+
+        sheet.write(0, 0, 'ID(Not Change)')
+        sheet.write(0, 1, 'Date')
+        sheet.write(0, 2, 'Amount')
+
+        for idx, line in enumerate(self.installment_board_ids, start=1):
+            sheet.write(idx, 0, line.id or '')
+            sheet.write(idx, 1, str(line.date or ''))
+            sheet.write(idx, 2, line.amount or 0.0)
+
+        workbook.close()
+        output.seek(0)
+        file_data = output.read()
+        output.close()
+
+        attachment = self.env['ir.attachment'].create({
+            'name': 'installments.xlsx',
+            'type': 'binary',
+            'datas': base64.b64encode(file_data),
+            'res_model': 'vehicle.purchase.order',
+            'res_id': self.id,
+            'mimetype': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        })
+
+        return {
+            'type': 'ir.actions.act_url',
+            'url': f'/web/content/{attachment.id}?download=true',
+            'target': 'new',
+        }
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -144,8 +233,54 @@ class VehiclePurchaseOrder(models.Model):
                 })
 
     def action_create_bill(self):
-        for rec in self:
-            pass
+        account_move_obj = self.env['account.move']
+        for po in self:
+            if not po.vehicle_ids:
+                raise ValidationError("No vehicle found!")
+            config = self.env["bill.config.settings"].sudo().search([('is_bill','=',True)], order="id desc", limit=1)
+
+            if not config:
+                raise ValidationError("No bill configuration found!")
+            bill_lines = []
+            for vehicle in po.vehicle_ids:
+                vehicle_po = vehicle.vehicle_purchase_order_line_ids
+                # price = 1 + 2 + 3 + 4 + 5 + 9
+                price = vehicle_po.vehicle_cost+vehicle_po.shipping_cost+vehicle_po.admin_fees+vehicle_po.insurance_cost +vehicle_po.plate_fees+vehicle_po.interest_cost
+                extra_fees = vehicle_po.plate_fees+vehicle_po.insurance_cost
+                bill_lines.append((0, 0, {
+                    'vehicle_id': vehicle.id,
+                    'account_id': config.account_id.id,
+                    'quantity': 1,
+                    'price_unit': price,
+                    'extra_fees': extra_fees,
+                    'tax_ids': [(6, 0, config.tax_ids.ids)],
+                }))
+
+            bill_vals = {
+                'move_type': 'in_invoice',
+                'partner_id': po.vendor_id.id,
+                'journal_id': config.journal_id.id,
+                'invoice_line_ids': bill_lines,
+                'amount_tax': po.total_vehicle_tax ,
+                'currency_id': self.env.company.currency_id.id,
+                'vpo_id': self.id,
+            }
+            bill = account_move_obj.sudo().create(bill_vals)
+            po.bill_id = bill.id
+
+            po.message_post(
+                body=f"Created Bill: {po.vendor_id.name} for PO# {po.name}",
+                subtype_xmlid="mail.mt_comment")
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'account.move',
+                'res_id': bill.id,
+                'view_mode': 'form',
+                'target': 'current',
+                'context': {
+
+                },
+            }
 
     def action_create_advance_payment(self):
             return {
@@ -202,8 +337,16 @@ class VehiclePurchaseOrder(models.Model):
 
     def action_view_bills(self):
         for rec in self:
-            action = self.env['ir.actions.actions']._for_xml_id('account.action_move_in_invoice')
-            return action
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'account.move',
+                'res_id': rec.bill_id.id,
+                'view_mode': 'form',
+                'target': 'current',
+                'context': {
+
+                },
+            }
 
 class VehiclePurchaseOrderLine(models.Model):
     _name = 'vehicle.purchase.order.line'
@@ -297,12 +440,16 @@ class InstallmentBoard(models.Model):
         required=False)
     amount = fields.Float(string='Amount',readonly=True)
     paid_amount = fields.Float(string='Paid Amount')
-    remaining_amount = fields.Float(string='Remaining Amount',compute="_compute_remaining_amount")
+    remaining_amount = fields.Float(string='Remaining Amount',compute="_compute_remaining_amount",store=True)
     state = fields.Selection(
         string='State',
         selection=[('not_paid', 'Not Paid'),
-                   ('paid', 'Paid'),('partial_paid', ' Partial Paid'), ],default='not_paid',compute="_compute_state")
+                   ('paid', 'Paid'),('partial_paid', ' Partial Paid'), ],default='not_paid',compute="_compute_state",store=True)
     vehicle_purchase_order_id = fields.Many2one(comodel_name='vehicle.purchase.order')
+
+    order_name = fields.Char(related='vehicle_purchase_order_id.name', string='Order Reference', store=True)
+    vendor_id = fields.Many2one(related='vehicle_purchase_order_id.vendor_id', string='Customer', store=True)
+
 
     @api.depends('amount','paid_amount')
     def _compute_remaining_amount(self):
@@ -317,3 +464,25 @@ class InstallmentBoard(models.Model):
                 rec.state = 'partial_paid'
             else:
                 rec.state = 'not_paid'
+
+
+    @api.constrains('amount')
+    def _check_editable_and_total_validation(self):
+        if self._context.get('create_from_btn'):
+            return
+        for rec in self:
+            if rec.paid_amount > 0 and rec.amount != rec._origin.amount:
+                raise ValidationError("You cannot modify this installment amount because it has already been partially or fully paid.")
+
+        if self and self[0].vehicle_purchase_order_id:
+            order = self[0].vehicle_purchase_order_id
+            all_installments = self.env['installments.board'].search([
+                ('vehicle_purchase_order_id', '=', order.id)
+            ])
+            total = sum(line.amount for line in all_installments)
+            expected = order.number_of_installment * order.installment_cost
+
+            if abs(total - expected) > 0.01:
+                raise ValidationError(
+                    f"Total of installments ({total:.2f}) must equal original amount: {expected:.2f}"
+                )

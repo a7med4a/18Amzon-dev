@@ -2,7 +2,9 @@
 
 
 import datetime
-import re
+from dateutil.relativedelta import relativedelta
+import calendar
+import pytz
 from odoo import models, fields, api, _
 from odoo.addons.vehicle_info.models.fleet_vehicle import VEHICLE_STATUS, VEHICLE_PARTS_STATUS, AVAILABILITY, WORKING_CONDITION, FUEL_TYPE_STATUS, CAR_SEATS_STATUS
 
@@ -32,8 +34,9 @@ class RentalContract(models.Model):
 
     vehicle_id = fields.Many2one('fleet.vehicle', string='Vehicle',
                                  domain=lambda self: [('branch_id', 'in', self.env.branches.ids), ('state_id.type', '=', 'ready_to_rent')])
+    image_128 = fields.Image(related='vehicle_id.image_128')
     vehicle_model_datail_id = fields.Many2one(
-        'fleet.vehicle.model.detail', string='Vehicle Model Detail', compute="_compute_vehicle_model_datail_id", readonly=True, store=True)
+        'fleet.vehicle.model.detail', string='Vehicle Model Detail', compute="_compute_vehicle_model_datail_id", readonly=True)
     license_plate = fields.Char(
         string="License Plate", related='vehicle_id.license_plate', readonly=True, store=True)
     model_id = fields.Many2one(
@@ -41,62 +44,62 @@ class RentalContract(models.Model):
     category_id = fields.Many2one(
         'fleet.vehicle.model.category', string='Category', related='vehicle_id.category_id', readonly=True, store=True)
 
-    # Chick List Information
-    # Group 1
-    ac = fields.Selection(
+    # Chick List Out Information
+    # --------------------> Group 1
+    out_ac = fields.Selection(
         selection=VEHICLE_PARTS_STATUS,
         string='Ac', compute="_compute_vehicle_editable_fields", store=True, readonly=False)
-    radio_stereo = fields.Selection(
+    out_radio_stereo = fields.Selection(
         selection=VEHICLE_PARTS_STATUS,
         string='Radio Stereo', compute="_compute_vehicle_editable_fields", store=True, readonly=False)
-    screen = fields.Selection(
+    out_screen = fields.Selection(
         selection=VEHICLE_PARTS_STATUS,
         string='Screen', compute="_compute_vehicle_editable_fields", store=True, readonly=False)
-    spare_tire_tools = fields.Selection(
+    out_spare_tire_tools = fields.Selection(
         selection=AVAILABILITY,
         string='Spare Tire Tools', compute="_compute_vehicle_editable_fields", store=True, readonly=False)
-    tires = fields.Selection(
+    out_tires = fields.Selection(
         selection=VEHICLE_PARTS_STATUS,
         string='Tires', compute="_compute_vehicle_editable_fields", store=True, readonly=False)
-    spare_tires = fields.Selection(
+    out_spare_tires = fields.Selection(
         selection=VEHICLE_PARTS_STATUS,
         string='Spare Tires', compute="_compute_vehicle_editable_fields", store=True, readonly=False)
 
-    # Group 2
-    speedometer = fields.Selection(
+    # --------------------> Group 2
+    out_speedometer = fields.Selection(
         selection=WORKING_CONDITION,
         string='Speedometer', compute="_compute_vehicle_editable_fields", store=True, readonly=False)
-    keys = fields.Selection(
+    out_keys = fields.Selection(
         selection=WORKING_CONDITION,
         string='Keys', compute="_compute_vehicle_editable_fields", store=True, readonly=False)
-    care_seats = fields.Selection(
+    out_care_seats = fields.Selection(
         selection=CAR_SEATS_STATUS,
         string='Care Seats', compute="_compute_vehicle_editable_fields", store=True, readonly=False)
-    oil_change_km = fields.Float(
+    out_oil_change_km = fields.Float(
         'Oil Change KM Distance', compute="_compute_vehicle_editable_fields", store=True, readonly=False)
-    fuel_type_code = fields.Selection(
+    out_fuel_type_code = fields.Selection(
         FUEL_TYPE_STATUS, string='Fuel Type Code', compute="_compute_vehicle_editable_fields", store=True, readonly=False)
-    keys_number = fields.Integer(
+    out_keys_number = fields.Integer(
         'Number Of Keys', compute="_compute_vehicle_editable_fields", store=True, readonly=False)
 
-    # Group 3
-    safety_triangle = fields.Selection(
+    # --------------------> Group 3
+    out_safety_triangle = fields.Selection(
         selection=AVAILABILITY,
         string='Safety Triangle', compute="_compute_vehicle_editable_fields", store=True, readonly=False)
-    fire_extinguisher = fields.Selection(
+    out_fire_extinguisher = fields.Selection(
         selection=AVAILABILITY,
         string='Fire Extinguisher', compute="_compute_vehicle_editable_fields", store=True, readonly=False)
-    first_aid_kit = fields.Selection(
+    out_first_aid_kit = fields.Selection(
         selection=AVAILABILITY,
         string='First Aid Kit', compute="_compute_vehicle_editable_fields", store=True, readonly=False)
-    oil_type = fields.Char('Oil Type',
-                           compute="_compute_vehicle_editable_fields", store=True, readonly=False)
-    oil_change_date = fields.Date(
+    out_oil_type = fields.Char('Oil Type',
+                               compute="_compute_vehicle_editable_fields", store=True, readonly=False)
+    out_oil_change_date = fields.Date(
         'Oil Change Date', compute="_compute_vehicle_editable_fields", store=True, readonly=False)
-    vehicle_status = fields.Selection(
+    out_vehicle_status = fields.Selection(
         selection=VEHICLE_STATUS,
         string='Vehicle Status', compute="_compute_vehicle_editable_fields", store=True, readonly=False)
-    odometer = fields.Float(
+    out_odometer = fields.Float(
         'Odometer', compute="_compute_vehicle_editable_fields", store=True, readonly=False)
 
     # Contract Info Fields
@@ -118,7 +121,7 @@ class RentalContract(models.Model):
         ('external', 'External')
     ], string='Authorization Type', default='internal')
     authorization_country_id = fields.Many2one(
-        'additional.supplementary.services', string='Authorization Country', domain="[('type', '=', 'external_authorization')]")
+        'additional.supplementary.services.line', string='Authorization Country', domain="[('type', '=', 'external_authorization')]")
     need_extra_driver = fields.Selection([
         ('true', 'True'),
         ('false', 'False'),
@@ -127,12 +130,10 @@ class RentalContract(models.Model):
         'res.partner', string='Extra Driver', domain="[('create_from_rental', '=', True)]")
 
     # Additional & Suppl Service Fields
-    additional_services = fields.Many2many(
-        'additional.supplementary.services', relation="rental_contract_additional_services_rel", string='Additional Services',
-        domain="[('type', '=', 'additional')]")
-    supplementary_services = fields.Many2many(
-        'additional.supplementary.services', relation="rental_contract_supplementary_services_rel", string='Supplementary Services',
-        domain="[('type', '=', 'supplementary')]")
+    additional_service_ids = fields.Many2many(
+        'additional.supplementary.services.line', relation="rental_contract_additional_services_line_rel", string='Additional Services')
+    supplementary_service_ids = fields.Many2many(
+        'additional.supplementary.services.line', relation="rental_contract_supplementary_services_line_rel", string='Supplementary Services')
 
     # Financial Info Fields
     daily_rate = fields.Float(
@@ -150,7 +151,8 @@ class RentalContract(models.Model):
     total_amount = fields.Float(
         'Total Amount', store=True, compute='_compute_total_amount')
     discount_percentage = fields.Float('Discount Percentage (%)')
-    tax_percentage = fields.Float('Tax Percentage (%)', default=15)
+    tax_percentage = fields.Float(
+        'Tax Percentage (%)', compute="_compute_tax_percentage", store=True)
     tax_amount = fields.Float(
         'Tax Amount', compute='_compute_tax_amount', store=True)
     due_amount = fields.Monetary(
@@ -161,6 +163,7 @@ class RentalContract(models.Model):
         'account.payment', 'rental_contract_id', string='Payments', copy=False)
     payment_count = fields.Integer(
         'Payment Count', compute='_compute_payment_count', store=True)
+    rental_configuration_id = fields.Many2one('rental.config.settings')
 
     # Current Due Amount
 
@@ -177,6 +180,7 @@ class RentalContract(models.Model):
         'Current Hours', compute='_compute_display_open_state_fields')
     current_days = fields.Integer('Current Days', default=0)
     current_hours = fields.Integer('Current Hours', default=0)
+
     assumed_amount = fields.Monetary(
         compute='_compute_assumed_amount', store=True, currency_field='company_currency_id')
     display_current_amount = fields.Monetary(
@@ -198,16 +202,13 @@ class RentalContract(models.Model):
         'Current KM Extra Amount', currency_field='company_currency_id')
 
     # Calculate KM Popup Fields
-    odometer_km_in = fields.Float('KM In')
-    free_km_per_day = fields.Float(
-        related='vehicle_model_datail_id.free_kilometers', store=True)
+    in_odometer = fields.Float(
+        'Odometer')
     total_free_km = fields.Float(compute="_compute_total_free_km")
     consumed_km = fields.Float(
         compute='_compute_consumed_extra_km')
     total_extra_km = fields.Float(
         compute='_compute_consumed_extra_km')
-    extra_km_cost = fields.Float(
-        related='vehicle_model_datail_id.extra_kilometers_cost', store=True)
     display_current_km_extra_amount = fields.Monetary(
         'Current KM Extra Amount', currency_field='company_currency_id', compute="_compute_display_current_km_extra_amount")
 
@@ -217,14 +218,105 @@ class RentalContract(models.Model):
     account_move_ids = fields.One2many(
         'account.move', 'rental_contract_id', string='Related Moves')
     invoice_count = fields.Integer(
-        'invoice_count', compute="_compute_move_count")
+        'invoice_count', compute="_compute_move_count", store=True)
     credit_note_count = fields.Integer(
-        'invoice_count', compute="_compute_move_count")
+        'invoice_count', compute="_compute_move_count", store=True)
+
+    # Closing State
+    drop_off_date = fields.Datetime('Drop Off Date', copy=False)
+
+    # Chick List IN Information
+    # --------------------> Group 1
+    in_ac = fields.Selection(
+        selection=VEHICLE_PARTS_STATUS,
+        string='Ac')
+    in_radio_stereo = fields.Selection(
+        selection=VEHICLE_PARTS_STATUS,
+        string='Radio Stereo')
+    in_screen = fields.Selection(
+        selection=VEHICLE_PARTS_STATUS,
+        string='Screen')
+    in_spare_tire_tools = fields.Selection(
+        selection=AVAILABILITY,
+        string='Spare Tire Tools')
+    in_tires = fields.Selection(
+        selection=VEHICLE_PARTS_STATUS,
+        string='Tires')
+    in_spare_tires = fields.Selection(
+        selection=VEHICLE_PARTS_STATUS,
+        string='Spare Tires')
+
+    # --------------------> Group 2
+    in_speedometer = fields.Selection(
+        selection=WORKING_CONDITION,
+        string='Speedometer')
+    in_keys = fields.Selection(
+        selection=WORKING_CONDITION,
+        string='Keys')
+    in_care_seats = fields.Selection(
+        selection=CAR_SEATS_STATUS,
+        string='Care Seats')
+    in_oil_change_km = fields.Float(
+        'Oil Change KM Distance')
+    in_fuel_type_code = fields.Selection(
+        FUEL_TYPE_STATUS, string='Fuel Type Code')
+    in_keys_number = fields.Integer(
+        'Number Of Keys')
+
+    # --------------------> Group 3
+    in_safety_triangle = fields.Selection(
+        selection=AVAILABILITY,
+        string='Safety Triangle')
+    in_fire_extinguisher = fields.Selection(
+        selection=AVAILABILITY,
+        string='Fire Extinguisher')
+    in_first_aid_kit = fields.Selection(
+        selection=AVAILABILITY,
+        string='First Aid Kit')
+    in_oil_type = fields.Char('Oil Type',
+                              compute="_compute_vehicle_editable_fields", store=True, readonly=False)
+    in_oil_change_date = fields.Date(
+        'Oil Change Date')
+    in_vehicle_status = fields.Selection(
+        selection=VEHICLE_STATUS,
+        string='Vehicle Status')
+
+    vehicle_in_state = fields.Selection([
+        ('none', 'None'),
+        ('damage', 'Damage'),
+        ('accident', 'Accident'),
+        ('other', 'Other'),
+    ], string='Has accident / damage')
+
+    vehicle_in_state_other_reason = fields.Char('Other Reason')
+
+    # Accident Announcement Field
+    city_id = fields.Many2one(
+        'res.country.state', string='City', domain="[('country_id.code', '=', 'SA')]")
+    report_source = fields.Selection([
+        ('negm', 'Negm'),
+        ('morror', 'Morror'),
+        ('other', 'Others')
+    ], string='Report Source')
+    other_report_source = fields.Char('Other Report Source')
+    announcement_date = fields.Date('Announcement Date')
+    accident_date = fields.Date('Accident Date')
+
+    accident_ids = fields.One2many(
+        'fleet.accident', 'rental_contract_id', string='accident')
+    accident_count = fields.Integer(
+        'invoice_count', compute="_compute_accident_count", store=True)
+
+    damage_ids = fields.One2many(
+        'fleet.damage', 'rental_contract_id', string='Damage')
+    damage_count = fields.Integer(
+        'invoice_count', compute="_compute_damage_count", store=True)
 
     # Status Fields
     state = fields.Selection([
         ('draft', 'Draft'),
         ('opened', 'Opened'),
+        ('close_info', 'Closing Info'),
         ('delivered_pending', 'Delivered Pending'),
         ('delivered_debit', 'Delivered InDebit'),
         ('closed', 'Closed'),
@@ -239,36 +331,76 @@ class RentalContract(models.Model):
         ('financial_info', 'Financial Info')
     ], string='Status', default='customer_info')
 
-    @api.depends('vehicle_id')
+    # Configuration Fields
+
+    #   ----------> Model Pricing Fields
+    model_pricing_vehicle_brand_id = fields.Many2one(
+        comodel_name='fleet.vehicle.model.brand', string='Vehicle Model Brand')
+    model_pricing_free_kilometers = fields.Float(string='Free Kilometers')
+    model_pricing_extra_kilometers_cost = fields.Float(
+        string='Extra kilometers cost')
+    model_pricing_number_delay_hours_allowed = fields.Float()
+    model_pricing_normal_day_price = fields.Float()
+    model_pricing_weekly_day_price = fields.Float()
+    model_pricing_monthly_day_price = fields.Float()
+    model_pricing_full_tank_cost = fields.Float()
+    model_pricing_start_date = fields.Date()
+    model_pricing_end_date = fields.Date()
+
+    #  ----------> Additional Supplementary Services
+    additional_supplement_service_line_ids = fields.One2many(
+        'additional.supplementary.services.line', 'rental_contract_id', string='Additional Supplement Service Lines')
+    additional_supplement_service_count = fields.Integer(
+        compute="_compute_additional_supplement_service_count", store=True)
+
+    #  ----------> Rental Config
+    trip_days_account_id = fields.Many2one(
+        "account.account", string="Trip Days Account")
+    trip_days_label = fields.Char(string="Label")
+    extra_km_account_id = fields.Many2one(
+        "account.account", string="Trip Days Account")
+    extra_km_label = fields.Char(string="Label")
+    tax_ids = fields.Many2many('account.tax', string="Taxes")
+
+    #  ----------> Invoice Log
+    schedular_invoice_log_ids = fields.One2many(
+        'rental.contract.schedular.invoice.log', 'rental_contract_id')
+
+    schedular_invoice_log_count = fields.Integer(
+        compute="_compute_schedular_invoice_log_count", store=True)
+
+    @api.depends('vehicle_id', 'draft_state')
     def _compute_vehicle_model_datail_id(self):
         for record in self:
-            if record.vehicle_id:
+            if record.draft_state == 'vehicle_info' and record.vehicle_id:
                 record.vehicle_model_datail_id = self.env['fleet.vehicle.model.detail'].search(
                     [('branch_id', '=', record.vehicle_id.branch_id.id), ('vehicle_model_brand_id', '=', record.vehicle_id.model_id.brand_id.id), ('state', '=', 'running')], limit=1)
+            else:
+                record.vehicle_model_datail_id = False
 
     @api.depends('vehicle_id')
     def _compute_vehicle_editable_fields(self):
         for record in self:
             if record.vehicle_id:
-                record.ac = record.vehicle_id.ac
-                record.radio_stereo = record.vehicle_id.radio_stereo
-                record.screen = record.vehicle_id.screen
-                record.spare_tire_tools = record.vehicle_id.spare_tire_tools
-                record.tires = record.vehicle_id.tires
-                record.spare_tires = record.vehicle_id.spare_tires
-                record.speedometer = record.vehicle_id.speedometer
-                record.keys = record.vehicle_id.keys
-                record.care_seats = record.vehicle_id.care_seats
-                record.oil_change_km = record.vehicle_id.oil_change_km
-                record.fuel_type_code = record.vehicle_id.fuel_type_code
-                record.keys_number = record.vehicle_id.keys_number
-                record.safety_triangle = record.vehicle_id.safety_triangle
-                record.fire_extinguisher = record.vehicle_id.fire_extinguisher
-                record.first_aid_kit = record.vehicle_id.first_aid_kit
-                record.oil_type = record.vehicle_id.oil_type
-                record.oil_change_date = record.vehicle_id.oil_change_date
-                record.vehicle_status = record.vehicle_id.vehicle_status
-                record.odometer = record.vehicle_id.odometer
+                record.out_ac = record.vehicle_id.ac
+                record.out_radio_stereo = record.vehicle_id.radio_stereo
+                record.out_screen = record.vehicle_id.screen
+                record.out_spare_tire_tools = record.vehicle_id.spare_tire_tools
+                record.out_tires = record.vehicle_id.tires
+                record.out_spare_tires = record.vehicle_id.spare_tires
+                record.out_speedometer = record.vehicle_id.speedometer
+                record.out_keys = record.vehicle_id.keys
+                record.out_care_seats = record.vehicle_id.care_seats
+                record.out_oil_change_km = record.vehicle_id.oil_change_km
+                record.out_fuel_type_code = record.vehicle_id.fuel_type_code
+                record.out_keys_number = record.vehicle_id.keys_number
+                record.out_safety_triangle = record.vehicle_id.safety_triangle
+                record.out_fire_extinguisher = record.vehicle_id.fire_extinguisher
+                record.out_first_aid_kit = record.vehicle_id.first_aid_kit
+                record.out_oil_type = record.vehicle_id.oil_type
+                record.out_oil_change_date = record.vehicle_id.oil_change_date
+                record.out_vehicle_status = record.vehicle_id.vehicle_status
+                record.out_odometer = record.vehicle_id.odometer
 
     @api.depends('pickup_date', 'duration')
     def _compute_expected_return_date(self):
@@ -290,33 +422,35 @@ class RentalContract(models.Model):
             else:
                 record.rental_plan = 'daily'
 
-    @api.depends('vehicle_model_datail_id', 'rental_plan')
+    @api.depends('rental_plan')
     def _compute_daily_rate(self):
         for record in self:
-            if record.vehicle_model_datail_id:
-                if record.rental_plan == 'daily':
-                    record.daily_rate = record.vehicle_model_datail_id.normal_day_price
-                elif record.rental_plan == 'weekly':
-                    record.daily_rate = record.vehicle_model_datail_id.weekly_day_price
-                elif record.rental_plan == 'monthly':
-                    record.daily_rate = record.vehicle_model_datail_id.monthly_day_price
+            if record.rental_plan == 'daily':
+                record.daily_rate = record.model_pricing_normal_day_price
+            elif record.rental_plan == 'weekly':
+                record.daily_rate = record.model_pricing_weekly_day_price
+            elif record.rental_plan == 'monthly':
+                record.daily_rate = record.model_pricing_monthly_day_price
 
-    @api.depends('additional_services')
+    @api.depends('additional_service_ids')
     def _compute_daily_additional_services_rate(self):
         for record in self:
             record.daily_additional_services_rate = sum(
-                record.additional_services.filtered(lambda l: l.calculation == 'repeated').mapped('price'))
+                record.additional_service_ids.filtered(lambda l: l.calculation == 'repeated').mapped('price'))
 
-    @api.depends('supplementary_services')
+    @api.depends('supplementary_service_ids')
     def _compute_daily_supplementary_services_rate(self):
         for record in self:
             record.daily_supplementary_services_rate = sum(
-                record.supplementary_services.filtered(lambda l: l.calculation == 'repeated').mapped('price'))
+                record.supplementary_service_ids.filtered(lambda l: l.calculation == 'repeated').mapped('price'))
 
     @api.depends('authorization_country_id', 'authorization_type')
     def _compute_daily_authorization_country_rate(self):
-        for record in self.filtered(lambda l: l.authorization_country_id and l.authorization_type == 'external'):
-            record.daily_authorization_country_rate = record.authorization_country_id.price
+        for record in self:
+            if record.authorization_country_id and record.authorization_type == 'external':
+                record.daily_authorization_country_rate = record.authorization_country_id.price
+            else:
+                record.daily_authorization_country_rate = 0.0
 
     @api.depends('daily_rate', 'daily_additional_services_rate', 'daily_supplementary_services_rate', 'daily_authorization_country_rate')
     def _compute_total_per_day(self):
@@ -325,12 +459,12 @@ class RentalContract(models.Model):
                 record.daily_supplementary_services_rate + \
                 record.daily_authorization_country_rate
 
-    @api.depends('additional_services', 'supplementary_services')
+    @api.depends('additional_service_ids', 'supplementary_service_ids')
     def _compute_one_time_services(self):
         for record in self:
             record.one_time_services = sum(
-                record.additional_services.filtered(lambda l: l.calculation == 'once').mapped('price')) + sum(
-                record.supplementary_services.filtered(lambda l: l.calculation == 'once').mapped('price'))
+                record.additional_service_ids.filtered(lambda l: l.calculation == 'once').mapped('price')) + sum(
+                record.supplementary_service_ids.filtered(lambda l: l.calculation == 'once').mapped('price'))
 
     @api.depends('total_per_day', 'duration', 'one_time_services')
     def _compute_total_amount(self):
@@ -360,16 +494,25 @@ class RentalContract(models.Model):
         for record in self:
             record.payment_count = len(record.account_payment_ids)
 
+    @api.depends('rental_configuration_id')
+    def _compute_tax_percentage(self):
+        for rec in self:
+            if rec.rental_configuration_id:
+                rec.tax_percentage = sum(
+                    rec.rental_configuration_id.tax_ids.mapped('amount'))
+            else:
+                rec.tax_percentage = 0.0
+
     @api.depends('state', 'pickup_date')
     def _compute_display_open_state_fields(self):
         for record in self:
             if record.state == 'opened':
-                display_actual_days = record.pickup_date and ((
-                    datetime.datetime.now() - record.pickup_date).days + 1) or 0
+                display_actual_days = record.pickup_date and (
+                    datetime.datetime.now() - record.pickup_date).days or 0
                 display_hours = record.pickup_date and (
                     datetime.datetime.now() - record.pickup_date).seconds // 3600 or 0
                 display_actual_hours = 0 \
-                    if record.vehicle_model_datail_id and display_hours < record.vehicle_model_datail_id.number_delay_hours_allowed\
+                    if display_hours < record.model_pricing_number_delay_hours_allowed\
                     else display_hours
 
                 display_current_days = display_actual_days if display_actual_hours < 4 else display_actual_days + 1
@@ -427,23 +570,25 @@ class RentalContract(models.Model):
             record.discount_voucher_amount = sum(record.fines_discount_line_ids.filtered(
                 lambda l: l.type == 'discount').mapped('price'))
 
-    @api.depends('free_km_per_day', 'display_current_days')
+    @api.depends('model_pricing_free_kilometers', 'display_current_days')
     def _compute_total_free_km(self):
         for record in self:
-            record.total_free_km = record.free_km_per_day * record.display_current_days
+            record.total_free_km = record.model_pricing_free_kilometers * \
+                record.display_current_days
 
-    @api.depends('odometer_km_in', 'odometer', 'total_free_km')
+    @api.depends('in_odometer', 'out_odometer', 'total_free_km')
     def _compute_consumed_extra_km(self):
         for record in self:
-            consumed_km = record.odometer_km_in - record.odometer
+            consumed_km = record.in_odometer - record.out_odometer
             record.consumed_km = consumed_km
             record.total_extra_km = consumed_km - \
                 record.total_free_km if record.total_free_km < consumed_km else 0.0
 
-    @api.depends('total_extra_km', 'extra_km_cost')
+    @api.depends('total_extra_km', 'model_pricing_extra_kilometers_cost')
     def _compute_display_current_km_extra_amount(self):
         for record in self:
-            record.display_current_km_extra_amount = record.total_extra_km * record.extra_km_cost
+            record.display_current_km_extra_amount = record.total_extra_km * \
+                record.model_pricing_extra_kilometers_cost
 
     @api.depends('current_amount', 'current_fines_amount', 'current_accident_damage_amount', 'discount_voucher_amount', 'current_km_extra_amount', 'paid_amount')
     def _compute_current_due_amount(self):
@@ -460,14 +605,422 @@ class RentalContract(models.Model):
             record.credit_note_count = len(record.account_move_ids.filtered(
                 lambda move: move.move_type == 'out_refund'))
 
+    @api.depends('additional_supplement_service_line_ids')
+    def _compute_additional_supplement_service_count(self):
+        for rec in self:
+            rec.additional_supplement_service_count = len(
+                rec.additional_supplement_service_line_ids)
+
+    @api.depends('schedular_invoice_log_ids')
+    def _compute_schedular_invoice_log_count(self):
+        for rec in self:
+            rec.schedular_invoice_log_count = len(
+                rec.schedular_invoice_log_ids)
+
+    @api.depends('accident_ids')
+    def _compute_accident_count(self):
+        for rec in self:
+            rec.accident_count = len(rec.accident_ids)
+
+    @api.depends('damage_ids')
+    def _compute_damage_count(self):
+        for rec in self:
+            rec.damage_count = len(rec.damage_ids)
+
+    @api.constrains('accident_date', 'announcement_date')
+    def _check_accident_date(self):
+        for rec in self:
+            if rec.announcement_date and rec.accident_date and rec.announcement_date < rec.accident_date:
+                raise ValidationError(
+                    "Accident Date must be less than Announcement Date")
+
+    # Accounting Functions
+
+    def get_day_hour(self, date_from, date_to):
+        self.ensure_one()
+        actual_days = date_from and\
+            (date_to - date_from).days or 0
+        hours = date_from and (
+            date_to - date_from).seconds // 3600 or 0
+        actual_hours = 0 \
+            if hours < self.model_pricing_number_delay_hours_allowed\
+            else hours
+
+        current_days = actual_days if actual_hours < 4 else actual_days + 1
+        current_hours = actual_hours if actual_hours < 4 else 0
+        return {
+            'actual_days': actual_days,
+            'actual_hours': actual_hours,
+            'current_days': current_days,
+            'current_hours': current_hours,
+        }
+
+    def _prepare_trip_days_invoice_line_values(self, day_hour_dict={}):
+        duration = ''
+        if day_hour_dict.get('current_days'):
+            duration += str(day_hour_dict.get('current_days')) + 'يوم'
+        if day_hour_dict.get('current_days') and day_hour_dict.get('current_hours'):
+            duration += ' / '
+        if day_hour_dict.get('current_hours'):
+            duration += str(day_hour_dict.get('current_hours')) + 'ساعة'
+
+        total_price_unit = (day_hour_dict.get('current_days') * self.daily_rate) + \
+            (day_hour_dict.get('current_hours') * self.daily_rate / 24)
+
+        price_unit = total_price_unit / (1 + (self.tax_percentage / 100))
+        branch_analytic_account_ids = self.vehicle_branch_id.analytic_account_ids
+
+        if not branch_analytic_account_ids:
+            raise ValidationError(
+                _(f"Add Analytic Accounts To {self.vehicle_branch_id.name}"))
+
+        analytic_data = {
+            self.vehicle_id.analytic_account_id.id: 100,
+            branch_analytic_account_ids[0].id: 100
+        }
+
+        if not self.trip_days_account_id:
+            raise ValidationError(_(f"Insert account for {self.name}"))
+
+        return {
+            'name': self.trip_days_label,
+            'rental_contract_duration': duration,
+            'account_id': self.trip_days_account_id.id,
+            'quantity': 1,
+            'price_unit': price_unit,
+            'analytic_distribution': analytic_data,
+            'tax_ids': [(6, 0, self.tax_ids.ids)]
+        }
+
+    def _prepare_account_move_values(self, invoice_date=fields.Date.today()):
+        self.ensure_one()
+        allowed_journal_ids = self.vehicle_branch_id.sales_journal_ids
+        if not allowed_journal_ids:
+            raise ValidationError(
+                _(f"Add Sales Journals To {self.vehicle_branch_id.name}"))
+
+        return {
+            'move_type': 'out_invoice',
+            'rental_contract_id': self.id,
+            'invoice_date': invoice_date,
+            'journal_id': allowed_journal_ids[0].id,
+            'partner_id': self.partner_id.id,
+            'currency_id': self.company_currency_id.id,
+        }
+
+    def _prepare_invoice_vals_from_dates(self, day_hour_dict={}):
+        self.ensure_one()
+        invoice_vals = {}
+        invoice_line_ids = [
+            (0, 0, self._prepare_trip_days_invoice_line_values(day_hour_dict))]
+        all_service_ids = self.additional_service_ids | self.supplementary_service_ids
+
+        if self.authorization_type == 'external':
+            all_service_ids |= self.authorization_country_id
+        elif self.authorization_type == 'internal':
+            all_service_ids |= self.additional_supplement_service_line_ids.filtered(
+                lambda l: l.type == 'internal_authorization')
+
+        repeated_service_ids = all_service_ids.filtered(
+            lambda s: s.calculation == 'repeated')
+        for service in repeated_service_ids:
+            invoice_line_ids.append(
+                (0, 0, service._prepare_invoice_line_vals(day_hour_dict)))
+
+        if invoice_line_ids:
+
+            if day_hour_dict.get('date_to'):
+                invoice_date = day_hour_dict.get('date_to').date()
+                invoice_vals = self._prepare_account_move_values(invoice_date)
+            else:
+                invoice_vals = self._prepare_account_move_values()
+
+            invoice_vals.update({'invoice_line_ids': invoice_line_ids})
+
+        return invoice_vals
+
+    def create_one_time_services_invoice(self):
+        self.ensure_one()
+        all_service_ids = self.additional_service_ids | self.supplementary_service_ids
+        if self.authorization_type == 'external':
+            all_service_ids |= self.authorization_country_id
+        one_time_service_ids = all_service_ids.filtered(
+            lambda s: s.calculation == 'once')
+
+        invoice_line_ids = []
+        for service in one_time_service_ids:
+            invoice_line_ids.append(
+                (0, 0, service._prepare_invoice_line_vals()))
+
+        if invoice_line_ids:
+            invoice_vals = self._prepare_account_move_values()
+            invoice_vals.update({'invoice_line_ids': invoice_line_ids})
+            invoice = self.env['account.move'].create(invoice_vals)
+            invoice.action_post()
+
+    def _create_missing_schedular_invoice(self, drop_off_date):
+        local_timezone = pytz.timezone(self.company_id.tz or 'UTC')
+
+        drop_off_date_before_month = drop_off_date - relativedelta(month=1)
+        last_day_of_last_month = calendar.monthrange(
+            drop_off_date_before_month.year, drop_off_date_before_month.month)[1]
+
+        local_date_to = drop_off_date_before_month.replace(
+            day=last_day_of_last_month,  hour=23, minute=59, second=59)
+        utc_date_to = local_timezone.localize(
+            local_date_to).astimezone(pytz.UTC).replace(tzinfo=None)
+
+        invoice_vals_list = self.create_schedular_contract_invoice_list(
+            utc_date_to)
+
+        invoices = self.env['account.move'].create(invoice_vals_list)
+        invoices.action_post()
+
+    def get_closing_day_hour(self, drop_off_date):
+        self.ensure_one()
+        local_timezone = pytz.timezone(self.company_id.tz or 'UTC')
+        current_date_time = fields.Datetime.now()
+        local_first_month_date_time = current_date_time.replace(
+            day=1, hour=0, minute=0, second=0)
+        utc_first_month_date_time = local_timezone.localize(
+            local_first_month_date_time).astimezone(pytz.UTC).replace(tzinfo=None)
+
+        date_to = drop_off_date
+        date_from = self.pickup_date
+        if self.pickup_date < utc_first_month_date_time:
+            date_from = utc_first_month_date_time
+
+        day_hour_dict = self.get_day_hour(date_from, date_to)
+
+        # Get All Current hours of contract
+        if date_from != self.pickup_date:
+            pickup_date_day_hour_dict = self.get_day_hour(
+                self.pickup_date, date_to)
+            day_hour_dict.update(
+                {'current_hours': pickup_date_day_hour_dict.get('current_hours')})
+
+        return day_hour_dict
+
+    def get_schedular_day_hour(self, date_time):
+        self.ensure_one()
+        local_timezone = pytz.timezone(self.company_id.tz or 'UTC')
+        date_from = self.pickup_date
+        last_current_month_day = calendar.monthrange(
+            date_time.year, date_time.month)[1]
+        local_first_month_date_time = date_time.replace(
+            day=1, hour=0, minute=0, second=0)
+        local_last_month_date_time = date_time.replace(
+            day=last_current_month_day, hour=23, minute=59, second=59)
+
+        utc_first_month_date_time = local_timezone.localize(
+            local_first_month_date_time).astimezone(pytz.UTC).replace(tzinfo=None)
+        utc_last_month_date_time = local_timezone.localize(
+            local_last_month_date_time).astimezone(pytz.UTC).replace(tzinfo=None)
+
+        date_to = utc_last_month_date_time
+        if self.pickup_date < utc_first_month_date_time:
+            date_from = utc_first_month_date_time
+
+        day_hour_dict = self.get_day_hour(date_from, date_to)
+        # postponement Current hours to be total calculated in closing invoice
+        if date_from == self.pickup_date:
+            day_hour_dict.update({'current_hours': 0})
+
+        day_hour_dict.update({'date_from': date_from, 'date_to': date_to})
+        return day_hour_dict
+
+    def _get_dates_to_create(self, date_to):
+        self.ensure_one()
+        dates_to_create = []
+
+        local_timezone = pytz.timezone(self.company_id.tz or 'UTC')
+        last_pickup_month_day = calendar.monthrange(
+            self.pickup_date.year, self.pickup_date.month)[1]
+
+        local_start_date = self.pickup_date.replace(
+            day=last_pickup_month_day,  hour=23, minute=30)
+        utc_start_date = local_timezone.localize(
+            local_start_date).astimezone(pytz.UTC).replace(tzinfo=None)
+
+        while (utc_start_date <= date_to):
+            date_exist = False
+            for log in self.schedular_invoice_log_ids:
+                if utc_start_date >= log.date_from and utc_start_date <= log.date_from:
+                    date_exist = True
+                    break
+            if not date_exist:
+                dates_to_create.append(utc_start_date)
+            utc_start_date += relativedelta(months=1)
+            last_start_date_month_day = calendar.monthrange(
+                utc_start_date.year, utc_start_date.month)[1]
+            utc_start_date = utc_start_date.replace(
+                day=last_start_date_month_day)
+
+        return dates_to_create
+
+    def create_schedular_contract_invoice_list(self, date_to=fields.Datetime.now()):
+        self.ensure_one()
+        contract_invoice_vals_list = []
+        dates_to_create = self._get_dates_to_create(date_to)
+        for date_time in dates_to_create:
+            day_hour_dict = self.get_schedular_day_hour(date_time)
+            invoice_vals = self._prepare_invoice_vals_from_dates(
+                day_hour_dict)
+            if invoice_vals:
+
+                invoice_log_id = self.env['rental.contract.schedular.invoice.log'].sudo().create({
+                    'actual_days': day_hour_dict.get('actual_days'),
+                    'actual_hours': day_hour_dict.get('actual_hours'),
+                    'current_days': day_hour_dict.get('current_days'),
+                    'current_hours': day_hour_dict.get('current_hours'),
+                    'date_from': day_hour_dict.get('date_from'),
+                    'date_to': day_hour_dict.get('date_to'),
+                    'rental_contract_id': self.id
+                })
+                invoice_vals.update({'invoice_log_id': invoice_log_id.id})
+                contract_invoice_vals_list.append(invoice_vals)
+        return contract_invoice_vals_list
+
+    @api.model
+    def schedular_create_repeated_services_invoices(self):
+        # Run On Only Open Contracts
+        invoice_vals_list = []
+
+        for contract in self.search([('state', '=', 'opened')]):
+            invoice_vals_list.extend(
+                contract.create_schedular_contract_invoice_list())
+
+        invoices = self.env['account.move'].create(invoice_vals_list)
+        invoices.action_post()
+
+    def create_closing_invoice(self, drop_off_date):
+        invoice_vals_list = []
+
+        for contract in self.filtered(lambda c: c.state == 'opened'):
+            # create missing schedular if exist
+            contract._create_missing_schedular_invoice(drop_off_date)
+            # Create Drop Off Invoice
+            day_hour_dict = contract.get_closing_day_hour(drop_off_date)
+            invoice_vals = contract._prepare_invoice_vals_from_dates(
+                day_hour_dict)
+            if invoice_vals:
+                invoice_vals_list.append(invoice_vals)
+
+        invoices = self.env['account.move'].create(invoice_vals_list)
+        invoices.action_post()
+
+    def check_model_pricing(self):
+        for rec in self:
+            if not rec.vehicle_model_datail_id:
+                raise ValidationError(
+                    _(f"Configure Model Pricing For {rec.vehicle_id.display_name}"))
+
+    def assign_model_pricing_fields(self):
+        for rec in self:
+
+            # Set Configuration Fields
+            #   ----------> Model Pricing Fields
+            rec.model_pricing_vehicle_brand_id = rec.vehicle_model_datail_id.vehicle_model_brand_id
+            rec.model_pricing_free_kilometers = rec.vehicle_model_datail_id.free_kilometers
+            rec.model_pricing_extra_kilometers_cost = rec.vehicle_model_datail_id.extra_kilometers_cost
+            rec.model_pricing_normal_day_price = rec.vehicle_model_datail_id.normal_day_price
+            rec.model_pricing_weekly_day_price = rec.vehicle_model_datail_id.weekly_day_price
+            rec.model_pricing_monthly_day_price = rec.vehicle_model_datail_id.monthly_day_price
+            rec.model_pricing_full_tank_cost = rec.vehicle_model_datail_id.full_tank_cost
+            rec.model_pricing_start_date = rec.vehicle_model_datail_id.start_date
+            rec.model_pricing_end_date = rec.vehicle_model_datail_id.end_date
+
+    def set_additional_supplementary_lines(self):
+        available_lines = self.env['additional.supplementary.services'].search([
+        ])
+        for rec in self:
+            additional_supplement_service_line_ids = [(5, 0, 0)]
+            for line in available_lines:
+                additional_supplement_service_line_ids.append((0, 0, {
+                    'name': line.name,
+                    'type': line.type,
+                    'calculation': line.calculation,
+                    'price': line.price,
+                    'account_id': line.account_id.id,
+                }))
+            rec.additional_supplement_service_line_ids = additional_supplement_service_line_ids
+
+    def get_rental_configuration(self):
+        all_config_allowed = self.env['rental.config.settings'].search([])
+        for rec in self:
+            matched_record_config = all_config_allowed.filtered(
+                lambda c: c.company_id == rec.company_id)
+            if not matched_record_config:
+                raise ValidationError(
+                    _("Add Rental configuration for current company"))
+            rec.rental_configuration_id = matched_record_config[0]
+
+    def assign_rental_configuration_fields(self):
+        for rec in self:
+
+            # Set Configuration Fields
+            #   ----------> Rental Config Fields
+            rec.trip_days_account_id = rec.rental_configuration_id.trip_days_account_id
+            rec.trip_days_label = rec.rental_configuration_id.trip_days_label
+            rec.extra_km_account_id = rec.rental_configuration_id.extra_km_account_id
+            rec.extra_km_label = rec.rental_configuration_id.extra_km_label
+            rec.tax_ids = [(6, 0, rec.rental_configuration_id.tax_ids.ids)]
+
+    def assign_in_check_list_fields(self):
+        for record in self:
+            record.in_ac = record.out_ac
+            record.in_radio_stereo = record.out_radio_stereo
+            record.in_screen = record.out_screen
+            record.in_spare_tire_tools = record.out_spare_tire_tools
+            record.in_tires = record.out_tires
+            record.in_spare_tires = record.out_spare_tires
+            record.in_speedometer = record.out_speedometer
+            record.in_keys = record.out_keys
+            record.in_care_seats = record.out_care_seats
+            record.in_oil_change_km = record.out_oil_change_km
+            record.in_fuel_type_code = record.out_fuel_type_code
+            record.in_keys_number = record.out_keys_number
+            record.in_safety_triangle = record.out_safety_triangle
+            record.in_fire_extinguisher = record.out_fire_extinguisher
+            record.in_first_aid_kit = record.out_first_aid_kit
+            record.in_oil_type = record.out_oil_type
+            record.in_oil_change_date = record.out_oil_change_date
+            record.in_vehicle_status = record.out_vehicle_status
+
+    def apply_in_check_list_to_vehicle(self):
+        for record in self:
+            record.vehicle_id.ac = record.in_ac
+            record.vehicle_id.radio_stereo = record.in_radio_stereo
+            record.vehicle_id.screen = record.in_screen
+            record.vehicle_id.spare_tire_tools = record.in_spare_tire_tools
+            record.vehicle_id.tires = record.in_tires
+            record.vehicle_id.spare_tires = record.in_spare_tires
+            record.vehicle_id.speedometer = record.in_speedometer
+            record.vehicle_id.keys = record.in_keys
+            record.vehicle_id.care_seats = record.in_care_seats
+            record.vehicle_id.oil_change_km = record.in_oil_change_km
+            record.vehicle_id.fuel_type_code = record.in_fuel_type_code
+            record.vehicle_id.keys_number = record.in_keys_number
+            record.vehicle_id.safety_triangle = record.in_safety_triangle
+            record.vehicle_id.fire_extinguisher = record.in_fire_extinguisher
+            record.vehicle_id.first_aid_kit = record.in_first_aid_kit
+            record.vehicle_id.oil_type = record.in_oil_type
+            record.vehicle_id.oil_change_date = record.in_oil_change_date
+            record.vehicle_id.vehicle_status = record.in_vehicle_status
+
     def next_draft_state(self):
         if self.draft_state == 'customer_info':
             self.draft_state = 'vehicle_info'
         elif self.draft_state == 'vehicle_info':
+            self.check_model_pricing()
+            self.assign_model_pricing_fields()
             self.draft_state = 'contract_info'
         elif self.draft_state == 'contract_info':
+            self.set_additional_supplementary_lines()
             self.draft_state = 'additional_suppl_service'
         elif self.draft_state == 'additional_suppl_service':
+            self.get_rental_configuration()
+            self.assign_rental_configuration_fields()
             self.draft_state = 'financial_info'
 
     def prev_draft_state(self):
@@ -495,28 +1048,73 @@ class RentalContract(models.Model):
         self.vehicle_id.write({'state_id': rental_vehicle_state.id})
 
         for rec in self:
+            # Set Contract Name
             rec.name = self.env['ir.sequence'].next_by_code(
                 'rental.contract.seq')
+            # Create OneTime Services Invoice
+            rec.create_one_time_services_invoice()
 
         self.write({'state': 'opened'})
 
-    def action_delivered_pending(self):
-        self.write({'state': 'delivered_pending'})
-
-    def set_current_km_extra_amount(self):
-        self.ensure_one()
-        if self.odometer > self.odometer_km_in:
-            raise ValidationError(_('KM In Must Be greater Than KM Out'))
-        self.current_km_extra_amount = self.display_current_km_extra_amount
-        return {'type': 'ir.actions.act_window_close'}
-
-    def action_delivered_debit(self):
-        self.write({'state': 'delivered_debit'})
+    def action_close_info(self):
+        drop_off_date = fields.Datetime.now()
+        self.create_closing_invoice(drop_off_date)
+        self.assign_in_check_list_fields()
+        self.write({'state': 'close_info', 'drop_off_date': drop_off_date})
 
     def action_close(self):
-        # if not all(payment.state == 'paid' for payment in self.account_payment_ids):
-        #     raise UserError(
-        #         _('You cannot close this contract because there are payments that are not in posted state.'))
+
+        accident_obj = self.env['fleet.accident'].sudo()
+        damage_obj = self.env['fleet.damage'].sudo()
+        ready_to_rent_fleet_status = self.env['fleet.vehicle.state'].search(
+            [('type', '=', 'ready_to_rent')])
+
+        for rec in self:
+            if rec.vehicle_in_state == 'accident':
+                accident_obj.create({
+                    'accident_category': 'received_accident',
+                    'fleet_vehicle_id': rec.vehicle_id.id,
+                    'partner_id': rec.partner_id.id,
+                    'rental_contract_id': rec.id,
+                    'city_id': rec.city_id.id,
+                    'report_source': rec.report_source,
+                    'other_report_source': rec.other_report_source,
+                    'announcement_date': rec.announcement_date,
+                    'accident_date': rec.accident_date,
+                })
+
+            elif rec.vehicle_in_state == 'damage':
+                damage_obj.create({
+                    'vehicle_id': rec.vehicle_id.id,
+                    'rental_contract_id': rec.id,
+                    'customer_id': rec.partner_id.id,
+                })
+
+            elif rec.vehicle_in_state == 'none':
+                if rec.current_due_amount <= 0:
+                    rec.state = 'closed'
+                else:
+                    rec.state = 'delivered_debit'
+
+            if rec.vehicle_in_state in ['other', 'damage', 'accident']:
+                rec.state = 'delivered_pending'
+
+            if rec.vehicle_in_state in ['other', 'none']:
+                if not ready_to_rent_fleet_status:
+                    raise ValidationError(
+                        _("Please Configure Ready To Rent Fleet status"))
+                rec.vehicle_id.state_id = ready_to_rent_fleet_status[0].id
+
+            rec.apply_in_check_list_to_vehicle()
+
+    def action_final_close(self):
+        for rec in self:
+
+            # InDebit Status due amount check
+            if rec.due_amount > 0:
+                raise ValidationError(
+                    _("Due amount must be less than or equal to zero !"))
+
         self.write({'state': 'closed'})
 
     def action_cancel(self):
@@ -525,6 +1123,13 @@ class RentalContract(models.Model):
                 _('You cannot cancel this contract because there are payments that are not in draft state.'))
         self.account_payment_ids.action_cancel()
         self.write({'state': 'cancelled'})
+
+    def set_current_km_extra_amount(self):
+        self.ensure_one()
+        if self.out_odometer > self.in_odometer:
+            raise ValidationError(_('KM In Must Be greater Than KM Out'))
+        self.current_km_extra_amount = self.display_current_km_extra_amount
+        return {'type': 'ir.actions.act_window_close'}
 
     def action_pay(self):
         return {
@@ -536,23 +1141,38 @@ class RentalContract(models.Model):
         }
 
     def view_vehicle_model_pricing(self):
-        view_id = self.env.ref(
-            'rental_contract.fleet_vehicle_model_pricing_view_form').id
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Vehicle Model Pricing'),
-            'res_model': 'fleet.vehicle.model.detail',
-            'target': 'new',
-            'view_mode': 'form',
-            'res_id': self.vehicle_model_datail_id.id,
-            'views': [[view_id, 'form']]
-        }
+        self.ensure_one()
+        if self.draft_state == 'vehicle_info' and self.vehicle_model_datail_id:
+            view_id = self.env.ref(
+                'rental_contract.fleet_vehicle_model_pricing_view_form').id
+            return {
+                'type': 'ir.actions.act_window',
+                'name': _('Vehicle Model Pricing'),
+                'res_model': 'fleet.vehicle.model.detail',
+                'target': 'new',
+                'view_mode': 'form',
+                'res_id': self.vehicle_model_datail_id.id,
+                'views': [[view_id, 'form']]
+            }
+        else:
+            view_id = self.env.ref(
+                'rental_contract.view_rental_contract_model_pricing_form').id
+            return {
+                'type': 'ir.actions.act_window',
+                'name': _('Vehicle Model Pricing'),
+                'res_model': 'rental.contract',
+                'target': 'new',
+                'view_mode': 'form',
+                'context': {'create': 0, 'edit': 0},
+                'res_id': self.id,
+                'views': [[view_id, 'form']]
+            }
 
     def view_calculate_km(self):
         view_id = self.env.ref(
             'rental_contract.view_rental_contract_calculate_km_form').id
-        if not self.odometer_km_in:
-            self.odometer_km_in = self.odometer
+        if not self.in_odometer:
+            self.in_odometer = self.out_odometer
         return {
             'type': 'ir.actions.act_window',
             'name': _('Calculate KM'),
@@ -590,6 +1210,49 @@ class RentalContract(models.Model):
             'domain': [('rental_contract_id', '=', self.id), ('move_type', '=', 'out_refund')]
         }
 
+    def view_contract_additional_supplement_service(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Contract Additional Supplementary Services'),
+            'res_model': 'additional.supplementary.services.line',
+            'view_mode': 'list',
+            'domain': [('id', 'in', self.additional_supplement_service_line_ids.ids)]
+        }
+
+    def view_schedular_invoice_log(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Rental Contract Schedular Invoice Log'),
+            'res_model': 'rental.contract.schedular.invoice.log',
+            'view_mode': 'list',
+            'domain': [('rental_contract_id', '=', self.id)],
+            'context': {'default_rental_contract_id': self.id},
+        }
+
+    def view_related_accident(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Accident'),
+            'res_model': 'fleet.accident',
+            'view_mode': 'list, form',
+            'domain': [('rental_contract_id', '=', self.id)],
+            'context': {'create': 0}
+        }
+
+    def view_related_damage(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Damage'),
+            'res_model': 'fleet.damage',
+            'view_mode': 'list, form',
+            'domain': [('rental_contract_id', '=', self.id)],
+            'context': {'create': 0}
+        }
+
 
 class RentalContractFinesDiscountLine(models.Model):
     _name = 'rental.contract.fines.discount.line'
@@ -607,3 +1270,59 @@ class RentalContractFinesDiscountLine(models.Model):
         ('fine', 'Fine'),
         ('discount', 'Discount'),
     ], string='Type', required=True)
+
+
+class ContractFinesDiscountConfigLines(models.Model):
+    _name = 'additional.supplementary.services.line'
+    _inherit = 'additional.supplementary.services'
+    _description = 'Additional Supplementary Services Contract Line'
+
+    rental_contract_id = fields.Many2one(
+        'rental.contract', string='Contract', ondelete="cascade")
+
+    def _prepare_invoice_line_vals(self, day_hour_dict={}):
+        self.ensure_one()
+        price_unit = 0.0
+        duration = ''
+
+        branch_analytic_account_ids = self.rental_contract_id.vehicle_branch_id.analytic_account_ids
+
+        if not branch_analytic_account_ids:
+            raise ValidationError(
+                _(f"Add Analytic Accounts To {self.rental_contract_id.vehicle_branch_id.name}"))
+
+        if not self.account_id:
+            raise ValidationError(_(f"Insert account for {self.name}"))
+
+        analytic_data = {
+            self.rental_contract_id.vehicle_id.analytic_account_id.id: 100,
+            branch_analytic_account_ids[0].id: 100
+        }
+
+        if self.calculation == 'once':
+            price_unit = self.price / \
+                (1 + (self.rental_contract_id.tax_percentage / 100))
+
+        elif self.calculation == 'repeated':
+            if day_hour_dict.get('current_days'):
+                duration += str(day_hour_dict.get('current_days')) + 'يوم'
+            if day_hour_dict.get('current_days') and day_hour_dict.get('current_hours'):
+                duration += ' / '
+            if day_hour_dict.get('current_hours'):
+                duration += str(day_hour_dict.get('current_hours')) + 'ساعة'
+
+            total_price_unit = (day_hour_dict.get('current_days') * self.price) + \
+                (day_hour_dict.get('current_hours') * self.price / 24)
+
+            price_unit = total_price_unit / \
+                (1 + (self.rental_contract_id.tax_percentage / 100))
+
+        return {
+            'name': self.name,
+            'rental_contract_duration': duration,
+            'account_id': self.account_id.id,
+            'quantity': 1,
+            'price_unit': price_unit,
+            'analytic_distribution': analytic_data,
+            'tax_ids': [(6, 0, self.rental_contract_id.rental_configuration_id.tax_ids.ids)]
+        }

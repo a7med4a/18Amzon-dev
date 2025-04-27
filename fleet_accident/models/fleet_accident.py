@@ -23,7 +23,6 @@ class FleetAccident(models.Model):
     ], string='Accident Category', required=True, default='received_accident')
     partner_id = fields.Many2one(
         'res.partner', string='Customer', domain="[('create_from_rental', '=', True)]", required=True)
-    rental_contract_no = fields.Char('Rental Contract Number', required=True)
     fleet_vehicle_id = fields.Many2one(
         'fleet.vehicle', string='Vehicle', domain="[('state_id.type', '!=', 'sold')]", required=True)
     image_128 = fields.Image(

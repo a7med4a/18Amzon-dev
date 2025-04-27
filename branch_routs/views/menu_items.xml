@@ -6,13 +6,13 @@
         sequence="10" />
 
     <menuitem id="branch_routs_configuration_menu"
-        name="Branches"
+        name="Routes"
         action="branch_routs.branch_route_action" groups="base.group_user"
         parent="branch_route_configuration_root_menu"
         sequence="10" />
 
     <menuitem id="vehicle_routs_configuration_menu"
-        name="Vehicles"
+        name="Routes Log"
         action="branch_routs.vehicle_route_action" groups="base.group_user"
         parent="branch_route_configuration_root_menu"
         sequence="20" />

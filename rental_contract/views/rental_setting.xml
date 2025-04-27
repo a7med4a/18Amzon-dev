@@ -1,0 +1,32 @@
+<odoo>
+    <record id="view_rental_config_form" model="ir.ui.view">
+        <field name="name">rental.config.settings.form</field>
+        <field name="model">rental.config.settings</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="trip_days_label"/>
+                            <field name="trip_days_account_id"/>
+                            <field name="extra_km_label"/>
+                            <field name="extra_km_account_id"/>
+                            <field name="tax_ids" widget="many2many_tags"/>
+                            
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="rental_config_action" model="ir.actions.act_window">
+        <field name="name">Rental Configuration</field>
+        <field name="res_model">rental.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+    </record>
+
+    <menuitem id="set_default_rental" name="Rental Set Default"  sequence="1"
+              parent="rental_customization.menu_configuration_root" action="rental_config_action"/>
+</odoo>

@@ -1,0 +1,13 @@
+<odoo>
+
+    <record id="rental_contract_schedular_invoice_cron" model="ir.cron">
+        <field name="name">Rental Contract Create Schedular Invoice</field>
+        <field name="model_id" ref="model_rental_contract" />
+        <field name="interval_number">1</field>
+        <field name="interval_type">months</field>
+        <field name="nextcall" eval="(DateTime.now().replace(day=1, hour=20) + relativedelta(months=1, days=-1)).strftime('%Y-%m-%d %H:%M:%S')" />
+        <field name="state">code</field>
+        <field name="code">model.schedular_create_repeated_services_invoices()</field>
+    </record>
+
+</odoo>

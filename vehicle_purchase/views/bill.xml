@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="move_form_inherit_extra_fees" model="ir.ui.view">
+            <field name="name">account.move.form</field>
+            <field name="model">account.move</field>
+            <field name="inherit_id" ref="account.view_move_form"/>
+            <field name="arch" type="xml">
+                <!-- Add extra_fees and subtotal to invoice_lines tree view -->
+                <xpath expr="//field[@name='invoice_line_ids']/list/field[@name='price_unit']" position="after">
+                    <field name="extra_fees" string="Extra Fees" column_invisible="1"/>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>

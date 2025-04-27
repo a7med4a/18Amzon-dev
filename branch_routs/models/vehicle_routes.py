@@ -14,6 +14,8 @@ class VehicleRouts(models.Model):
 
     fleet_vehicle_id = fields.Many2one(
         'fleet.vehicle', string='Vehicle', required=True)
+    running_vehicle_ids = fields.Many2many(
+        'fleet.vehicle', compute="_compute_running_vehicle_ids")
     branch_route_id = fields.Many2one(
         'branch.route', string='Branch Route', ondelete="cascade")
     destination_type = fields.Selection(
@@ -28,11 +30,11 @@ class VehicleRouts(models.Model):
         related='branch_route_id.transfer_type', string='Transfer Type', store=True)
     exit_checklist_status = fields.Selection([
         ('under_check', 'Under Check'),
-        ('in_transfer', 'In Transfer'),
+        ('in_transfer', 'Exit Check Done'),
     ], string='Exist CheckList Status', tracking=True)
     entry_checklist_status = fields.Selection([
         ('in_transfer', 'In Transfer'),
-        ('done', 'Done'),
+        ('done', 'Entry Check Done'),
     ], string='Entry CheckList Status', tracking=True)
     exist_under_check_date = fields.Datetime(
         'Exist Under Check Date', tracking=True)
@@ -148,6 +150,12 @@ class VehicleRouts(models.Model):
         selection=VEHICLE_STATUS,
         string='Entry Vehicle Status', tracking=True)
 
+    def _compute_running_vehicle_ids(self):
+        running_vehicle_ids = self.search(
+            [('branch_route_id.state', 'not in', ['entry_done', 'cancel'])]).mapped('fleet_vehicle_id')
+        for rec in self:
+            rec.running_vehicle_ids = [(6, 0, running_vehicle_ids.ids)]
+
     @api.constrains('entry_odometer')
     def _check_odometer_validity(self):
         for rec in self:
@@ -155,7 +163,17 @@ class VehicleRouts(models.Model):
                 raise ValidationError(
                     _(f"Odometer must be greater than {rec.exit_odometer}"))
 
+    @api.constrains('fleet_vehicle_id')
+    def _check_exist_vehicle_route(self):
+        for rec in self:
+            exist_running_vehicle_route = self.search([('branch_route_id.state', 'not in', [
+                                                      'entry_done', 'cancel']), ('id', '!=', rec.id)])
+            if exist_running_vehicle_route:
+                raise ValidationError(
+                    _(f"Vehicle {rec.fleet_vehicle_id} exist in branch route {exist_running_vehicle_route.branch_route_id.name} which is in {exist_running_vehicle_route.branch_route_id} state"))
+
     # Exit Functions
+
     def action_branch_approve(self):
         for rec in self:
             rec.with_context(tracking_disable=True).write({

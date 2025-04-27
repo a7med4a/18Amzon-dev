@@ -20,7 +20,8 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_create_installment_board" string="Calculate Installments" type="object"
+                    <field name="bill_id" invisible="1"/>
+                    <button name="action_create_installment_board" context="{'create_from_btn': True}" string="Calculate Installments" type="object"
                             confirm="Are you sure you want to Calculate Installments ?"
                             class="btn-primary" invisible="state not in  ('draft') or installment_board_ids"/>
                     <button name="action_create_installment_payment" string="Create Installment Payment" type="object"
@@ -35,7 +36,7 @@
                             class="btn-primary" invisible="state not in  ('confirmed') or vehicle_ids"/>
                     <button name="action_create_bill" string="Create Bill" type="object"
                             confirm="Are you sure you want to Create Bill ?"
-                            class="btn-primary" invisible="state not in  ('confirmed') or is_advanced_payment_paid == False"/>
+                            class="btn-primary" invisible="state not in  ('confirmed') or is_advanced_payment_paid == False or bill_id != False"/>
                     <button name="action_reset_draft" string="Reset To Draft" type="object"
                             confirm="Are you sure you want to reset back to draft state ?"
                             class="btn-primary" invisible="state not in  ('cancelled','refused')"/>
@@ -51,6 +52,7 @@
                     <button name="action_cancel" string="Cancel" type="object"
                             confirm="Are you sure you want to Cancel PR Request ?"
                             class="btn-secondary" invisible="state not in ('under_review')"/>
+
                     <field name="state" widget="statusbar"/>
                 </header>
                 <sheet>
@@ -62,11 +64,10 @@
                                 <span class="o_stat_text"> Payments</span>
                             </div>
                         </button>
-                        <button name="action_view_bills" icon="fa-usd" type="object"
-                                help="Show Payments related">
+                        <button name="action_view_bills" icon="fa-usd" type="object" invisible="bill_id == False"
+                                help="Show Bills related">
                             <div class="o_stat_widget">
-<!--                                <field name="account_payment_count" class="o_stat_value"/>-->
-                                <span class="o_stat_text"> Bills</span>
+                                <span class="o_stat_text">1 Bills</span>
                             </div>
                         </button>
                         <button name="action_view_vehicle" icon="fa-bars" type="object"
@@ -80,7 +81,16 @@
                     <div class="oe_title">
                         <label for="name" class="oe_edit_only"/>
                         <h1>
-                            <field name="name" readonly="1"/>
+                            <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="flex-grow: 1;">
+                        <field name="name"/>
+                    </div>
+                    <div style="flex-shrink: 0;">
+                        <field name="installment_status" widget="badge" class="oe_inline"
+                               style="font-size: 22px; padding: 8px 20px; font-weight: bold;
+                                      min-width: 140px; text-align: center;"/>
+                    </div>
+                </div>
                         </h1>
                     </div>
                     <group>
@@ -183,12 +193,24 @@
                             </div>
                         </page>
                         <page string="Installments Board">
+                            <div class="btn-group" style="margin-bottom: 10px;">
+        <button name="action_export_installments"
+                string="Export Installments"
+                type="object"
+                class="btn btn-outline-secondary"
+                icon="fa-download"/>
+        <button name="vehicle_purchase.action_import_installments_wizard"
+                string="Import Installments"
+                type="action"
+                class="btn btn-outline-secondary"
+                icon="fa-upload"/>
+    </div>
                             <field name="installment_board_ids" readonly="state != 'draft'">
                                 <list editable="bottom" create="false" edit="true">
-                                    <field name="date" optional='show'/>
-                                    <field name="amount" optional='show'/>
-                                    <field name="paid_amount" optional='show'/>
-                                    <field name="remaining_amount" optional='show'/>
+                                    <field name="date" sum="Total" optional='show'/>
+                                    <field name="amount" sum="Total" optional='show'/>
+                                    <field name="paid_amount" sum="Total" optional='show'/>
+                                    <field name="remaining_amount" sum="Total" optional='show'/>
                                     <field name="state" optional='show'/>
                                 </list>
                             </field>

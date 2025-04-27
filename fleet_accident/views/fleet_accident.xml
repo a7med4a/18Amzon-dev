@@ -59,7 +59,6 @@
                         <group string="Accident Information">
                             <field name="accident_category" readonly="state in ['invoicing', 'closed', 'cancel']"/>
                             <field name="partner_id" readonly="state in ['invoicing', 'closed', 'cancel']"/>
-                            <field name="rental_contract_no" readonly="state in ['invoicing', 'closed', 'cancel']"/>
                             <field name="endurance_rate"/>
                             <field name="endurance_customer"/>
                             <field name="insurance_type"/>
@@ -191,7 +190,6 @@
                 <field name="fleet_vehicle_id"/>
                 <field name="accident_category"/>
                 <field name="partner_id"/>
-                <field name="rental_contract_no"/>
                 <field name="endurance_rate"/>
                 <field name="endurance_customer"/>
                 <field name="insurance_type"/>

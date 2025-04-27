@@ -1,0 +1,13 @@
+<odoo>
+    <record id="fleet_accident_view_form" model="ir.ui.view">
+        <field name="name">fleet.accident.view.form.inherit</field>
+        <field name="model">fleet.accident</field>
+        <field name="inherit_id" ref="fleet_accident.fleet_accident_view_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="rental_contract_id" readonly="state in ['invoicing', 'closed', 'cancel']" />
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

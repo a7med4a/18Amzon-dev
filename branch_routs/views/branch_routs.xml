@@ -79,15 +79,18 @@
             <group>
               <field name="destination_branch_domain"
                 invisible="1" />
+              <field name="source_branch_domain"
+                invisible="1" />
               <field name="company_id"
-                readonly="state != 'draft'" />
+                readonly="state != 'draft'" options="{'no_open': True, 'no_create': True}"/>
               <field name="destination_type"
                 readonly="state != 'draft'" />
               <label for="source_branch_id"
                 string="Source Branch / Workshop" />
               <field name="source_branch_id"
                 nolabel="1"
-                readonly="state != 'draft'" />
+                domain="source_branch_domain"
+                readonly="state != 'draft'"  options="{'no_open': True, 'no_create': True}"/>
               <label for="destination_branch_id"
                 string="Destination Branch"
                 invisible="destination_type != 'branch'" />
@@ -98,24 +101,23 @@
                 nolabel="1"
                 invisible="not destination_type"
                 domain="destination_branch_domain"
-                options="{'no_quick_create': True}"
-                readonly="state != 'draft'" />
+                readonly="state != 'draft'"  options="{'no_open': True, 'no_create': True}"/>
             </group>
             <group>
               <field name="transfer_type"
                 readonly="state != 'draft'" />
               <field name="driver_employee_id"
                 invisible="transfer_type not in ['driver', 'amazon']"
-                required="transfer_type  in ['driver', 'amazon'] and state == 'approved'"
-                readonly="state not in ['draft', 'approved']" />
+                required="transfer_type  in ['driver', 'amazon']"
+                readonly="state not in ['draft']" options="{'no_open': True, 'no_create': True}" />
               <field name="truck_vehicle_id"
                 invisible="transfer_type != 'amazon'"
-                required="transfer_type == 'amazon' and state == 'approved'"
-                readonly="state not in ['draft', 'approved']" />
+                required="transfer_type == 'amazon'"
+                readonly="state not in ['draft']" options="{'no_open': True, 'no_create': True}" />
               <field name="third_party_partner_id"
                 invisible="transfer_type != 'outsource'"
                 required="transfer_type == 'outsource' and state == 'approved'"
-                readonly="state not in ['draft', 'approved']" />
+                readonly="state not in ['draft', 'approved']" options="{'no_open': True, 'no_create': True}" />
               <field name="create_date"
                 string="Request Date"
                 readonly="True" />
@@ -134,8 +136,9 @@
                 readonly="state != 'draft'"
                 invisible="disable_create_vehicle_line">
                 <list editable="bottom">
-                  <field name="fleet_vehicle_id"
-                    domain="[('state_id.allow_transfer', '=', True), ('branch_id', '=', parent.source_branch_id)]" />
+                  <field name="running_vehicle_ids" column_invisible="1"/>
+                  <field name="fleet_vehicle_id" options="{'no_open': True, 'no_create': True}"
+                    domain="[('state_id.allow_transfer', '=', True), ('branch_id', '=', parent.source_branch_id), ('id', 'not in', running_vehicle_ids.ids) ]" />
                   <field name="exit_checklist_status"
                     readonly="True" />
                   <field name="entry_checklist_status"
@@ -146,8 +149,9 @@
                 readonly="state != 'draft'"
                 invisible="not disable_create_vehicle_line">
                 <list create="0">
-                  <field name="fleet_vehicle_id"
-                    domain="[('state_id.allow_transfer', '=', True), ('branch_id', '=', parent.source_branch_id)]" />
+                  <field name="running_vehicle_ids" column_invisible="1"/>
+                  <field name="fleet_vehicle_id" options="{'no_open': True, 'no_create': True}"
+                    domain="[('state_id.allow_transfer', '=', True), ('branch_id', '=', parent.source_branch_id), ('id', 'not in', running_vehicle_ids.ids) ]" />
                   <field name="exit_checklist_status"
                     readonly="True" />
                   <field name="entry_checklist_status"
@@ -189,6 +193,8 @@
       <search>
         <field name="name" />
         <field name="company_id" />
+        <field name="vehicle_route_ids" string="Vehicle" filter_domain="[('order_line.fleet_vehicle_id', 'ilike', self)]"/>
+        <filter string="Archived" name="inactive" domain="[('active','=',False)]"/>
         <filter string="Company"
           name="company"
           context="{'group_by':'company_id'}" />
@@ -198,7 +204,7 @@
 
   <record id="branch_route_action"
     model="ir.actions.act_window">
-    <field name="name">Branch Routes</field>
+    <field name="name">Routes</field>
     <field name="res_model">branch.route</field>
     <field name="view_mode">list,form</field>
   </record>

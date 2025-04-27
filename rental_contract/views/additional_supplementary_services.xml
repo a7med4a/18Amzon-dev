@@ -1,0 +1,13 @@
+<odoo>
+    <record id="additional_supplementary_services_view_list" model="ir.ui.view">
+        <field name="name">additional.supplementary.services.list.inherit</field>
+        <field name="model">additional.supplementary.services</field>
+        <field name="inherit_id" ref="additional_and_supplementary_services.additional_supplementary_services_view_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='calculation']" position="after">
+                <field name="account_id"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

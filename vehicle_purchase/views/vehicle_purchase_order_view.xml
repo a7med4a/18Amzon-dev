@@ -194,17 +194,17 @@
                         </page>
                         <page string="Installments Board">
                             <div class="btn-group" style="margin-bottom: 10px;">
-        <button name="action_export_installments"
-                string="Export Installments"
-                type="object"
-                class="btn btn-outline-secondary"
-                icon="fa-download"/>
-        <button name="vehicle_purchase.action_import_installments_wizard"
-                string="Import Installments"
-                type="action"
-                class="btn btn-outline-secondary"
-                icon="fa-upload"/>
-    </div>
+                                <button name="action_export_installments"
+                                        string="Export Installments"
+                                        type="object"
+                                        class="btn btn-outline-secondary"
+                                        icon="fa-download"/>
+                                <button name="vehicle_purchase.action_import_installments_wizard"
+                                        string="Import Installments"
+                                        type="action"
+                                        class="btn btn-outline-secondary"
+                                        icon="fa-upload"/>
+                            </div>
                             <field name="installment_board_ids" readonly="state != 'draft'">
                                 <list editable="bottom" create="false" edit="true">
                                     <field name="date" sum="Total" optional='show'/>

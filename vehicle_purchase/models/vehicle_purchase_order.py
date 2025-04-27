@@ -438,7 +438,7 @@ class InstallmentBoard(models.Model):
     date = fields.Date(
         string='Date',
         required=False)
-    amount = fields.Float(string='Amount',readonly=True)
+    amount = fields.Float(string='Amount')
     paid_amount = fields.Float(string='Paid Amount')
     remaining_amount = fields.Float(string='Remaining Amount',compute="_compute_remaining_amount",store=True)
     state = fields.Selection(

@@ -3,8 +3,9 @@
         <field name="name">vehicle.documents.list</field>
         <field name="model">vehicle.documents</field>
         <field name="arch" type="xml">
-            <list>
+            <list decoration-success="document_status == 'running'" decoration-danger="document_status == 'expired'">
                 <field name="vehicle_id"/>
+                <field name="license_plate" column_invisible="1"/>
                 <field name="vehicle_document_type_id"/>
                 <field name="description"/>
                 <field name="start_date"/>
@@ -14,47 +15,63 @@
             </list>
         </field>
     </record>
-<record id="view_vehicle_documents_kanban" model="ir.ui.view">
-    <field name="name">vehicle.documents.kanban</field>
-    <field name="model">vehicle.documents</field>
-    <field name="arch" type="xml">
-        <kanban>
-            <field name="vehicle_id"/>
-            <field name="vehicle_document_type_id"/>
-            <field name="description"/>
-            <field name="start_date"/>
-            <field name="end_date"/>
-            <field name="document_status"/>
-            <templates>
-                <t t-name="kanban-box">
-                    <div class="o_kanban_record card shadow-sm p-3 mb-3 rounded"
-                         t-attf-style="background-color: #{record.document_status.raw_value == 'running' and '#d4edda' or
+
+    <record id="view_vehicle_documents_kanban" model="ir.ui.view">
+        <field name="name">vehicle.documents.kanban</field>
+        <field name="model">vehicle.documents</field>
+        <field name="arch" type="xml">
+            <kanban>
+                <field name="vehicle_id"/>
+                <field name="vehicle_document_type_id"/>
+                <field name="description"/>
+                <field name="start_date"/>
+                <field name="end_date"/>
+                <field name="document_status"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="o_kanban_record card shadow-sm p-3 mb-3 rounded"
+                             t-attf-style="background-color: #{record.document_status.raw_value == 'running' and '#d4edda' or
                                                             record.document_status.raw_value == 'expired' and '#f8d7da' or
                                                             '#fdfdfd'};">
-                        <div class="o_kanban_card">
-                            <div class="o_kanban_details">
-                                <div><strong>🚗 Vehicle:</strong> <span t-esc="record.vehicle_id.value"/></div>
-                                <div><strong>📄 Document Type:</strong> <span t-esc="record.vehicle_document_type_id.value"/></div>
-                                <div><strong>📝 Description:</strong> <span t-esc="record.description.value"/></div>
-                                <div><strong>📅 Start Date:</strong> <span t-esc="record.start_date.value"/></div>
-                                <div><strong>📅 End Date:</strong> <span t-esc="record.end_date.value"/></div>
-                                <div>
-                                    <strong style="color: #007bff;">📌 Status:</strong>
-                                    <span t-attf-class="badge
+                            <div class="o_kanban_card">
+                                <div class="o_kanban_details">
+                                    <div>
+                                        <strong>🚗 Vehicle:</strong>
+                                        <span t-esc="record.vehicle_id.value"/>
+                                    </div>
+                                    <div>
+                                        <strong>📄 Document Type:</strong>
+                                        <span t-esc="record.vehicle_document_type_id.value"/>
+                                    </div>
+                                    <div>
+                                        <strong>📝 Description:</strong>
+                                        <span t-esc="record.description.value"/>
+                                    </div>
+                                    <div>
+                                        <strong>📅 Start Date:</strong>
+                                        <span t-esc="record.start_date.value"/>
+                                    </div>
+                                    <div>
+                                        <strong>📅 End Date:</strong>
+                                        <span t-esc="record.end_date.value"/>
+                                    </div>
+                                    <div>
+                                        <strong style="color: #007bff;">📌 Status:</strong>
+                                        <span t-attf-class="badge
                                                         #{record.document_status.raw_value == 'running' and 'badge-success' or
                                                           record.document_status.raw_value == 'expired' and 'badge-danger'}"
-                                                                                              style="font-size: 14px;">
-                                        <span t-esc="record.document_status.value"/>
-                                    </span>
+                                              style="font-size: 14px;">
+                                            <span t-esc="record.document_status.value"/>
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </t>
-            </templates>
-        </kanban>
-    </field>
-</record>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
 
     <record id="view_vehicle_documents_form" model="ir.ui.view">
         <field name="name">vehicle.documents.form</field>
@@ -84,6 +101,18 @@
                 </sheet>
                 <chatter/>
             </form>
+        </field>
+    </record>
+
+
+    <record id="view_vehicle_documents_search" model="ir.ui.view">
+        <field name="name">vehicle.documents.search</field>
+        <field name="model">vehicle.documents</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="license_plate"/>
+                <field name="document_status"/>
+            </search>
         </field>
     </record>
 

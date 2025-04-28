@@ -10,6 +10,7 @@ class VehicleDocuments(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
     vehicle_id = fields.Many2one('fleet.vehicle', required=True)
+    license_plate=fields.Char(related='vehicle_id.license_plate')
     description = fields.Text( string="Description",required=False)
     vehicle_document_type_id =fields.Many2one('vehicle.documents.type', required=True)
     active = fields.Boolean(default=True)

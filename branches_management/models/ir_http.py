@@ -9,8 +9,7 @@ from odoo.tools import lazy_property
 from odoo.api import Environment
 import logging
 _logger = logging.getLogger(__name__)
-
-
+from odoo import SUPERUSER_ID
 class IrRule(models.Model):
     _inherit = 'ir.rule'
 
@@ -31,7 +30,8 @@ class BranchEnvironment(Environment):
     def branch(self):
         branch_ids = self.context.get('allowed_branch_ids', [])
         if branch_ids:
-            if not self.su:
+            if self.user.id != SUPERUSER_ID:
+            # if not self.su:
                 user_branch_ids = self.user.branch_ids.ids
                 if any(bid not in user_branch_ids for bid in branch_ids):
                     raise AccessError(_("Access to unauthorized or invalid branches."))
@@ -42,7 +42,8 @@ class BranchEnvironment(Environment):
     def branches(self):
         branch_ids = self.context.get('allowed_branch_ids', [])
         if branch_ids:
-            if not self.su:
+            if self.user.id != SUPERUSER_ID:
+            # if not self.su:
                 user_branch_ids = self.user.branch_ids.ids
                 if any(bid not in user_branch_ids for bid in branch_ids):
                     raise AccessError(_("Access to unauthorized or invalid branches."))

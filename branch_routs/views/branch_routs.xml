@@ -16,16 +16,6 @@
             string="Approve"
             class="oe_highlight"
             invisible="state != 'draft'" />
-          <button name="action_exit_done"
-            type="object"
-            string="Exit Done"
-            class="oe_highlight"
-            invisible="state != 'approved' or not all_vehicle_exit_done" />
-          <button name="action_entry_done"
-            type="object"
-            string="Entry Done"
-            class="oe_highlight"
-            invisible="state != 'exit_done' or not all_vehicle_entry_done" />
           <button name="action_button_cancel"
             type="object"
             string="Cancel"
@@ -39,7 +29,15 @@
 
           <field name="state"
             widget="statusbar"
+            invisible="is_new_vehicle"
             statusbar_visible="draft,approved,exit_done,entry_done" />
+
+          <field name="state"
+            widget="statusbar"
+            invisible="not is_new_vehicle"
+            statusbar_visible="draft,approved,entry_done" />
+            <field name="user_can_access_source_branch" invisible="1"/>
+            <field name="user_can_access_destination_branch" invisible="1"/>
         </header>
         <sheet>
           <div name="button_box"
@@ -47,7 +45,8 @@
             <button class="oe_stat_button"
               type="action"
               name="%(branch_routs.vehicle_route_exit_permits_action)d"
-              icon="fa-book">
+              icon="fa-book"
+              invisible="not user_can_access_source_branch">
               <div class="o_stat_info">
                 <span class="o_stat_value">
                   <field name="exist_permit_count" />
@@ -58,7 +57,8 @@
             <button class="oe_stat_button"
               type="action"
               name="%(branch_routs.vehicle_route_entry_permits_action)d"
-              icon="fa-book">
+              icon="fa-book"
+              invisible="not user_can_access_destination_branch">
               <div class="o_stat_info">
                 <span class="o_stat_value">
                   <field name="entry_permit_count" />
@@ -82,26 +82,37 @@
               <field name="source_branch_domain"
                 invisible="1" />
               <field name="company_id"
-                readonly="state != 'draft'" options="{'no_open': True, 'no_create': True}"/>
-              <field name="destination_type"
-                readonly="state != 'draft'" />
+                readonly="state != 'draft'" 
+                options="{'no_open': True, 'no_create': True}"/>
+              <field name="destination_type" 
+                invisible="is_new_vehicle"
+                readonly="state != 'draft'" 
+                required="not is_new_vehicle"/>
               <label for="source_branch_id"
-                string="Source Branch / Workshop" />
+                string="Source Branch / Workshop" 
+                invisible="is_new_vehicle"/>
               <field name="source_branch_id"
                 nolabel="1"
-                domain="source_branch_domain"
-                readonly="state != 'draft'"  options="{'no_open': True, 'no_create': True}"/>
+                domain="source_branch_domain" 
+                invisible="is_new_vehicle"
+                required="not is_new_vehicle"
+                readonly="state != 'draft'"  
+                options="{'no_open': True, 'no_create': True}"/>
               <label for="destination_branch_id"
                 string="Destination Branch"
-                invisible="destination_type != 'branch'" />
+                invisible="destination_type in ['workshop', False]" />
               <label for="destination_branch_id"
                 string="Destination Workshop"
-                invisible="destination_type != 'workshop'" />
+                invisible="destination_type in ['branch', False]" />
+              <label for="destination_branch_id"
+                string="Destination Branch - Workshop"
+                invisible="not is_new_vehicle" />
               <field name="destination_branch_id"
                 nolabel="1"
-                invisible="not destination_type"
+                invisible="not destination_type and not is_new_vehicle"
                 domain="destination_branch_domain"
                 readonly="state != 'draft'"  options="{'no_open': True, 'no_create': True}"/>
+                <field name="is_new_vehicle"/>
             </group>
             <group>
               <field name="transfer_type"
@@ -136,11 +147,11 @@
                 readonly="state != 'draft'"
                 invisible="disable_create_vehicle_line">
                 <list editable="bottom">
-                  <field name="running_vehicle_ids" column_invisible="1"/>
-                  <field name="fleet_vehicle_id" options="{'no_open': True, 'no_create': True}"
-                    domain="[('state_id.allow_transfer', '=', True), ('branch_id', '=', parent.source_branch_id), ('id', 'not in', running_vehicle_ids.ids) ]" />
+                  <field name="fleet_domain" column_invisible="1" />
+                  <field name="fleet_vehicle_id" options="{'no_open': True, 'no_create': True}" domain="fleet_domain"/>
                   <field name="exit_checklist_status"
-                    readonly="True" />
+                    readonly="True" 
+                    column_invisible="parent.is_new_vehicle"/>
                   <field name="entry_checklist_status"
                     readonly="True" />
                 </list>
@@ -149,11 +160,11 @@
                 readonly="state != 'draft'"
                 invisible="not disable_create_vehicle_line">
                 <list create="0">
-                  <field name="running_vehicle_ids" column_invisible="1"/>
-                  <field name="fleet_vehicle_id" options="{'no_open': True, 'no_create': True}"
-                    domain="[('state_id.allow_transfer', '=', True), ('branch_id', '=', parent.source_branch_id), ('id', 'not in', running_vehicle_ids.ids) ]" />
+                  <field name="fleet_domain" column_invisible="1" />
+                  <field name="fleet_vehicle_id" options="{'no_open': True, 'no_create': True}" domain="fleet_domain"/>
                   <field name="exit_checklist_status"
-                    readonly="True" />
+                    readonly="True" 
+                    column_invisible="parent.is_new_vehicle"/>
                   <field name="entry_checklist_status"
                     readonly="True" />
                 </list>

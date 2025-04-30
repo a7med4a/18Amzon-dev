@@ -14,8 +14,6 @@ class VehicleRouts(models.Model):
 
     fleet_vehicle_id = fields.Many2one(
         'fleet.vehicle', string='Vehicle', required=True)
-    running_vehicle_ids = fields.Many2many(
-        'fleet.vehicle', compute="_compute_running_vehicle_ids")
     branch_route_id = fields.Many2one(
         'branch.route', string='Branch Route', ondelete="cascade")
     destination_type = fields.Selection(
@@ -28,6 +26,8 @@ class VehicleRouts(models.Model):
         related='branch_route_id.destination_branch_id', store=True)
     transfer_type = fields.Selection(
         related='branch_route_id.transfer_type', string='Transfer Type', store=True)
+    is_new_vehicle = fields.Boolean(
+        related='branch_route_id.is_new_vehicle', string='New Vehicle', store=True)
     exit_checklist_status = fields.Selection([
         ('under_check', 'Under Check'),
         ('in_transfer', 'Exit Check Done'),
@@ -51,6 +51,8 @@ class VehicleRouts(models.Model):
         ('entry_done', 'Entry Done'),
         ('cancel', 'Cancelled')
     ], string='State', default='draft')
+    fleet_domain = fields.Binary(
+        string="Fleet domain", help="Dynamic domain used for the Vehicle", compute="_compute_fleet_domain")
 
     # Exist Chick List Information
     exit_odometer = fields.Float('Exit Odometer')
@@ -150,56 +152,91 @@ class VehicleRouts(models.Model):
         selection=VEHICLE_STATUS,
         string='Entry Vehicle Status', tracking=True)
 
-    def _compute_running_vehicle_ids(self):
-        running_vehicle_ids = self.search(
+    @api.depends('is_new_vehicle')
+    def _compute_fleet_domain(self):
+        running_vehicle_ids = self.env['vehicle.route'].search(
             [('branch_route_id.state', 'not in', ['entry_done', 'cancel'])]).mapped('fleet_vehicle_id')
-        for rec in self:
-            rec.running_vehicle_ids = [(6, 0, running_vehicle_ids.ids)]
+      # running_vehicle_ids |= self.vehicle_route_ids.fleet_vehicle_id
+        for route in self:
+            if route.branch_route_id.is_new_vehicle:
+                domain = [('state_id.type', '=', 'under_preparation'),
+                          ('id', 'not in', running_vehicle_ids.ids)]
+            else:
+                domain = [('state_id.allow_transfer', '=', True),
+                          ('branch_id', '=', route.source_branch_id.id), ('id', 'not in', running_vehicle_ids.ids)]
 
-    @api.constrains('entry_odometer')
+            route.fleet_domain = domain
+
+    @api.constrains('entry_odometer', 'entry_vehicle_status')
     def _check_odometer_validity(self):
         for rec in self:
-            if rec.exit_odometer > rec.entry_odometer or rec.entry_odometer == 0:
+            if rec.exit_odometer > rec.entry_odometer or (rec.entry_odometer == 0 and not rec.is_new_vehicle and rec.entry_vehicle_status != 'done'):
                 raise ValidationError(
                     _(f"Odometer must be greater than {rec.exit_odometer}"))
 
     @api.constrains('fleet_vehicle_id')
     def _check_exist_vehicle_route(self):
         for rec in self:
-            exist_running_vehicle_route = self.search([('branch_route_id.state', 'not in', [
-                                                      'entry_done', 'cancel']), ('id', '!=', rec.id)])
+            exist_running_vehicle_route = self.sudo().search([('branch_route_id.state', 'not in', [
+                'entry_done', 'cancel']), ('id', '!=', rec.id), ('fleet_vehicle_id', '=', rec.fleet_vehicle_id.id)], limit=1)
             if exist_running_vehicle_route:
                 raise ValidationError(
-                    _(f"Vehicle {rec.fleet_vehicle_id} exist in branch route {exist_running_vehicle_route.branch_route_id.name} which is in {exist_running_vehicle_route.branch_route_id} state"))
+                    _(f"Vehicle {rec.fleet_vehicle_id.display_name} exist in branch route {exist_running_vehicle_route.branch_route_id.name} which is in {exist_running_vehicle_route.branch_route_id.state} state"))
 
     # Exit Functions
 
     def action_branch_approve(self):
         for rec in self:
-            rec.with_context(tracking_disable=True).write({
-                'exit_odometer': rec.fleet_vehicle_id.odometer,
-                'exit_ac': rec.fleet_vehicle_id.ac,
-                'exit_radio_stereo': rec.fleet_vehicle_id.radio_stereo,
-                'exit_screen': rec.fleet_vehicle_id.screen,
-                'exit_spare_tire_tools': rec.fleet_vehicle_id.spare_tire_tools,
-                'exit_tires': rec.fleet_vehicle_id.tires,
-                'exit_spare_tires': rec.fleet_vehicle_id.spare_tires,
-                'exit_speedometer': rec.fleet_vehicle_id.speedometer,
-                'exit_keys': rec.fleet_vehicle_id.keys,
-                'exit_care_seats': rec.fleet_vehicle_id.care_seats,
-                'exit_oil_change_km': rec.fleet_vehicle_id.oil_change_km,
-                'exit_fuel_type_code': rec.fleet_vehicle_id.fuel_type_code,
-                'exit_keys_number': rec.fleet_vehicle_id.keys_number,
-                'exit_safety_triangle': rec.fleet_vehicle_id.safety_triangle,
-                'exit_fire_extinguisher': rec.fleet_vehicle_id.fire_extinguisher,
-                'exit_first_aid_kit': rec.fleet_vehicle_id.first_aid_kit,
-                'exit_oil_type': rec.fleet_vehicle_id.oil_type,
-                'exit_oil_change_date': rec.fleet_vehicle_id.oil_change_date,
-                'exit_vehicle_status': rec.fleet_vehicle_id.vehicle_status,
-                'exit_checklist_status': 'under_check',
-                'state': 'exit_check',
-                'exist_under_check_date': fields.Datetime.now()
-            })
+            if not rec.is_new_vehicle:
+                rec.with_context(tracking_disable=True).write({
+                    'exit_odometer': rec.fleet_vehicle_id.odometer,
+                    'exit_ac': rec.fleet_vehicle_id.ac,
+                    'exit_radio_stereo': rec.fleet_vehicle_id.radio_stereo,
+                    'exit_screen': rec.fleet_vehicle_id.screen,
+                    'exit_spare_tire_tools': rec.fleet_vehicle_id.spare_tire_tools,
+                    'exit_tires': rec.fleet_vehicle_id.tires,
+                    'exit_spare_tires': rec.fleet_vehicle_id.spare_tires,
+                    'exit_speedometer': rec.fleet_vehicle_id.speedometer,
+                    'exit_keys': rec.fleet_vehicle_id.keys,
+                    'exit_care_seats': rec.fleet_vehicle_id.care_seats,
+                    'exit_oil_change_km': rec.fleet_vehicle_id.oil_change_km,
+                    'exit_fuel_type_code': rec.fleet_vehicle_id.fuel_type_code,
+                    'exit_keys_number': rec.fleet_vehicle_id.keys_number,
+                    'exit_safety_triangle': rec.fleet_vehicle_id.safety_triangle,
+                    'exit_fire_extinguisher': rec.fleet_vehicle_id.fire_extinguisher,
+                    'exit_first_aid_kit': rec.fleet_vehicle_id.first_aid_kit,
+                    'exit_oil_type': rec.fleet_vehicle_id.oil_type,
+                    'exit_oil_change_date': rec.fleet_vehicle_id.oil_change_date,
+                    'exit_vehicle_status': rec.fleet_vehicle_id.vehicle_status,
+                    'exit_checklist_status': 'under_check',
+                    'state': 'exit_check',
+                    'exist_under_check_date': fields.Datetime.now()
+                })
+            else:
+                rec.with_context(tracking_disable=True).write({
+                    'entry_odometer': rec.fleet_vehicle_id.odometer,
+                    'entry_ac': rec.fleet_vehicle_id.ac,
+                    'entry_radio_stereo': rec.fleet_vehicle_id.radio_stereo,
+                    'entry_screen': rec.fleet_vehicle_id.screen,
+                    'entry_spare_tire_tools': rec.fleet_vehicle_id.spare_tire_tools,
+                    'entry_tires': rec.fleet_vehicle_id.tires,
+                    'entry_spare_tires': rec.fleet_vehicle_id.spare_tires,
+                    'entry_speedometer': rec.fleet_vehicle_id.speedometer,
+                    'entry_keys': rec.fleet_vehicle_id.keys,
+                    'entry_care_seats': rec.fleet_vehicle_id.care_seats,
+                    'entry_oil_change_km': rec.fleet_vehicle_id.oil_change_km,
+                    'entry_fuel_type_code': rec.fleet_vehicle_id.fuel_type_code,
+                    'entry_keys_number': rec.fleet_vehicle_id.keys_number,
+                    'entry_safety_triangle': rec.fleet_vehicle_id.safety_triangle,
+                    'entry_fire_extinguisher': rec.fleet_vehicle_id.fire_extinguisher,
+                    'entry_first_aid_kit': rec.fleet_vehicle_id.first_aid_kit,
+                    'entry_oil_type': rec.fleet_vehicle_id.oil_type,
+                    'entry_oil_change_date': rec.fleet_vehicle_id.oil_change_date,
+                    'entry_vehicle_status': rec.fleet_vehicle_id.vehicle_status,
+                    'entry_checklist_status': 'in_transfer',
+                    'state': 'entry_check',
+                    'entry_in_transfer_date': fields.Datetime.now()
+                })
 
     def action_exit_done(self):
         self.write({
@@ -207,6 +244,7 @@ class VehicleRouts(models.Model):
             'exit_checklist_status': 'in_transfer',
             'exist_in_transfer_date': fields.Datetime.now()
         })
+        self.branch_route_id.action_exit_done()
 
     def action_branch_exit_done(self):
         in_transfer_fleet_status = self.env['fleet.vehicle.state'].search(
@@ -265,6 +303,7 @@ class VehicleRouts(models.Model):
             'entry_checklist_status': 'done',
             'entry_done_date': fields.Datetime.now()
         })
+        self.branch_route_id.action_entry_done()
 
     def action_branch_entry_done(self):
 
@@ -272,7 +311,17 @@ class VehicleRouts(models.Model):
             [('type', '=', 'ready_to_rent')])
         under_maintenance_fleet_status = self.env['fleet.vehicle.state'].search(
             [('type', '=', 'under_maintenance')])
+        in_service_fleet_status = self.env['fleet.vehicle.state'].search(
+            [('type', '=', 'in_service')])
         for rec in self:
+            fleet_status = self.env['fleet.vehicle.state']
+            if rec.branch_route_id.destination_type == 'branch' or (rec.branch_route_id.is_new_vehicle and rec.destination_branch_id.branch_type in ['rental', 'limousine']):
+                fleet_status = ready_to_rent_fleet_status
+            elif rec.branch_route_id.destination_type == 'workshop' or (rec.branch_route_id.is_new_vehicle and rec.destination_branch_id.branch_type == 'workshop'):
+                fleet_status = under_maintenance_fleet_status
+            elif rec.branch_route_id.is_new_vehicle and rec.destination_branch_id.branch_type == 'administration':
+                fleet_status = in_service_fleet_status
+
             rec.fleet_vehicle_id.write({
                 'ac': rec.entry_ac,
                 'radio_stereo': rec.entry_radio_stereo,
@@ -292,7 +341,7 @@ class VehicleRouts(models.Model):
                 'oil_type': rec.entry_oil_type,
                 'oil_change_date': rec.entry_oil_change_date,
                 'vehicle_status': rec.entry_vehicle_status,
-                'state_id': ready_to_rent_fleet_status.id if rec.branch_route_id.destination_type == 'branch' else under_maintenance_fleet_status.id,
+                'state_id': fleet_status.id if fleet_status else False,
                 'branch_id': rec.branch_route_id.destination_branch_id.id
             })
 

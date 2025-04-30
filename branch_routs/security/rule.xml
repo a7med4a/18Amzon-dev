@@ -1,0 +1,26 @@
+<odoo>
+    <data noupdate="1">
+        <record id="branch_route_multi_company_rule" model="ir.rule">
+            <field name="name">Branch Routes Multi-Company</field>
+            <field name="model_id" ref="model_branch_route"/>
+            <field name="domain_force">[('company_id', 'in', company_ids + [False])]</field>
+        </record>
+        <record id="vehicle_route_multi_company_rule" model="ir.rule">
+            <field name="name">Branch Routes Log Multi-Company</field>
+            <field name="model_id" ref="model_vehicle_route"/>
+            <field name="domain_force">[('branch_route_id.company_id', 'in', company_ids + [False])]</field>
+        </record>
+
+        <record id="branch_route_branches_rule" model="ir.rule">
+            <field name="name">Branch Routes</field>
+            <field name="model_id" ref="model_branch_route"/>
+            <field name="domain_force">['|', ('source_branch_id', 'in', user.branch_ids.ids), ('destination_branch_id', 'in', user.branch_ids.ids)]</field>
+        </record>
+        <record id="vehicle_route_branches_rule" model="ir.rule">
+            <field name="name">Branch Routes Log</field>
+            <field name="model_id" ref="model_vehicle_route"/>
+            <field name="domain_force">['|', ('source_branch_id', 'in', user.branch_ids.ids), ('destination_branch_id', 'in', user.branch_ids.ids)]</field>
+        </record>
+    </data>
+
+</odoo>

@@ -14,9 +14,9 @@ class BranchRoute(models.Model):
     company_id = fields.Many2one(
         'res.company', string='Company', default=lambda self: self.env.company, domain=lambda self: [('id', 'in', self.env.companies.ids)])
     destination_type = fields.Selection([
-        ('branch', 'Branch'), ('workshop', 'WorkShop')], string='Destination Type', required=True)
+        ('branch', 'Branch'), ('workshop', 'WorkShop')], string='Destination Type', required=False)
     source_branch_id = fields.Many2one(
-        'res.branch', string='Source', required=True, default=lambda self: self.env.branch)
+        'res.branch', string='Source', required=False, default=lambda self: self.env.branch)
     destination_branch_id = fields.Many2one(
         'res.branch', string='Destination', required=True)
     transfer_type = fields.Selection([
@@ -24,6 +24,7 @@ class BranchRoute(models.Model):
         ('amazon', 'Amazon Truck'),
         ('outsource', 'Third Party Truck')
     ], string='Transfer Type', required=True)
+    is_new_vehicle = fields.Boolean('New Vehicle')
     driver_employee_id = fields.Many2one(
         'hr.employee', string='Driver Name', domain="[('is_driver', '=', True)]")
     truck_vehicle_id = fields.Many2one(
@@ -51,15 +52,19 @@ class BranchRoute(models.Model):
 
     # Helping fields
     destination_branch_domain = fields.Binary(
-        string="tag domain", help="Dynamic domain used for the destination branch", compute="_compute_destination_branch_domain")
+        string="Destination Branch domain", help="Dynamic domain used for the destination branch", compute="_compute_destination_branch_domain")
     source_branch_domain = fields.Binary(
-        string="tag domain", help="Dynamic domain used for the destination branch", compute="_compute_source_branch_domain")
+        string="Source Branch domain", help="Dynamic domain used for the Source branch", compute="_compute_source_branch_domain")
     disable_create_vehicle_line = fields.Boolean(
         compute="_compute_disable_create_vehicle_line")
     all_vehicle_exit_done = fields.Boolean(
         compute="_compute_all_vehicle_exit_done")
     all_vehicle_entry_done = fields.Boolean(
         compute="_compute_all_vehicle_entry_done")
+    user_can_access_source_branch = fields.Boolean(
+        compute="_compute_user_can_access_source_branch")
+    user_can_access_destination_branch = fields.Boolean(
+        compute="_compute_user_can_access_destination_branch")
 
     @api.depends('vehicle_route_ids', 'vehicle_route_ids.exit_checklist_status')
     def _compute_exist_permit_count(self):
@@ -76,19 +81,25 @@ class BranchRoute(models.Model):
     @api.depends('destination_type', 'source_branch_id')
     def _compute_destination_branch_domain(self):
         for route in self:
-            domain = [('id', '!=', route.source_branch_id.id),
-                      ('company_id', '=', route.company_id.id)]
+            domain = [
+                ('id', '!=', route.source_branch_id.id),
+                ('id', 'in', self.env.user.branch_ids.ids),
+                ('company_id', '=', route.company_id.id)
+            ]
             if route.destination_type == 'branch':
                 domain.append(('branch_type', 'in', ['rental', 'limousine']))
             elif route.destination_type == 'workshop':
                 domain.append(('branch_type', '=', 'workshop'))
             route.destination_branch_domain = domain
 
-    @api.depends('destination_branch_id')
+    @api.depends('destination_branch_id', 'destination_type')
     def _compute_source_branch_domain(self):
         for route in self:
-            domain = [('id', '!=', route.destination_branch_id.id),
-                      ('company_id', '=', route.company_id.id)]
+            domain = [
+                ('id', '!=', route.destination_branch_id.id),
+                ('id', 'in', self.env.user.branch_ids.ids),
+                ('company_id', '=', route.company_id.id)
+            ]
             route.source_branch_domain = domain
 
     @api.depends('vehicle_route_ids', 'transfer_type')
@@ -116,11 +127,31 @@ class BranchRoute(models.Model):
                 raise ValidationError(
                     _("Source and destination Location can't be the same"))
 
+    def _compute_user_can_access_source_branch(self):
+        for rec in self.sudo():
+            if rec.source_branch_id and rec.source_branch_id in self.env.user.sudo().branch_ids:
+                rec.user_can_access_source_branch = True
+            else:
+                rec.user_can_access_source_branch = False
+
+    def _compute_user_can_access_destination_branch(self):
+        for rec in self.sudo():
+            if rec.destination_branch_id and rec.destination_branch_id in self.env.user.sudo().branch_ids:
+                rec.user_can_access_destination_branch = True
+            else:
+                rec.user_can_access_destination_branch = False
+
     @api.onchange('transfer_type')
     def _onchange_transfer_type(self):
         self.driver_employee_id = False
         self.truck_vehicle_id = False
         self.third_party_partner_id = False
+
+    @api.onchange('is_new_vehicle')
+    def _onchange_is_new_vehicle(self):
+        if self.is_new_vehicle:
+            self.transfer_type = False
+            self.source_branch_id = False
 
     @api.model_create_multi
     def create(self, vals_list):

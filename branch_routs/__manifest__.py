@@ -10,6 +10,7 @@
     'depends': ['fleet_master_configuration', 'hr_fleet', 'vehicle_info', 'fleet_status'],
     'data': [
         'security/ir.model.access.csv',
+        'security/rule.xml',
         'data/branch_routs_sequence.xml',
         'views/res_partner.xml',
         'views/hr_employee.xml',

@@ -1,4 +1,5 @@
 from odoo import api, fields, models
+from odoo.exceptions import ValidationError
 
 
 class AccountMoveLine(models.Model):
@@ -14,6 +15,13 @@ class AccountMove(models.Model):
     _inherit = 'account.move'
 
     vpo_id = fields.Many2one(comodel_name="vehicle.purchase.order", string="Vehicle Purchase Order", required=False, )
+    is_vehicle_purchase = fields.Boolean(string="Is Vehicle Purchase Order", default=False)
+
+    def action_register_payment(self):
+        if self.is_vehicle_purchase:
+            raise ValidationError("You can't register payment for vehicle purchase order")
+        res = super(AccountMove, self).action_register_payment()
+        return res
 
     def _prepare_product_base_line_for_taxes_computation(self, product_line):
         resault = super(AccountMove,self)._prepare_product_base_line_for_taxes_computation(product_line)
@@ -40,6 +48,7 @@ class AccountMove(models.Model):
             lambda l: l.account_id == self.partner_id.property_account_payable_id
                       and not l.reconciled
         )
+        print("bill_line ==>", bill_line)
         if not bill_line or not payments:
             return
 
@@ -51,6 +60,7 @@ class AccountMove(models.Model):
                 lambda l: l.account_id == payment.journal_id.default_account_id
                           and not l.reconciled
             )
+            print("payment_line ==>", payment_line)
             if payment_line:
                 (bill_line + payment_line).reconcile()
 

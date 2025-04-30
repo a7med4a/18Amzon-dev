@@ -18,7 +18,7 @@ class VehiclePaymentRegister(models.TransientModel):
     journal_id = fields.Many2one(
         'account.journal', string='Journal', required=True)
     payment_method_line_id = fields.Many2one(
-        'account.payment.method.line', string='Payment Method', required=True)
+        'account.payment.method.line', string='Payment Method')
     payment_date = fields.Date(
         string='Payment Date', required=True, default=fields.Date.today())
     amount = fields.Float(string='Amount', required=True, readonly=False)
@@ -56,7 +56,7 @@ class VehiclePaymentRegister(models.TransientModel):
             'company_id': po.company_id.id,
             'date': self.payment_date,
             'state': 'draft',
-            'payment_method_line_id': self.payment_method_line_id.id,
+            'payment_method_line_id': self.journal_id.outbound_payment_method_line_ids[0].id if self.journal_id.outbound_payment_method_line_ids else False,
             'vehicle_po_id': po.id,
         })
 

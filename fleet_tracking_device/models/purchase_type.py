@@ -27,21 +27,60 @@ class PurchaseType(models.Model):
             rec.is_tracking_device = is_tracking_device
             rec.is_spare_parts = is_spare_parts
 
-class PurchaseOrderLine(models.Model):
-    _inherit = 'purchase.order.line'
+class PurchaseOrderInherit(models.Model):
+    _inherit = 'purchase.order'
 
-    purchase_type = fields.Selection(
-        selection=[('tracking_device', 'Tracking Device'),('spare_parts', 'Spare Parts'),  ('other', 'Other'), ],
-        default=lambda self:self.env['ir.config_parameter'].sudo().get_param('fleet_tracking_device.purchase_type'), store=True)
+    def _get_purchase_type_ids(self):
+        purchase_type_ids = self.env['ir.config_parameter'].sudo().get_param(
+            'fleet_tracking_device.purchase_type_ids', default='[]'
+        )
+        ids = eval(purchase_type_ids) if purchase_type_ids else []
+        return ids if isinstance(ids, list) else []
+
+    purchase_type_id = fields.Many2one(
+        comodel_name='purchase.type.names',
+        string='Purchase Type',
+        domain=lambda self: [
+            ('id', 'in', self._get_purchase_type_ids())
+        ],
+        help='Select the purchase type for this fleet tracking device.'
+    )
+
+    def write(self, values):
+        res=super(PurchaseOrderInherit, self).write(values)
+        if values.get('purchase_type_id'):
+            self.order_line.unlink()
+        return res
 
 
 class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
-    purchase_type = fields.Selection(
-        selection=[('spare_parts', 'Spare Parts'), ('tracking_device', 'Tracking Device'), ('other', 'Other'), ],
-        default='tracking_device', config_parameter='fleet_tracking_device.purchase_type')
-    purchase_name = fields.Char(string="Name",default="Purchase Type", config_parameter='fleet_tracking_device.purchase_name')
+    purchase_type_ids = fields.Many2many(
+        comodel_name='purchase.type.names',
+        string='Purchase Types',
+        help='Select the purchase types for fleet tracking devices.'
+    )
+
+    def set_values(self):
+        super(ResConfigSettings, self).set_values()
+        self.env['ir.config_parameter'].sudo().set_param(
+            'fleet_tracking_device.purchase_type_ids',
+            self.purchase_type_ids.ids
+        )
+
+    def get_values(self):
+        res = super(ResConfigSettings, self).get_values()
+        purchase_type_ids = self.env['ir.config_parameter'].sudo().get_param('fleet_tracking_device.purchase_type_ids', default='[]')
+        purchase_type_ids = eval(purchase_type_ids) if purchase_type_ids else []
+        res.update(
+            purchase_type_ids=[(6, 0, purchase_type_ids)] if purchase_type_ids else False
+        )
+        return res
 
 
+class PurchaseTypeNames(models.Model):
+    _name = 'purchase.type.names'
+    _description = 'Purchase Type Names'
 
+    name = fields.Char(required=True)

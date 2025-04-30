@@ -6,7 +6,7 @@
             <form string="Bulk Installment Payment">
                 <group>
                     <field name="partner_id" options="{'no_create': True, 'no_create_edit': True}"/>
-                    <field name="journal_id" options="{'no_create': True, 'no_create_edit': True}"/>
+                    <field name="journal_id" options="{'no_create': True, 'no_create_edit': True}" domain="[('type', 'in', ['bank', 'cash'])]"/>
                 </group>
                 <group string="Purchase Orders" col="1">
                        <field name="payment_lines" nolabel="1">

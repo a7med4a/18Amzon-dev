@@ -1,0 +1,13 @@
+<odoo>
+    <data noupdate="1">
+        <record id="purchase_type_spare_parts" model="purchase.type.names">
+            <field name="name">Spare Parts</field>
+        </record>
+        <record id="purchase_type_tracking_device" model="purchase.type.names">
+            <field name="name">Tracking Device</field>
+        </record>
+        <record id="purchase_type_other" model="purchase.type.names">
+            <field name="name">Other</field>
+        </record>
+    </data>
+</odoo>

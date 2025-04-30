@@ -23,10 +23,10 @@
                     <field name="bill_id" invisible="1"/>
                     <button name="action_create_installment_board" context="{'create_from_btn': True}" string="Calculate Installments" type="object"
                             confirm="Are you sure you want to Calculate Installments ?"
-                            class="btn-primary" invisible="state not in  ('draft') or installment_board_ids"/>
+                            class="btn-primary" invisible="state not in  ('draft') or payment_method == 'cash'"/>
                     <button name="action_create_installment_payment" string="Create Installment Payment" type="object"
                             confirm="Are you sure you want to Create Installment Payment  ?"
-                            class="btn-primary" invisible="state not in  ('confirmed')"/>
+                            class="btn-primary" invisible="state not in  ('confirmed') or payment_method == 'cash' or installment_status == 'paid'"/>
 <!--                            class="btn-primary" invisible="state not in  ('confirmed') or is_advanced_payment_paid == True"/>-->
                     <button name="action_create_advance_payment" string="Create Advance Payment " type="object"
                             confirm="Are you sure you want to Create Advance Payment  ?"
@@ -52,7 +52,6 @@
                     <button name="action_cancel" string="Cancel" type="object"
                             confirm="Are you sure you want to Cancel PR Request ?"
                             class="btn-secondary" invisible="state not in ('under_review')"/>
-
                     <field name="state" widget="statusbar"/>
                 </header>
                 <sheet>
@@ -82,15 +81,16 @@
                         <label for="name" class="oe_edit_only"/>
                         <h1>
                             <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
-                    <div style="flex-grow: 1;">
-                        <field name="name"/>
-                    </div>
-                    <div style="flex-shrink: 0;">
-                        <field name="installment_status" widget="badge" class="oe_inline"
-                               style="font-size: 22px; padding: 8px 20px; font-weight: bold;
+                                <div style="flex-grow: 1;">
+                                    <field name="name"/>
+                                </div>
+                                <div style="flex-shrink: 0;">
+                                    <field name="installment_status" widget="badge" class="oe_inline"
+                                           invisible="state not in ('confirmed')"
+                                           style="font-size: 22px; padding: 8px 20px; font-weight: bold;
                                       min-width: 140px; text-align: center;"/>
-                    </div>
-                </div>
+                                </div>
+                            </div>
                         </h1>
                     </div>
                     <group>
@@ -119,10 +119,10 @@
                                     <field name="tax_cost" optional='show'/>
                                     <field name="total_per_model" optional='show'/>
                                     <field name="advanced_payment_per_model" optional='show'/>
-                                    <field name="financing_amount_per_model" optional='show'/>
-                                    <field name="interest_rate" optional='show'/>
-                                    <field name="interest_cost_per_model" optional='show'/>
-                                    <field name="ownership_value" optional='show'/>
+                                    <field name="financing_amount_per_model" optional='show' column_invisible="parent.payment_method == 'cash'"/>
+                                    <field name="interest_rate" optional='show' column_invisible="parent.payment_method == 'cash'"/>
+                                    <field name="interest_cost_per_model" optional='show' column_invisible="parent.payment_method == 'cash'"/>
+                                    <field name="ownership_value" optional='show' column_invisible="parent.payment_method == 'cash'"/>
                                 </list>
                             </field>
                             <div class="row">
@@ -132,12 +132,12 @@
                                     <h4 style="padding-bottom:7px;font-weight:bold">Tax 15%:</h4>
                                     <h4 style="font-weight:bold">Total Vehicles Cost :</h4>
                                     <h4 style="padding-bottom:7px;font-weight:bold">Total Advanced Payment :</h4>
-                                    <h4 style="padding-bottom:7px;font-weight:bold">Total Financing Amount :</h4>
-                                    <h4 style="padding-bottom:7px;font-weight:bold">Total Interest Cost :</h4>
-                                    <h4 style="padding-bottom:7px;font-weight:bold">Total installment Cost  :</h4>
-                                    <h4 style="padding-bottom:7px;font-weight:bold">Number of Installment  :</h4>
-                                    <h4 style="padding-bottom:7px;font-weight:bold">Installment Cost  :</h4>
-                                    <h4 style="padding-bottom:7px;font-weight:bold">Date  :</h4>
+                                    <h4 style="padding-bottom:7px;font-weight:bold" invisible="payment_method == 'cash'">Total Financing Amount :</h4>
+                                    <h4 style="padding-bottom:7px;font-weight:bold" invisible="payment_method == 'cash'">Total Interest Cost :</h4>
+                                    <h4 style="padding-bottom:7px;font-weight:bold" invisible="payment_method == 'cash'">Total installment Cost  :</h4>
+                                    <h4 style="padding-bottom:7px;font-weight:bold" invisible="payment_method == 'cash'">Number of Installment  :</h4>
+                                    <h4 style="padding-bottom:7px;font-weight:bold" invisible="payment_method == 'cash'">Installment Cost  :</h4>
+                                    <h4 style="padding-bottom:7px;font-weight:bold" invisible="payment_method == 'cash'">Date  :</h4>
                                 </div>
                                 <div class="col-2">
                                     <h4>
@@ -162,48 +162,58 @@
                                     </h4>
                                     <h4>
                                         <field name="total_financial_amount"
+                                                invisible="payment_method == 'cash'"
                                                style="font-weight:bold;border-bottom:1px solid black"
                                                readonly="1"/>
                                     </h4>
                                     <h4>
                                         <field name="total_interest_cost"
+                                                invisible="payment_method == 'cash'"
                                                style="font-weight:bold;border-bottom:1px solid black"
                                                readonly="1"/>
                                     </h4>
                                     <h4>
                                         <field name="total_installment_cost"
+                                                invisible="payment_method == 'cash'"
                                                style="font-weight:bold;border-bottom:1px solid black"
                                                readonly="1"/>
                                     </h4>
                                     <h4>
                                         <field name="number_of_installment"
+                                                invisible="payment_method == 'cash'"
                                                style="font-weight:bold;border-bottom:1px solid black"
                                                required="payment_method == 'settlement'"/>
                                     </h4>
                                     <h4>
                                         <field name="installment_cost"
+                                                invisible="payment_method == 'cash'"
                                                style="font-weight:bold;border-bottom:1px solid black"
                                                readonly="1"/>
                                     </h4>
                                     <h4>
                                         <field name="date"
+                                                invisible="payment_method == 'cash'"
                                                style="font-weight:bold;border-bottom:1px solid black"/>
                                     </h4>
                                 </div>
                             </div>
                         </page>
-                        <page string="Installments Board">
+                        <page string="Installments Board" invisible="payment_method == 'cash'">
                             <div class="btn-group" style="margin-bottom: 10px;">
                                 <button name="action_export_installments"
                                         string="Export Installments"
                                         type="object"
                                         class="btn btn-outline-secondary"
-                                        icon="fa-download"/>
+                                        icon="fa-download"
+                                        invisible="state != 'draft'"
+                                />
                                 <button name="vehicle_purchase.action_import_installments_wizard"
                                         string="Import Installments"
                                         type="action"
                                         class="btn btn-outline-secondary"
-                                        icon="fa-upload"/>
+                                        icon="fa-upload"
+                                        invisible="state != 'draft'"
+                                />
                             </div>
                             <field name="installment_board_ids" readonly="state != 'draft'">
                                 <list editable="bottom" create="false" edit="true">

@@ -9,9 +9,12 @@
             <xpath expr="//field[@name='parent_id']" position="after">
 <!--                <field name="is_tracking_device" />-->
 <!--                <field name="is_spare_parts" />-->
-                <field name="purchase_type" widget="radio" class="oe_inline" options="{'horizontal': true}"/>
+<!--                <field name="purchase_type" widget="radio" class="oe_inline" options="{'horizontal': true}"/>-->
+                <field name="purchase_type_id" options="{'no_create': True, 'no_open': True, 'no_edit': True}"/>
             </xpath>
         </field>
     </record>
+
+
 
 </odoo>

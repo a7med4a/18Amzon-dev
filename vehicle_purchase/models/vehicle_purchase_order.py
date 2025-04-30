@@ -1,3 +1,4 @@
+from email.policy import default
 
 from odoo.exceptions import ValidationError
 from odoo import models, fields, api, _
@@ -25,7 +26,7 @@ class VehiclePurchaseOrder(models.Model):
         string='Payment Method',
         selection=[('cash', 'Cash'),
                    ('settlement', 'Settlement'), ],
-        required=False, )
+        required=True,default='settlement')
     vehicle_purchase_quotation_id = fields.Many2one('vehicle.purchase.quotation', string='PO')
     vehicle_purchase_order_line_ids=fields.One2many('vehicle.purchase.order.line','vehicle_purchase_order_id')
     installment_board_ids=fields.One2many('installments.board','vehicle_purchase_order_id')
@@ -40,7 +41,7 @@ class VehiclePurchaseOrder(models.Model):
     total_interest_cost = fields.Float( string='Total interest Cost',compute="_compute_total_interest_cost")
     total_installment_cost = fields.Float( string='Total installment Cost ',compute="_compute_total_installment_cost")
     number_of_installment = fields.Integer( string='Number of Installment')
-    installment_cost = fields.Integer( string='Installment Cost',compute="_compute_installment_cost")
+    installment_cost = fields.Float( string='Installment Cost',compute="_compute_installment_cost")
     date = fields.Date(string='Date',required=False)
     is_advanced_payment_paid = fields.Boolean(string='Advanced Payment Paid',default=False)
     vehicle_ids=fields.One2many('fleet.vehicle','po_id')
@@ -68,17 +69,19 @@ class VehiclePurchaseOrder(models.Model):
     installment_status_class = fields.Char(compute="_compute_installment_status_helper")
     installment_status_tooltip = fields.Char(compute="_compute_installment_status_helper")
 
+
+    @api.depends('installment_board_ids','installment_board_ids.remaining_amount','account_payment_count','is_advanced_payment_paid')
     def _compute_installment_status(self):
         for rec in self:
-            paid = rec.installment_board_ids.filtered(lambda i: i.state != 'paid')
-            not_paid = rec.installment_board_ids.filtered(lambda i: i.state != 'not_paid')
-            partial_paid = rec.installment_board_ids.filtered(lambda i: i.state != 'partial_paid')
-            if not_paid and not paid and not partial_paid:
-                rec.installment_status = 'not_paid'
-            elif paid and not not_paid and not partial_paid:
+            remaining_amount = sum(rec.installment_board_ids.mapped("remaining_amount"))
+            # not_paid = rec.installment_board_ids.filtered(lambda i: i.state != 'not_paid')
+            # partial_paid = rec.installment_board_ids.filtered(lambda i: i.state != 'partial_paid')
+            if (rec.installment_board_ids and remaining_amount == 0) or (rec.is_advanced_payment_paid and not rec.installment_board_ids) :
                 rec.installment_status = 'paid'
-            elif paid and not_paid or partial_paid:
+            elif rec.account_payment_count != 0:
                 rec.installment_status = 'partial_paid'
+            elif remaining_amount != 0 or rec.account_payment_count == 0:
+                rec.installment_status = 'not_paid'
             else:
                 rec.installment_status = ''
 
@@ -225,7 +228,10 @@ class VehiclePurchaseOrder(models.Model):
             if  rec.number_of_installment <1 or not rec.date :
                 raise ValidationError(_(f'Date and number_of_installment is required'))
             first_installment = rec.date
+            if rec.installment_board_ids :
+                rec.installment_board_ids.unlink()
             for installment in range(1, rec.number_of_installment + 1):
+
                 self.env['installments.board'].create({
                     'amount': rec.installment_cost,
                     'date': first_installment + relativedelta(months=installment),
@@ -249,6 +255,7 @@ class VehiclePurchaseOrder(models.Model):
                 extra_fees = vehicle_po.plate_fees+vehicle_po.insurance_cost
                 bill_lines.append((0, 0, {
                     'vehicle_id': vehicle.id,
+                    'name': vehicle.display_name,
                     'account_id': config.account_id.id,
                     'quantity': 1,
                     'price_unit': price,
@@ -258,6 +265,7 @@ class VehiclePurchaseOrder(models.Model):
 
             bill_vals = {
                 'move_type': 'in_invoice',
+                'is_vehicle_purchase': True,
                 'partner_id': po.vendor_id.id,
                 'journal_id': config.journal_id.id,
                 'invoice_line_ids': bill_lines,
@@ -283,17 +291,17 @@ class VehiclePurchaseOrder(models.Model):
             }
 
     def action_create_advance_payment(self):
-            return {
-                'type': 'ir.actions.act_window',
-                'name': _('Pay'),
-                'res_model': 'vehicle.purchase.payment.register',
-                'view_mode': 'form',
-                'target': 'new',
-                'context': {
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Pay'),
+            'res_model': 'vehicle.purchase.payment.register',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
                 'default_pay_type': 'advance',
-                'default_amount': self.total_advanced_payment,
+                'default_amount': self.total_advanced_payment, 'default_communication': self.name
             },
-            }
+        }
 
     def action_create_installment_payment(self):
         for rec in self:
@@ -306,8 +314,8 @@ class VehiclePurchaseOrder(models.Model):
                 'view_mode': 'form',
                 'target': 'new',
                 'context': {
-                'default_pay_type': 'installment',
-            },
+                    'default_pay_type': 'installment','default_communication': rec.name,
+                },
             }
 
     def action_create_vehicle(self):
@@ -324,10 +332,13 @@ class VehiclePurchaseOrder(models.Model):
                     quantity -=1
 
     def action_view_vehicle(self):
-        for rec in self:
-            action = self.env['ir.actions.actions']._for_xml_id('fleet.fleet_vehicle_action')
-            action['domain']=[('po_id','=',rec.id)]
-            return action
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'fleet.vehicle',
+            'view_mode': 'list,form',
+            'target': 'current',
+            'domain': [('po_id', '=', self.id)],
+        }
 
     def action_view_payments(self):
         for rec in self:

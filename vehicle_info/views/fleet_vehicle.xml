@@ -67,6 +67,10 @@
       </xpath>
       <xpath expr="//field[@name='category_id']" position="attributes">
         <attribute name="required">state_id.type != 'under_preparation'</attribute>
+        <attribute name="options">{'no_create': True, 'no_open': True}</attribute>
+      </xpath>
+      <xpath expr="//field[@name='model_id']" position="attributes">
+        <attribute name="options">{'no_create': True, 'no_open': True}</attribute>
       </xpath>
       <xpath expr="//field[@name='manager_id']" position="attributes">
         <attribute name="required">state_id.type != 'under_preparation'</attribute>
@@ -86,8 +90,27 @@
         <field name="license_type" required="state_id.type != 'under_preparation'" />
       </xpath>
        <xpath expr="//field[@name='location']" position="after">
-        <field name="branch_id" required="state_id.type != 'under_preparation'"/>
+        <field name="branch_id" required="state_id.type != 'under_preparation'" options="{'no_create': True, 'no_open': True}"/>
        </xpath>
+      <xpath expr="//button[@name='action_view_bills']" position="attributes">
+        <attribute name="invisible">0</attribute>
+      </xpath>
+      <xpath expr="//button[@name='action_open_employee']" position="attributes">
+        <attribute name="invisible">0</attribute>
+      </xpath>
+      <xpath expr="//button[@name='open_assignation_logs']" position="attributes">
+        <attribute name="invisible">0</attribute>
+      </xpath>
+      <xpath expr="//button[@name='return_action_to_open']" position="attributes">
+        <attribute name="invisible">0</attribute>
+      </xpath>
+      <xpath expr="//button[@context=&quot;{'xml_id':'fleet_vehicle_log_services_action', 'search_default_inactive': not active}&quot;]"
+             position="attributes">
+        <attribute name="invisible">0</attribute>
+      </xpath>
+      <xpath expr="//button[@context=&quot;{'xml_id':'fleet_vehicle_odometer_action'}&quot;]" position="attributes">
+        <attribute name="invisible">0</attribute>
+      </xpath>
       <xpath expr="//page[@name='note']" position="after">
         <page name="checklist" string="Checklist">
           <group>

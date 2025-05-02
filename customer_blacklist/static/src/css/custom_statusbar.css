@@ -1,0 +1,21 @@
+```css
+.o_statusbar_status .btn-primary {
+    background-color: #6c757d !important; /* Default gray for inactive states */
+    color: white !important;
+}
+
+.o_statusbar_status .btn-primary[data-value="running"].active {
+    background-color: #28a745 !important; /* Green for Running */
+    color: white !important;
+}
+
+.o_statusbar_status .btn-primary[data-value="warning"].active {
+    background-color: #ffc107 !important; /* Orange for Warning */
+    color: black !important;
+}
+
+.o_statusbar_status .btn-primary[data-value="blocked"].active {
+    background-color: #dc3545 !important; /* Red for Blocked */
+    color: white !important;
+}
+```

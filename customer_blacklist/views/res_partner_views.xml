@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_partner_form_blacklist" model="ir.ui.view">
+            <field name="name">res.partner.form.blacklist</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="customer_info.view_partner_form_rental"/>
+            <field name="arch" type="xml">
+                <xpath expr="//sheet" position="before">
+                    <header>
+                        <field name="blacklist_status" widget="statusbar"
+                               decoration-danger="blacklist_status == 'blocked'"
+                               decoration-warning="blacklist_status == 'warning'"
+                               decoration-success="blacklist_status == 'running'"/>
+                        <button name="%(customer_blacklist.action_blacklist_action_wizard)d"
+                                string="Block Customer"
+                                type="action"
+                                class="btn btn-danger"
+                                groups="customer_blacklist.group_blacklist_manager"
+                                invisible="blacklist_status != 'running'"/>
+
+                        <button name="%(customer_blacklist.action_blacklist_unblock_wizard)d"
+                                string="Unblock Customer"
+                                type="action"
+                                class="btn btn-success"
+                                groups="customer_blacklist.group_blacklist_manager"
+                                invisible="blacklist_status == 'running'"/>
+                    </header>
+
+                </xpath>
+
+                <xpath expr="//field[@name='property_account_receivable_id']" position="after">
+                    <field name="blacklist_reason" invisible="blacklist_status == 'running'" readonly="1"/>
+                </xpath>
+                <xpath expr="//page[@name='internal_notes']" position="after">
+                    <page name="blacklist_history" string="Blacklist History"
+                          groups="customer_blacklist.group_blacklist_manager">
+                        <field name="blacklist_history_ids" widget="one2many_list" readonly="1">
+                            <list>
+                                <field name="change_date"/>
+                                <field name="action"/>
+                                <field name="type"/>
+                                <field name="reason"/>
+                                <field name="create_uid"/>
+                            </list>
+                        </field>
+                    </page>
+                </xpath>
+
+            </field>
+        </record>
+
+        <record id="view_partner_blacklist_list_rental" model="ir.ui.view">
+            <field name="name">res.partner.blacklist.list.rental</field>
+            <field name="model">res.partner</field>
+            <field name="arch" type="xml">
+                <list create="false" string="Blacklisted Individual Customers">
+                    <field name="complete_name" string="Name"/>
+                    <field name="blacklist_status"/>
+                    <field name="blacklist_reason"/>
+                    <field name="city" optional="show"/>
+                    <field name="country_id" optional="show"/>
+                    <field name="create_from_rental" invisible="1"/>
+                </list>
+            </field>
+        </record>
+
+    </data>
+</odoo>

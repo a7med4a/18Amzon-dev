@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_blacklist_unblock_wizard_form" model="ir.ui.view">
+        <field name="name">blacklist.unblock.wizard.form</field>
+        <field name="model">blacklist.unblock.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Unblock Customer">
+                <group>
+                    <field name="reason"/>
+                </group>
+                <footer>
+                    <button name="action_unblock" string="Unblock" type="object" class="btn-success"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_blacklist_unblock_wizard" model="ir.actions.act_window">
+        <field name="name">Unblock Customer</field>
+        <field name="res_model">blacklist.unblock.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="view_id" ref="view_blacklist_unblock_wizard_form"/>
+    </record>
+</odoo>

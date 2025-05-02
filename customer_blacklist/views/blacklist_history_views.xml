@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_blacklist_history_tree" model="ir.ui.view">
+        <field name="name">res.partner.blacklist.history.tree</field>
+        <field name="model">res.partner.blacklist.history</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="change_date"/>
+                <field name="action"/>
+                <field name="type"/>
+                <field name="reason"/>
+                <field name="create_uid"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_blacklist_history" model="ir.actions.act_window">
+        <field name="name">Blacklist History</field>
+        <field name="res_model">res.partner.blacklist.history</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_blacklist_history_tree"/>
+    </record>
+
+
+    <menuitem id="menu_rental_blacklist_customers"
+              name="Blacklisted Customers"
+              action="action_blacklist_history"
+              parent="rental_customization.menu_customer_data"
+              groups="customer_blacklist.group_blacklist_manager"/>
+</odoo>

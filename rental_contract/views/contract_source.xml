@@ -1,0 +1,27 @@
+<odoo>
+    <record id="contract_source_view_list" model="ir.ui.view">
+        <field name="name">contract.source.view.tree</field>
+        <field name="model">contract.source</field>
+        <field name="arch" type="xml">
+            <list string="Contract Source" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="reservation_number"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="contract_source_action" model="ir.actions.act_window">
+        <field name="name">Contract Source</field>
+        <field name="res_model">contract.source</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <menuitem
+            id="contract_source_menu"
+            name="Source Contract"
+            action="contract_source_action"
+            sequence="30"
+            parent="rental_customization.menu_configuration_root"/>
+
+</odoo>

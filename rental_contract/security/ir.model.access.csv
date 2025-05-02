@@ -8,3 +8,4 @@ access_rental_config_settings,rental.config.settings,model_rental_config_setting
 access_rental_contract_schedular_invoice_log,rental.contract.schedular.invoice.log,model_rental_contract_schedular_invoice_log,base.group_user,1,1,1,1
 access_rental_contract_fines_discount_wiz,rental.contract.fines.discount.wiz,model_rental_contract_fines_discount_wiz,base.group_user,1,1,1,1
 access_rental_contract_fines_discount_wiz_line,rental.contract.fines.discount.wiz.line,model_rental_contract_fines_discount_wiz_line,base.group_user,1,1,1,1
+access_contract_source,contract.source,model_contract_source,base.group_user,1,1,1,1

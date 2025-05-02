@@ -368,6 +368,9 @@ class RentalContract(models.Model):
 
     schedular_invoice_log_count = fields.Integer(
         compute="_compute_schedular_invoice_log_count", store=True)
+    source_contract = fields.Many2one(comodel_name='contract.source',string='Source Contract',required=True)
+    reservation_number = fields.Boolean(related='source_contract.reservation_number')
+    reservation_no = fields.Integer("Reservation Number")
 
     @api.depends('vehicle_id', 'draft_state')
     def _compute_vehicle_model_datail_id(self):
@@ -633,6 +636,11 @@ class RentalContract(models.Model):
             if rec.announcement_date and rec.accident_date and rec.announcement_date < rec.accident_date:
                 raise ValidationError(
                     "Accident Date must be less than Announcement Date")
+    @api.constrains('reservation_no')
+    def _check_reservation_number(self):
+        for rec in self:
+            if rec.reservation_number and rec.reservation_no <= 0:
+                raise ValidationError("Reservation Number must be more than 0")
 
     # Accounting Functions
 

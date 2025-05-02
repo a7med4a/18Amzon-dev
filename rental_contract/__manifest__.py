@@ -31,6 +31,7 @@
         'views/fleet_accident.xml',
         'views/fleet_damage.xml',
         'views/rental_contract.xml',
+        'views/contract_source.xml',
 
     ],
 }

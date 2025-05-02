@@ -118,6 +118,9 @@
               <field name="partner_id" options="{'no_create': True}" context="{'form_view_ref': 'customer_info.view_partner_form_rental', 'search_by_mobile': True}" readonly="state != 'draft'" />
               <field name="partner_mobile" />
               <field name="partner_id_no" />
+              <field name="source_contract" />
+              <field name="reservation_number" invisible="1"/>
+              <field name="reservation_no" invisible="reservation_number == False" required="reservation_number == True"/>
             </group>
           </group>
           <!-- vehicle_info -->
@@ -183,10 +186,10 @@
           <group invisible="(state == 'draft' and draft_state != 'additional_suppl_service') or state == 'close_info'">
             <field name="additional_supplement_service_line_ids" invisible="1" />
             <group string="Additional Services">
-              <field name="additional_service_ids" options="{'no_open': True, 'no_create': True}" widget="many2many_checkboxes" nolabel="1" required="draft_state not in ['customer_info', 'vehicle_info', 'contract_info']" readonly="state != 'draft'" domain="[('type', '=', 'additional'), ('id', 'in', additional_supplement_service_line_ids)]" />
+              <field name="additional_service_ids" options="{'no_open': True, 'no_create': True}" widget="many2many_checkboxes" nolabel="1" readonly="state != 'draft'" domain="[('type', '=', 'additional'), ('id', 'in', additional_supplement_service_line_ids)]" />
             </group>
             <group string="Supplementary Services">
-              <field name="supplementary_service_ids" options="{'no_open': True, 'no_create': True}" widget="many2many_checkboxes" nolabel="1" required="draft_state not in ['customer_info', 'vehicle_info', 'contract_info']" readonly="state != 'draft'" domain="[('type', '=', 'supplementary'), ('id', 'in', additional_supplement_service_line_ids)]" />
+              <field name="supplementary_service_ids" options="{'no_open': True, 'no_create': True}" widget="many2many_checkboxes" nolabel="1" readonly="state != 'draft'" domain="[('type', '=', 'supplementary'), ('id', 'in', additional_supplement_service_line_ids)]" />
             </group>
           </group>
           <!-- financial_info -->

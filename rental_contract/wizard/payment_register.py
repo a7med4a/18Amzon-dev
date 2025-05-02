@@ -30,6 +30,12 @@ class PaymentRegister(models.TransientModel):
 
     available_payment_method_line_ids = fields.Many2many(
         'account.payment.method.line', compute='_compute_payment_method_line_fields')
+    payment_type_selection = fields.Selection(
+        string='Payment Type Selection',
+        selection=[('advance', 'مقدم'),('extension', 'تمديد'),('close', 'إغلاق'),('debit', 'سداد مديونية'),('extension_offline', 'تمديد بدون منصة'),
+                   ('suspended_payment', 'سداد عقد معلق'), ],
+        required=True, )
+        
 
     @api.depends('journal_id', 'currency_id')
     def _compute_payment_method_line_fields(self):
@@ -62,6 +68,7 @@ class PaymentRegister(models.TransientModel):
             'rental_contract_id': contract.id,
             'company_id': contract.company_id.id,
             'date': self.payment_date,
+            'payment_type_selection': self.payment_type_selection,
             'state': 'draft',
             'payment_method_line_id': self.payment_method_line_id.id,
         })

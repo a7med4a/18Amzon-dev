@@ -20,6 +20,7 @@
                                     <field name="currency_id"/>
                                 </div>
                                 <field name="communication"/>
+                                <field name="payment_type_selection"/>
                             </group>
                         </group>
                     </sheet>

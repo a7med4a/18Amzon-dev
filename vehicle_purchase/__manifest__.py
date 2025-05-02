@@ -20,6 +20,7 @@
         'views/bill_setting.xml',
         'views/bill.xml',
         'views/vehicle_purchase_order_view.xml',
+        'views/vehicle_purchase_accounting.xml',
 
     ],
 }

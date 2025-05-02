@@ -36,7 +36,7 @@
                             class="btn-primary" invisible="state not in  ('confirmed') or vehicle_ids"/>
                     <button name="action_create_bill" string="Create Bill" type="object"
                             confirm="Are you sure you want to Create Bill ?"
-                            class="btn-primary" invisible="state not in  ('confirmed') or is_advanced_payment_paid == False or bill_id != False"/>
+                            class="btn-primary" invisible="state not in  ('confirmed') or (is_advanced_payment_paid == False and total_advanced_payment > 0)  or bill_id != False"/>
                     <button name="action_reset_draft" string="Reset To Draft" type="object"
                             confirm="Are you sure you want to reset back to draft state ?"
                             class="btn-primary" invisible="state not in  ('cancelled','refused')"/>

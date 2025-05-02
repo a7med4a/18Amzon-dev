@@ -9,16 +9,18 @@ class InheritFleetVehicle(models.Model):
     vehicle_purchase_order_line_ids=fields.Many2many('vehicle.purchase.order.line',readonly=True)
 
     def write(self, values):
+        res = super(InheritFleetVehicle, self).write(values)
         for rec in self :
-           res = super(InheritFleetVehicle, self).write(values)
-           align_items=self.env['account.move.line'].search([('vehicle_id','=',self.id)])
-           print("align_items",align_items ,values.get('license_plate'))
-           if values.get('license_plate') and align_items:
-               align_items.write({'name': rec.display_name})
-           if (values.get('vin_sin') or values.get('license_plate') )and align_items:
-               align_items.write({'analytic_distribution': {
+            align_items=self.env['account.move.line'].search([('vehicle_id','=',self.id)])
+            align_assets=self.env['account.asset'].search([('vehicle_id','=',self.id)])
+            if  values.get('license_plate') or values.get('vin_sin') :
+                if align_items:
+                    align_items.write({'name': rec.display_name,'analytic_distribution': {
                         rec.analytic_account_id.id: 100,
                     }})
-           return res
-        return None
+                if align_assets:
+                    align_assets.write({'name': rec.display_name,'analytic_distribution': {
+                        rec.analytic_account_id.id: 100,
+                    }})
+        return res
 

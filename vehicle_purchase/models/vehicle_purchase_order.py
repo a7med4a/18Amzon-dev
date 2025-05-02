@@ -148,6 +148,8 @@ class VehiclePurchaseOrder(models.Model):
         for rec in self:
             if not rec.vendor_id :
                 raise ValidationError(_(f'Please ,Add Vendor to request validate'))
+            if rec.payment_method == 'settlement' and not rec.installment_board_ids:
+                raise ValidationError(_(f'Please ,Calculate installments before request validate'))
             rec.state='under_review'
     def action_confirm(self):
         for rec in self:
@@ -459,7 +461,7 @@ class InstallmentBoard(models.Model):
     vehicle_purchase_order_id = fields.Many2one(comodel_name='vehicle.purchase.order')
 
     order_name = fields.Char(related='vehicle_purchase_order_id.name', string='Order Reference', store=True)
-    vendor_id = fields.Many2one(related='vehicle_purchase_order_id.vendor_id', string='Customer', store=True)
+    vendor_id = fields.Many2one(related='vehicle_purchase_order_id.vendor_id', string='Vendor', store=True)
 
 
     @api.depends('amount','paid_amount')

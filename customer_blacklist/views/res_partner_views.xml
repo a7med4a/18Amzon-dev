@@ -51,20 +51,35 @@
             </field>
         </record>
 
-        <record id="view_partner_blacklist_list_rental" model="ir.ui.view">
-            <field name="name">res.partner.blacklist.list.rental</field>
+        <record id="view_partner_tree_rental" model="ir.ui.view">
+            <field name="name">res.partner.inherit</field>
             <field name="model">res.partner</field>
+            <field name="inherit_id" ref="customer_info.view_partner_tree_rental"/>
             <field name="arch" type="xml">
-                <list create="false" string="Blacklisted Individual Customers">
-                    <field name="complete_name" string="Name"/>
-                    <field name="blacklist_status"/>
-                    <field name="blacklist_reason"/>
-                    <field name="city" optional="show"/>
-                    <field name="country_id" optional="show"/>
-                    <field name="create_from_rental" invisible="1"/>
-                </list>
+                <xpath expr="//field[@name='company_id']" position="after">
+                    <field name="blacklist_status" widget="badge" decoration-info="blacklist_status == 'running'" decoration-warning="blacklist_status == 'warning'"  decoration-danger="blacklist_status == 'blocked'"/>
+                </xpath>
+
             </field>
         </record>
+
+        <record id="rental_individual_customers_action_blocked" model="ir.actions.act_window">
+            <field name="name">Individual Customers</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">list,form</field>
+            <field name="view_ids" eval="[
+            (5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('customer_info.view_partner_tree_rental')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('customer_info.view_partner_form_rental')})]"/>
+            <field name="domain">[('create_from_rental', '=', True),('blacklist_status', 'in', ['warning','blocked'])]</field>
+            <field name="context">{'default_create_from_rental': True,'default_is_company': False}</field>
+        </record>
+
+        <menuitem id="menu_rental_blacklist_customers"
+                  name="Blacklisted Customers"
+                  action="rental_individual_customers_action_blocked"
+                  parent="rental_customization.menu_customer_data"
+                  groups="customer_blacklist.group_blacklist_manager"/>
 
     </data>
 </odoo>

@@ -452,6 +452,7 @@
         <field name="current_due_amount" />
         <field name="paid_amount" />
         <field name="state" />
+        <field name="source_contract" />
       </list>
     </field>
   </record>

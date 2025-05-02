@@ -22,9 +22,5 @@
     </record>
 
 
-    <menuitem id="menu_rental_blacklist_customers"
-              name="Blacklisted Customers"
-              action="action_blacklist_history"
-              parent="rental_customization.menu_customer_data"
-              groups="customer_blacklist.group_blacklist_manager"/>
+
 </odoo>

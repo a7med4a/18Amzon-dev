@@ -7,7 +7,7 @@ class DamageConfigSettings(models.Model):
     @api.model
     def default_get(self, fields_list):
         result = super().default_get(fields_list)
-        config = self.search([],order="id desc",limit=1)
+        config = self.search([('company_id','=',self.env.company.id)],order="id desc",limit=1)
         if config:
             field_names = ['journal_id', 'damage_account_id','description']
             result.update({
@@ -21,14 +21,16 @@ class DamageConfigSettings(models.Model):
     damage_account_id = fields.Many2one("account.account",required=True,string="Damage Account")
     description = fields.Text(string="Description",required=True)
     tax_ids = fields.Many2many('account.tax',string="Taxes",domain=[("type_tax_use", "=", "sale")])
+    company_id=fields.Many2one("res.company",default=lambda self:self.env.company.id,readonly=True)
 
     @api.model_create_multi
     def create(self, values):
-        config = self.env["damage.config.settings"].search([], order="id desc", limit=1)
-        if config:
-            config.write(values)
-            return config
-        return super().create(values)
-
-
-
+        res = False
+        for val in values:
+            config = self.env["damage.config.settings"].search([('company_id','=',self.env.company.id)], order="id desc", limit=1)
+            if config:
+                config.write(val)
+                res = config
+            else:
+                res = super().create(val)
+        return res

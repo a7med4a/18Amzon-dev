@@ -5,8 +5,23 @@
         <field name="arch" type="xml">
             <list>
                 <field name="name"/>
-                <field name="state_color" widget="color_picker"/>
-                <field name="state" widget="badge" options="{'color_field': 'state_color'}"/>
+                <field name="vehicle_id"/>
+                <field name="rental_contract_id"/>
+                <field name="customer_id"/>
+                <field name="id_no"/>
+                <field name="evaluation_type"/>
+                <field name="evaluation_party_id"/>
+                <field name="company_id"/>
+                <field name="total_without_tax"/>
+                <field name="total_tax"/>
+                <field name="total_include_tax"/>
+                <field name="state" widget="badge" options="{'color_field': 'state_color'}"
+                       decoration-info="state in ('waiting_evaluation')"
+                       decoration-warning="state == 'draft'"
+                       decoration-danger="state == 'cancelled'"
+                       decoration-success="state == 'charged'"/>
+                <field name="invoice_fleet_damage" widget="badge"
+                       decoration-info="invoice_fleet_damage in ('invoiced')"/>
             </list>
         </field>
     </record>
@@ -42,13 +57,18 @@
                     </div>
                     <group>
                         <group string="Vehicle Info">
-                            <field name="vehicle_id" options="{'no_create': True, 'no_open': True, 'no_edit': True}" readonly="state != 'draft'"/>
-                            <field name="model_id" />
-                            <field name="category_id"/>
+                            <field name="name" invisible="1"/>
+                            <field name="vehicle_id" options="{'no_create': True, 'no_open': True, 'no_edit': True}" readonly="state != 'draft' or source == 'rental'"/>
+                            <field name="model_id" options="{'no_create': True, 'no_open': True, 'no_edit': True}"/>
+                            <field name="category_id" options="{'no_create': True, 'no_open': True, 'no_edit': True}"/>
                         </group>
                         <group string="Customer Info">
-                            <field name="customer_id" readonly="state != 'draft'"/>
-                            <field name="id_no" readonly="state != 'draft'"/>
+                            <field name="rental_contract_id"
+                                   readonly="customer_id == False or source == 'rental' or state != 'draft'"
+                                   options="{'no_create': True, 'no_open': True, 'no_edit': True}"/>
+                            <field name="customer_id" readonly="state != 'draft'  or source == 'rental' " options="{'no_create': True, 'no_open': True, 'no_edit': True}"/>
+                            <field name="id_no" readonly="state != 'draft'  or source == 'rental'" options="{'no_create': True, 'no_open': True, 'no_edit': True}"/>
+                            <field name="source" readonly="1"/>
                         </group>
                     </group>
                     <group>
@@ -63,8 +83,8 @@
                             <field name="evaluation_ids" readonly="state in ('charged','cancelled')">
                                 <list editable="bottom" create="true" edit="true">
                                     <field name="evaluation_item_id" optional='show'/>
-                                    <field name="amount_without_tax" optional='show'/>
-                                    <field name="tax_ids" optional='show' widget="many2many_tags"/>
+                                    <field name="amount_without_tax" optional='hide'/>
+                                    <field name="tax_ids" optional='hide' widget="many2many_tags"/>
                                     <field name="amount_include_tax" optional='show'/>
                                 </list>
                             </field>
@@ -126,5 +146,11 @@
 
     <menuitem id="menu_fleet_damage_invoice_menu" name="Invoice Damage" parent="fleet_accident.fleet_accident_root_menu" action="action_fleet_damage_invoice" sequence="1"/>
 
+    <record id="seq_fleet_damage" model="ir.sequence">
+        <field name="name">Fleet Damage</field>
+        <field name="code">fleet.damage.seq</field>
+        <field name="prefix">FD/</field>
+        <field name="padding">5</field>
+    </record>
 
 </odoo>

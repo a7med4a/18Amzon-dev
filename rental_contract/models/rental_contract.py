@@ -381,6 +381,9 @@ class RentalContract(models.Model):
     source_contract = fields.Many2one(comodel_name='contract.source',string='Source Contract',required=True,default=lambda self: self._get_default_source_contract())
     reservation_number = fields.Boolean(related='source_contract.reservation_number')
     reservation_no = fields.Char("Reservation Number", default=lambda self: False)
+    invoice_damage_accident = fields.Selection([
+        ('invoiced', 'Invoiced'),
+        ('none', 'None')], string='Invoice Accident/Damage', readonly=True)
 
 
 
@@ -612,11 +615,13 @@ class RentalContract(models.Model):
                 + record.current_accident_damage_amount + record.current_km_extra_amount\
                 - (record.discount_voucher_amount + record.paid_amount)
 
-    @api.depends('account_move_ids', 'account_move_ids.move_type')
+    @api.depends('account_move_ids', 'account_move_ids.move_type','damage_ids','damage_ids.invoice_id','damage_ids.state')
     def _compute_move_count(self):
         for record in self:
-            record.invoice_count = len(record.account_move_ids.filtered(
-                lambda move: move.move_type == 'out_invoice'))
+            invoice_contract_related = len(record.account_move_ids.filtered(lambda move: move.move_type == 'out_invoice'))
+            invoice_damage_relate=len(record.damage_ids.filtered(lambda damage: damage.invoice_id != False and damage.invoice_id.state == 'posted'))
+            print(record.damage_ids.filtered(lambda damage: damage.invoice_id != False))
+            record.invoice_count=invoice_contract_related + invoice_damage_relate
             record.credit_note_count = len(record.account_move_ids.filtered(
                 lambda move: move.move_type == 'out_refund'))
 
@@ -1172,6 +1177,8 @@ class RentalContract(models.Model):
                     'vehicle_id': rec.vehicle_id.id,
                     'rental_contract_id': rec.id,
                     'customer_id': rec.partner_id.id,
+                    'source': 'rental',
+                    'id_no': rec.partner_id_no,
                 })
 
             elif rec.vehicle_in_state == 'none':
@@ -1282,7 +1289,7 @@ class RentalContract(models.Model):
             'name': _('Invoices'),
             'res_model': 'account.move',
             'view_mode': 'list,form',
-            'domain': [('rental_contract_id', '=', self.id), ('move_type', '=', 'out_invoice')]
+            'domain': ['|',('damage_id','in',self.damage_ids.ids),('rental_contract_id', '=', self.id), ('move_type', '=', 'out_invoice'), ('state', 'in', ('posted','draft'))]
         }
 
     def view_related_credit_note(self):
@@ -1332,7 +1339,7 @@ class RentalContract(models.Model):
             'type': 'ir.actions.act_window',
             'name': _('Damage'),
             'res_model': 'fleet.damage',
-            'view_mode': 'list, form',
+            'view_mode': 'list,form',
             'domain': [('rental_contract_id', '=', self.id)],
             'context': {'create': 0}
         }

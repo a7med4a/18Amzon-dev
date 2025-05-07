@@ -458,6 +458,11 @@
         <field name="paid_amount" />
         <field name="state" />
         <field name="source_contract" />
+        <field name="vehicle_in_state" widget="badge"
+                       decoration-warning="vehicle_in_state == 'accident'"
+                       decoration-danger="vehicle_in_state == 'damage'"
+                       decoration-info="vehicle_in_state == 'other'"/>
+        <field name="invoice_damage_accident" decoration-info="invoice_damage_accident == 'invoiced'" widget="badge"/>
       </list>
     </field>
   </record>

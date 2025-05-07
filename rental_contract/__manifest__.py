@@ -30,7 +30,6 @@
         'views/account_move.xml',
         'views/contract_schedular_invoice_log.xml',
         'views/fleet_accident.xml',
-        'views/fleet_damage.xml',
         'views/rental_contract.xml',
         'views/fleet_vehicle.xml',
         'views/contract_source.xml',

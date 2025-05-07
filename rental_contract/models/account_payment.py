@@ -41,8 +41,8 @@ class AccountPayment(models.Model):
         moves = self.env['account.move'].create(move_vals)
         for pay, move in zip(need_move, moves):
             pay.write({'move_id': move.id, 'state': 'in_process'})
-            
-            
+
+
     def _synchronize_to_moves(self, changed_fields):
         '''
             Update the account.move regarding the modified account.payment.
@@ -85,7 +85,7 @@ class AccountPayment(models.Model):
                 'partner_bank_id': pay.partner_bank_id.id,
                 'line_ids': line_ids_commands,
             })
-            
+
     @api.model
     def _get_trigger_fields_to_synchronize(self):
         return (

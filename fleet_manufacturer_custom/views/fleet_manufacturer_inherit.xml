@@ -17,9 +17,14 @@
                                     <field name="free_kilometers"/>
                                     <field name="extra_kilometers_cost"/>
                                     <field name="number_delay_hours_allowed"/>
-                                    <field name="normal_day_price"/>
-                                    <field name="weekly_day_price"/>
-                                    <field name="monthly_day_price"/>
+                                    <field name="min_normal_day_price"/>
+                                    <field name="min_weekly_day_price"/>
+                                    <field name="min_monthly_day_price"/>
+                                    <field name="max_normal_day_price"/>
+                                    <field name="max_weekly_day_price"/>
+                                    <field name="max_monthly_day_price"/>
+                                    <field name="min_customer_age"/>
+                                    <field name="max_customer_age"/>
                                     <field name="full_tank_cost"/>
                                     <field name="start_date"/>
                                     <field name="end_date"/>

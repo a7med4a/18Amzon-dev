@@ -5,11 +5,12 @@
     'summary': 'Manage Vehicle Purchase',
     'author': '',
     'version': '18.0.0.1',
-    'depends': ['base','fleet','purchase','contacts','accountant','fleet_status','account'],
+    'depends': ['base', 'fleet', 'purchase', 'contacts', 'accountant', 'fleet_status', 'account', 'account_asset'],
     'data': [
         'security/ir.model.access.csv',
         'security/security.xml',
         'data/vehicle_purchase_sequence.xml',
+        'views/vehicle_purchase_view.xml',
         'wizard/payment_register.xml',
         'wizard/bulk_installment_payment_wizard.xml',
         'wizard/import_installments_wizard.xml',
@@ -24,5 +25,3 @@
 
     ],
 }
-
-

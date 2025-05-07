@@ -1,0 +1,14 @@
+<odoo>
+    <record id="fleet_vehicle_view_form" model="ir.ui.view">
+        <field name="name">fleet.vehicle.view.form.inherit</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="view_related_accident" type="object" class="oe_stat_button" icon="fa-times" help="show related accident for this vehicle">
+                    <field name="accident_count" widget="statinfo" string="Accident"/>
+                </button>
+            </xpath>
+        </field>
+    </record>
+</odoo>

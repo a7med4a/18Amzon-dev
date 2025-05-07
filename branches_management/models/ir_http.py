@@ -33,21 +33,25 @@ class BranchEnvironment(Environment):
             if self.user.id != SUPERUSER_ID:
             # if not self.su:
                 user_branch_ids = self.user.branch_ids.ids
+                _logger.error("Non-stored 555 %s cannot be searched.", user_branch_ids, exc_info=True)
                 if any(bid not in user_branch_ids for bid in branch_ids):
-                    raise AccessError(_("Access to unauthorized or invalid branches."))
+                    raise AccessError(_("Access to unauthorized or invalid branches2."))
             return self['res.branch'].browse(branch_ids[0])
         return self.user.branch_id.with_env(self)
+
+
 
     @lazy_property
     def branches(self):
         branch_ids = self.context.get('allowed_branch_ids', [])
         if branch_ids:
             if self.user.id != SUPERUSER_ID:
-            # if not self.su:
                 user_branch_ids = self.user.branch_ids.ids
+                if not user_branch_ids:
+                    raise AccessError(_("No branches assigned to the user."))
                 if any(bid not in user_branch_ids for bid in branch_ids):
                     raise AccessError(_("Access to unauthorized or invalid branches."))
-            return self['res.branch'].browse(branch_ids)
+                return self['res.branch'].browse(branch_ids)
         return self.user.branch_ids.with_env(self)
 
     Environment.branch = branch

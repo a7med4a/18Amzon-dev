@@ -35,7 +35,7 @@ class PaymentRegister(models.TransientModel):
         selection=[('advance', 'مقدم'),('extension', 'تمديد'),('close', 'إغلاق'),('debit', 'سداد مديونية'),('extension_offline', 'تمديد بدون منصة'),
                    ('suspended_payment', 'سداد عقد معلق'), ],
         required=True, )
-        
+
 
     @api.depends('journal_id', 'currency_id')
     def _compute_payment_method_line_fields(self):

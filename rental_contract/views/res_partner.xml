@@ -1,0 +1,16 @@
+<odoo>
+    <record id="view_partner_form_rental" model="ir.ui.view">
+        <field name="name">res.partner.view.form.inherit</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="customer_info.view_partner_form_rental"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <div class="oe_button_box" name="button_box">
+                    <button name="view_related_rental_contact" type="object" class="oe_stat_button" icon="fa-book" help="show related accident for this vehicle">
+                        <field name="rental_contact_count" widget="statinfo" string="Rental Contract" />
+                    </button>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

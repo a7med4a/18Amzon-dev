@@ -14,6 +14,7 @@
         'views/default_accident_item.xml',
         'views/account_move.xml',
         'views/fleet_accident.xml',
+        'views/fleet_vehicle.xml',
         'views/menu_item.xml',
     ]
 }

@@ -5,6 +5,10 @@
         <field name="model">fleet.vehicle</field>
         <field name="inherit_id" ref="fleet.fleet_vehicle_view_form"/>
         <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="view_related_purchase_order" type="object" class="oe_stat_button" icon="fa-file-text" help="show related purchase order for this vehicle" string="Purchase Order">
+                </button>
+            </xpath>
             <xpath expr="//page[@name='note']" position="after">
                 <page string="Purchase Vehicles Info">
                     <field name="vehicle_purchase_order_line_ids" mode="kanban" readonly="1"

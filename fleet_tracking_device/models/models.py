@@ -14,7 +14,7 @@ class ProductCategoryInherit(models.Model):
     is_spare_parts = fields.Boolean(default=False)
     purchase_type = fields.Selection(
         selection=[('Spare Parts', 'Spare Parts'), ('Tracking Device', 'Tracking Device'), ('Other', 'Other'),],
-        default='other')
+        default='Other')
     purchase_type_id = fields.Many2one(comodel_name='purchase.type.names')
 
 

@@ -16,6 +16,12 @@ class RentalContract(models.Model):
     _description = 'Rental Contract'
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
+    def _get_default_source_contract(self):
+        source = self.env['contract.source'].search(
+            [], order='sequence ASC', limit=1
+        )
+        return source if source else False
+
     name = fields.Char('Contract Number', copy=False, readonly=True,
                        default='New')
     # Customer Info Fields
@@ -136,8 +142,7 @@ class RentalContract(models.Model):
         'additional.supplementary.services.line', relation="rental_contract_supplementary_services_line_rel", string='Supplementary Services')
 
     # Financial Info Fields
-    daily_rate = fields.Float(
-        'Daily Rate', compute='_compute_daily_rate', store=True)
+    daily_rate = fields.Float('Daily Rate')
     daily_additional_services_rate = fields.Float(
         'Daily Addition Service Rate', compute='_compute_daily_additional_services_rate', store=True)
     daily_supplementary_services_rate = fields.Float(
@@ -340,9 +345,14 @@ class RentalContract(models.Model):
     model_pricing_extra_kilometers_cost = fields.Float(
         string='Extra kilometers cost')
     model_pricing_number_delay_hours_allowed = fields.Float()
-    model_pricing_normal_day_price = fields.Float()
-    model_pricing_weekly_day_price = fields.Float()
-    model_pricing_monthly_day_price = fields.Float()
+    model_pricing_min_normal_day_price = fields.Float()
+    model_pricing_min_weekly_day_price = fields.Float()
+    model_pricing_min_monthly_day_price = fields.Float()
+    model_pricing_max_normal_day_price = fields.Float()
+    model_pricing_max_weekly_day_price = fields.Float()
+    model_pricing_max_monthly_day_price = fields.Float()
+    model_pricing_min_customer_age = fields.Float()
+    model_pricing_max_customer_age = fields.Float()
     model_pricing_full_tank_cost = fields.Float()
     model_pricing_start_date = fields.Date()
     model_pricing_end_date = fields.Date()
@@ -368,9 +378,11 @@ class RentalContract(models.Model):
 
     schedular_invoice_log_count = fields.Integer(
         compute="_compute_schedular_invoice_log_count", store=True)
-    source_contract = fields.Many2one(comodel_name='contract.source',string='Source Contract',required=True)
+    source_contract = fields.Many2one(comodel_name='contract.source',string='Source Contract',required=True,default=lambda self: self._get_default_source_contract())
     reservation_number = fields.Boolean(related='source_contract.reservation_number')
-    reservation_no = fields.Integer("Reservation Number")
+    reservation_no = fields.Char("Reservation Number", default=lambda self: False)
+
+
 
     @api.depends('vehicle_id', 'draft_state')
     def _compute_vehicle_model_datail_id(self):
@@ -630,17 +642,69 @@ class RentalContract(models.Model):
         for rec in self:
             rec.damage_count = len(rec.damage_ids)
 
+    @api.constrains('partner_id')
+    def _check_contract_partner_id_validity(self):
+        matched_customer_contracts = self.search(
+            [('partner_id', 'in', self.partner_id.ids), ('state', 'in', ['draft', 'opened'])])
+
+        for rec in self.filtered(lambda c: c.partner_id):
+            # check customer has other draft / running contracts
+            if matched_customer_contracts.filtered(lambda c: c.partner_id == rec.partner_id and c.id != rec.id):
+                conflict_contract = matched_customer_contracts.filtered(
+                    lambda c: c.partner_id == rec.partner_id)[0]
+                raise ValidationError(
+                    _(f"Selected Customer Has Contract {conflict_contract.name} That In {conflict_contract.state} State"))
+
+    @api.constrains('vehicle_id')
+    def _check_contract_vehicle_id_validity(self):
+        matched_policy_logs = self.env['insurance.policy.line'].search(
+            [('vehicle_id', 'in', self.vehicle_id.ids), ('insurance_status', '=', 'running')])
+        matched_vehicle_contracts = self.search(
+            [('vehicle_id', 'in', self.vehicle_id.ids), ('state', 'in', ['draft', 'opened'])])
+
+        for rec in self.filtered(lambda c: c.vehicle_id):
+            # Check Insurance Policy
+            if not matched_policy_logs.filtered(lambda p: p.vehicle_id == rec.vehicle_id):
+                raise ValidationError(
+                    _("Selected Vehicle Hasn't Running Insurance Policy"))
+
+            # Check vehicle Exist in other draft / running contracts
+            if matched_vehicle_contracts.filtered(lambda c: c.vehicle_id == rec.vehicle_id and c.id != rec.id):
+                conflict_contract = matched_vehicle_contracts.filtered(
+                    lambda c: c.vehicle_id == rec.vehicle_id and c.id != rec.id)[0]
+                raise ValidationError(
+                    _(f"Selected Vehicle Exists On Contract {conflict_contract.name} That In {conflict_contract.state} State"))
+
+    @api.constrains('daily_rate', 'rental_plan')
+    def _check_daily_rate_validation(self):
+        for rec in self.filtered(lambda c: c.daily_rate and c.rental_plan):
+            if rec.rental_plan == 'daily' and (rec.daily_rate > rec.model_pricing_max_normal_day_price or rec.daily_rate < rec.model_pricing_min_normal_day_price):
+                msg = f"You exceed maximum daily rate of {rec.vehicle_id.display_name} model pricing" \
+                    if rec.daily_rate > rec.model_pricing_max_normal_day_price else\
+                    f"You recede minimum daily rate of {rec.vehicle_id.display_name} model pricing"
+                raise ValidationError(_(msg))
+            elif rec.rental_plan == 'weekly' and (rec.daily_rate > rec.model_pricing_max_weekly_day_price or rec.daily_rate < rec.model_pricing_min_weekly_day_price):
+                msg = f"You exceed maximum weekly rate of {rec.vehicle_id.display_name} model pricing" \
+                    if rec.daily_rate > rec.model_pricing_max_weekly_day_price else\
+                    f"You recede minimum weekly rate of {rec.vehicle_id.display_name} model pricing"
+                raise ValidationError(_(msg))
+            elif rec.rental_plan == 'monthly' and (rec.daily_rate > rec.model_pricing_max_monthly_day_price or rec.daily_rate < rec.model_pricing_min_monthly_day_price):
+                msg = f"You exceed maximum weekly rate of {rec.vehicle_id.display_name} model pricing" \
+                    if rec.daily_rate > rec.model_pricing_max_monthly_day_price else\
+                    f"You recede minimum weekly rate of {rec.vehicle_id.display_name} model pricing"
+                raise ValidationError(_(msg))
+
     @api.constrains('accident_date', 'announcement_date')
     def _check_accident_date(self):
         for rec in self:
             if rec.announcement_date and rec.accident_date and rec.announcement_date < rec.accident_date:
                 raise ValidationError(
                     "Accident Date must be less than Announcement Date")
-    @api.constrains('reservation_no')
-    def _check_reservation_number(self):
-        for rec in self:
-            if rec.reservation_number and rec.reservation_no <= 0:
-                raise ValidationError("Reservation Number must be more than 0")
+    # @api.constrains('reservation_no')
+    # def _check_reservation_number(self):
+    #     for rec in self:
+    #         if rec.reservation_number and rec.reservation_no <= 0:
+    #             raise ValidationError("Reservation Number must be more than 0")
 
     # Accounting Functions
 
@@ -923,6 +987,12 @@ class RentalContract(models.Model):
                 raise ValidationError(
                     _(f"Configure Model Pricing For {rec.vehicle_id.display_name}"))
 
+    def check_customer_age(self):
+        for rec in self:
+            if rec.vehicle_model_datail_id.min_customer_age > float(rec.partner_id.age) or rec.vehicle_model_datail_id.max_customer_age < float(rec.partner_id.age):
+                raise ValidationError(
+                    _("Selected customer age is out of vehicle age range !"))
+
     def assign_model_pricing_fields(self):
         for rec in self:
 
@@ -931,9 +1001,14 @@ class RentalContract(models.Model):
             rec.model_pricing_vehicle_brand_id = rec.vehicle_model_datail_id.vehicle_model_brand_id
             rec.model_pricing_free_kilometers = rec.vehicle_model_datail_id.free_kilometers
             rec.model_pricing_extra_kilometers_cost = rec.vehicle_model_datail_id.extra_kilometers_cost
-            rec.model_pricing_normal_day_price = rec.vehicle_model_datail_id.normal_day_price
-            rec.model_pricing_weekly_day_price = rec.vehicle_model_datail_id.weekly_day_price
-            rec.model_pricing_monthly_day_price = rec.vehicle_model_datail_id.monthly_day_price
+            rec.model_pricing_min_normal_day_price = rec.vehicle_model_datail_id.min_normal_day_price
+            rec.model_pricing_min_weekly_day_price = rec.vehicle_model_datail_id.min_weekly_day_price
+            rec.model_pricing_min_monthly_day_price = rec.vehicle_model_datail_id.min_monthly_day_price
+            rec.model_pricing_max_normal_day_price = rec.vehicle_model_datail_id.max_normal_day_price
+            rec.model_pricing_max_weekly_day_price = rec.vehicle_model_datail_id.max_weekly_day_price
+            rec.model_pricing_max_monthly_day_price = rec.vehicle_model_datail_id.max_monthly_day_price
+            rec.model_pricing_min_customer_age = rec.vehicle_model_datail_id.min_customer_age
+            rec.model_pricing_max_customer_age = rec.vehicle_model_datail_id.max_customer_age
             rec.model_pricing_full_tank_cost = rec.vehicle_model_datail_id.full_tank_cost
             rec.model_pricing_start_date = rec.vehicle_model_datail_id.start_date
             rec.model_pricing_end_date = rec.vehicle_model_datail_id.end_date
@@ -1021,6 +1096,7 @@ class RentalContract(models.Model):
             self.draft_state = 'vehicle_info'
         elif self.draft_state == 'vehicle_info':
             self.check_model_pricing()
+            self.check_customer_age()
             self.assign_model_pricing_fields()
             self.draft_state = 'contract_info'
         elif self.draft_state == 'contract_info':

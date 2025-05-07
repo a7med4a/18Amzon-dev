@@ -100,10 +100,10 @@
                 options="{'no_open': True, 'no_create': True}"/>
               <label for="destination_branch_id"
                 string="Destination Branch"
-                invisible="destination_type in ['workshop', False]" />
+                invisible="destination_type in ['workshop', False] or is_new_vehicle" />
               <label for="destination_branch_id"
                 string="Destination Workshop"
-                invisible="destination_type in ['branch', False]" />
+                invisible="destination_type in ['branch', False] or is_new_vehicle" />
               <label for="destination_branch_id"
                 string="Destination Branch - Workshop"
                 invisible="not is_new_vehicle" />
@@ -112,7 +112,7 @@
                 invisible="not destination_type and not is_new_vehicle"
                 domain="destination_branch_domain"
                 readonly="state != 'draft'"  options="{'no_open': True, 'no_create': True}"/>
-                <field name="is_new_vehicle"/>
+                <field name="is_new_vehicle" readonly="state != 'draft'"/>
             </group>
             <group>
               <field name="transfer_type"
@@ -204,7 +204,7 @@
       <search>
         <field name="name" />
         <field name="company_id" />
-        <field name="vehicle_route_ids" string="Vehicle" filter_domain="[('order_line.fleet_vehicle_id', 'ilike', self)]"/>
+        <field name="vehicle_route_ids" string="Vehicle" filter_domain="[('vehicle_route_ids.fleet_vehicle_id', 'ilike', self)]"/>
         <filter string="Archived" name="inactive" domain="[('active','=',False)]"/>
         <filter string="Company"
           name="company"

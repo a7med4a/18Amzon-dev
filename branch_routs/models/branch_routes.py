@@ -83,13 +83,14 @@ class BranchRoute(models.Model):
         for route in self:
             domain = [
                 ('id', '!=', route.source_branch_id.id),
-                ('id', 'in', self.env.user.branch_ids.ids),
                 ('company_id', '=', route.company_id.id)
             ]
             if route.destination_type == 'branch':
                 domain.append(('branch_type', 'in', ['rental', 'limousine']))
             elif route.destination_type == 'workshop':
                 domain.append(('branch_type', '=', 'workshop'))
+            if route.is_new_vehicle:
+                domain.append(('id', 'in', self.env.user.branch_ids.ids))
             route.destination_branch_domain = domain
 
     @api.depends('destination_branch_id', 'destination_type')
@@ -152,6 +153,7 @@ class BranchRoute(models.Model):
         if self.is_new_vehicle:
             self.transfer_type = False
             self.source_branch_id = False
+            self.destination_branch_id = False
 
     @api.model_create_multi
     def create(self, vals_list):

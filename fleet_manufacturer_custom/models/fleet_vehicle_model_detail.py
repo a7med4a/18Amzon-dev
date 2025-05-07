@@ -1,9 +1,7 @@
-
-from odoo import api, fields, models
-from datetime import date
-from markupsafe import Markup
-
 from odoo.exceptions import ValidationError
+from markupsafe import Markup
+from datetime import date
+from odoo import api, fields, models
 
 
 class VehicleModelDetail(models.Model):
@@ -32,9 +30,14 @@ class VehicleModelDetail(models.Model):
         string='Extra kilometers cost',
         required=True)
     number_delay_hours_allowed = fields.Float(required=True)
-    normal_day_price = fields.Float(required=True)
-    weekly_day_price = fields.Float(required=True)
-    monthly_day_price = fields.Float(required=True)
+    min_normal_day_price = fields.Float(required=True)
+    min_weekly_day_price = fields.Float(required=True)
+    min_monthly_day_price = fields.Float(required=True)
+    max_normal_day_price = fields.Float(required=True)
+    max_weekly_day_price = fields.Float(required=True)
+    max_monthly_day_price = fields.Float(required=True)
+    min_customer_age = fields.Float('Min Customer Age', required=True)
+    max_customer_age = fields.Float('Max Customer Age', required=True)
     full_tank_cost = fields.Float(required=True)
     start_date = fields.Date(required=True)
     end_date = fields.Date()

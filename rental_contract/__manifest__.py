@@ -20,6 +20,7 @@
         'wizard/payment_register.xml',
         'wizard/fines_discount_wiz.xml',
         # Model views
+        # 'views/res_partner.xml',
         'views/res_company.xml',
         'views/vehicle_model_details.xml',
         'views/contract_fines_discount_config.xml',
@@ -31,7 +32,9 @@
         'views/fleet_accident.xml',
         'views/fleet_damage.xml',
         'views/rental_contract.xml',
+        'views/fleet_vehicle.xml',
         'views/contract_source.xml',
+        'views/payment.xml',
 
     ],
 }

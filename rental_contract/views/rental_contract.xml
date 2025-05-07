@@ -118,9 +118,9 @@
               <field name="partner_id" options="{'no_create': True}" context="{'form_view_ref': 'customer_info.view_partner_form_rental', 'search_by_mobile': True}" readonly="state != 'draft'" />
               <field name="partner_mobile" />
               <field name="partner_id_no" />
-              <field name="source_contract" />
+              <field name="source_contract" readonly="state != 'draft'"/>
               <field name="reservation_number" invisible="1"/>
-              <field name="reservation_no" invisible="reservation_number == False" required="reservation_number == True"/>
+              <field name="reservation_no" readonly="state != 'draft'" invisible="reservation_number == False" required="reservation_number == True"/>
             </group>
           </group>
           <!-- vehicle_info -->
@@ -341,15 +341,20 @@
               <field name="model_pricing_free_kilometers" />
               <field name="model_pricing_extra_kilometers_cost" />
               <field name="model_pricing_number_delay_hours_allowed" />
-              <field name="model_pricing_normal_day_price" />
-              <field name="model_pricing_weekly_day_price" />
-              <field name="model_pricing_monthly_day_price" />
+              <field name="model_pricing_min_normal_day_price" />
+              <field name="model_pricing_min_weekly_day_price" />
+              <field name="model_pricing_min_monthly_day_price" />
+              <field name="model_pricing_min_customer_age" />
               <field name="model_pricing_full_tank_cost" />
             </group>
             <group>
               <field name="model_pricing_start_date" />
               <field name="model_pricing_end_date" />
               <field name="vehicle_branch_id" />
+              <field name="model_pricing_max_normal_day_price" />
+              <field name="model_pricing_max_weekly_day_price" />
+              <field name="model_pricing_max_monthly_day_price" />
+              <field name="model_pricing_max_customer_age" />
             </group>
           </group>
         </sheet>

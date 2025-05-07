@@ -6,8 +6,8 @@
         <field name="arch" type="xml">
             <form string="Branches Routes" create="0" delete="0">
                 <header invisible="context.get('exit_permits') or context.get('entry_permits')">
-                    <field name="state" widget="statusbar" statusbar_visible="draft,exit_check,exit_done,entry_check,entry_done" invisible="is_new_vehicle"/>
-                    <field name="state" widget="statusbar" statusbar_visible="draft,entry_check,entry_done" invisible="not is_new_vehicle"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,exit_check,exit_done,entry_check,entry_done" invisible="is_new_vehicle" />
+                    <field name="state" widget="statusbar" statusbar_visible="draft,entry_check,entry_done" invisible="not is_new_vehicle" />
                 </header>
                 <header invisible="not context.get('exit_permits')">
                     <button name="action_exit_done" type="object" string="Done" class="oe_highlight" invisible="exit_checklist_status != 'under_check'" />
@@ -24,6 +24,10 @@
                         <h1>
                             <field name="fleet_vehicle_id" readonly="1" options="{'no_open': True, 'no_create': True}" />
                         </h1>
+                        <label for="branch_route_id" class="oe_edit_only" string="Route" />
+                        <h3>
+                            <field name="branch_route_id" readonly="1" options="{'no_create': True}" context="{'create':0, 'edit':0}"/>
+                        </h3>
                     </div>
                     <group invisible="context.get('exit_permits') or context.get('entry_permits')">
                         <field name='destination_type' invisible="1" />

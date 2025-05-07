@@ -11,4 +11,5 @@ from . import contract_schedular_invoice_log
 from . import fleet_accident
 from . import fleet_damage
 from . import rental_contract
+from . import fleet_vehicle
 from . import contract_source

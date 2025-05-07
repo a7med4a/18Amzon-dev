@@ -156,7 +156,7 @@ class VehicleRouts(models.Model):
     def _compute_fleet_domain(self):
         running_vehicle_ids = self.env['vehicle.route'].search(
             [('branch_route_id.state', 'not in', ['entry_done', 'cancel'])]).mapped('fleet_vehicle_id')
-      # running_vehicle_ids |= self.vehicle_route_ids.fleet_vehicle_id
+        running_vehicle_ids |= self.branch_route_id.vehicle_route_ids.fleet_vehicle_id
         for route in self:
             if route.branch_route_id.is_new_vehicle:
                 domain = [('state_id.type', '=', 'under_preparation'),
@@ -167,10 +167,9 @@ class VehicleRouts(models.Model):
 
             route.fleet_domain = domain
 
-    @api.constrains('entry_odometer', 'entry_vehicle_status')
     def _check_odometer_validity(self):
         for rec in self:
-            if rec.exit_odometer > rec.entry_odometer or (rec.entry_odometer == 0 and not rec.is_new_vehicle and rec.entry_vehicle_status != 'done'):
+            if rec.exit_odometer >= rec.entry_odometer and not rec.is_new_vehicle:
                 raise ValidationError(
                     _(f"Odometer must be greater than {rec.exit_odometer}"))
 

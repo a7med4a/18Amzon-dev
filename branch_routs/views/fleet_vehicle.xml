@@ -7,6 +7,11 @@
             ref="fleet.fleet_vehicle_view_form" />
         <field name="arch"
             type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="view_related_vehicle_routes" type="object" class="oe_stat_button" icon="fa-exchange" help="show related routes for this vehicle">
+                    <field name="vehicle_route_count" widget="statinfo" string="Routes"/>
+                </button>
+            </xpath>
             <xpath expr="//field[@name='location']"
                 position="after">
                 <field name="is_truck" widget="boolean_toggle" />

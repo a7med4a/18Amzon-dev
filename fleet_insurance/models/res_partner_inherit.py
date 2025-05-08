@@ -10,7 +10,7 @@ class InheritResPartner(models.Model):
     @api.model
     def default_get(self, fields_list):
         defaults = super().default_get(fields_list)
-        config = self.env["insurance.config.settings"].search([], order="id desc", limit=1)
+        config = self.env["insurance.config.settings"].search([('company_id','=',self.env.company.id)], order="id desc", limit=1)
         if config:
             # Only apply these defaults if the context matches your action
             if self.env.context.get('default_is_insurance_company'):
@@ -25,7 +25,7 @@ class InheritResPartner(models.Model):
     @api.model
     def get_view(self, view_id=None, view_type='form', **options):
         res = super().get_view(view_id, view_type, **options)
-        config = self.env["insurance.config.settings"].search([], order="id desc", limit=1)
+        config = self.env["insurance.config.settings"].search([('company_id','=',self.env.company.id)], order="id desc", limit=1)
         if config:
             partner_action_form = self.env.ref('fleet_insurance.action_contacts_data')
             context = {

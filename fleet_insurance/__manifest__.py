@@ -8,6 +8,7 @@
     'depends': ['base','fleet','account','contacts','accountant'],
     'data': [
         'security/ir.model.access.csv',
+        'security/security.xml',
         'data/insurance_sequence.xml',
         'data/server_action.xml',
         'views/menu_view.xml',

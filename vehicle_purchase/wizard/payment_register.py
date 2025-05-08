@@ -61,6 +61,10 @@ class VehiclePaymentRegister(models.TransientModel):
         })
 
         payment.action_validate()
+        if po.bill_id and po.bill_id.state == 'posted':
+            po.bill_id.reconcile_advance_payments(payment)
+            po.bill_id._compute_amount()
+
         if payment and self.pay_type == 'advance':
             po.write({'is_advanced_payment_paid': True})
         if payment and self.pay_type == 'installment':

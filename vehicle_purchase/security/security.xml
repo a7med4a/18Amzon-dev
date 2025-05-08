@@ -17,5 +17,11 @@
             <field name="model_id" ref="model_vehicle_purchase_order"/>
             <field name="domain_force">[('company_id', 'in', company_ids)]</field>
         </record>
+
+        <record id="bill_config_settings_rule" model="ir.rule">
+            <field name="name">Bill Config Settings</field>
+            <field name="model_id" ref="model_bill_config_settings"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
     </data>
 </odoo>

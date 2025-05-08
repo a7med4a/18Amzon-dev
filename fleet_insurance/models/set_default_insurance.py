@@ -7,7 +7,7 @@ class InsuranceConfigSettings(models.Model):
     @api.model
     def default_get(self, fields_list):
         result = super().default_get(fields_list)
-        config = self.search([],order="id desc",limit=1)
+        config = self.search([('company_id','=',self.env.company.id)],order="id desc",limit=1)
         if config:
             field_names = [
                 'insurance_journal_id', 'insurance_expense_account_id',
@@ -29,15 +29,21 @@ class InsuranceConfigSettings(models.Model):
     category_id = fields.Many2many('res.partner.category',string="Tags")
     tax = fields.Integer(string="Tax")
     tax_ids = fields.Many2many('account.tax',string="Taxes")
+    company_id = fields.Many2one(comodel_name='res.company', default=lambda self: self.env.company.id,
+                                 domain=lambda self: [
+                                     ('id', 'in', self.env.user.company_ids.ids)], string='Company', required=True)
 
     @api.model_create_multi
     def create(self, values):
+        res=False
         for vals in values:
-            config = self.env["insurance.config.settings"].search([], order="id desc", limit=1)
+            config = self.env["insurance.config.settings"].search([('company_id','=',vals['company_id'])], order="id desc", limit=1)
             if config:
                 config.write(vals)
-                return config
-            return super().create(vals)
+                res= config
+            else:
+                res = super().create(vals)
+        return res
 
 
 

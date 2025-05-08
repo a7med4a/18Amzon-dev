@@ -33,18 +33,19 @@ class AccountMove(models.Model):
         res = super(AccountMove, self).action_post()
         for move in self:
             if move.move_type == 'in_invoice' and move.vpo_id:
-                move.reconcile_advance_payments()
+                advance_payments = self.env['account.payment'].search([
+                    ('vehicle_po_id', '=', self.vpo_id.id),
+                    ('partner_id', '=', self.partner_id.id),
+                    ('reconciled_bill_ids', '=', False),
+                    ('state', '=', 'paid'),
+                ])
+                move.reconcile_advance_payments(advance_payments)
                 move._compute_amount()
         return res
 
-    def reconcile_advance_payments(self):
+    def reconcile_advance_payments(self,advance_payments):
         """Reconcile advance payments with the current invoice."""
-        advance_payments = self.env['account.payment'].search([
-            ('vehicle_po_id', '=', self.vpo_id.id),
-            ('partner_id', '=', self.partner_id.id),
-            ('reconciled_bill_ids', '=', False),
-            ('state', '=', 'paid'),
-        ])
+
         print("advance_payments ==> ", advance_payments)
 
         if advance_payments:

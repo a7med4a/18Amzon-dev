@@ -126,7 +126,9 @@ class InsurancePolicy(models.Model):
         }
 
     def action_insurance_credit_note(self):
-        config = self.env["insurance.config.settings"].search([], order="id desc", limit=1)
+        config = self.env["insurance.config.settings"].search([('company_id','=',self.company.id)], order="id desc", limit=1)
+        if not config:
+            raise ValidationError("No configuration found For this company!")
         return {
             'name': 'Credit Notes',
             'type': 'ir.actions.act_window',
@@ -151,7 +153,9 @@ class InsurancePolicy(models.Model):
             if not policy.insurance_company:
                 raise ValidationError("No insurance company specified!")
             bill_lines = []
-            config = self.env["insurance.config.settings"].search([], order="id desc", limit=1)
+            config = self.env["insurance.config.settings"].search([('company_id','=',policy.company.id)], order="id desc", limit=1)
+            if not config:
+                raise ValidationError("No configuration found For this company!")
             if policy.policy_lines_ids and config:
                 if not policy.vendor_bill_ids or not policy.vendor_bill_ids.filtered(lambda x: x.state == 'draft'):
                     print("policy.policy_lines_ids")
@@ -214,11 +218,14 @@ class InsurancePolicy(models.Model):
 
                         },
                     }
+        return True
 
 
     def prepare_bill_lines(self):
         bill_lines = []
-        config = self.env["insurance.config.settings"].search([], order="id desc", limit=1)
+        config = self.env["insurance.config.settings"].search([('company_id','=',self.company.id)], order="id desc", limit=1)
+        if not config:
+            raise ValidationError("No configuration found For this company!")
         status_false_policy = self.policy_lines_ids.filtered(lambda line: line.bill_status == "false")
         print("status_false_policy",status_false_policy)
         for line in status_false_policy:

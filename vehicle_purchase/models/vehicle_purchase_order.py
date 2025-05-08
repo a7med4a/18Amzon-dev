@@ -245,8 +245,7 @@ class VehiclePurchaseOrder(models.Model):
         for po in self:
             if not po.vehicle_ids:
                 raise ValidationError("No vehicle found!")
-            config = self.env["bill.config.settings"].sudo().search([('is_bill','=',True)], order="id desc", limit=1)
-
+            config = self.env["bill.config.settings"].sudo().search([('is_bill','=',True),('company_id','=',po.company_id.id)], order="id desc", limit=1)
             if not config:
                 raise ValidationError("No bill configuration found!")
             bill_lines = []
@@ -291,6 +290,8 @@ class VehiclePurchaseOrder(models.Model):
 
                 },
             }
+        return True
+
 
     def action_create_advance_payment(self):
         return {

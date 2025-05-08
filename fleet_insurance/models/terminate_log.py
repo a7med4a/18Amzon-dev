@@ -1,6 +1,5 @@
 from odoo import models, fields, api
-
-
+from odoo.exceptions import ValidationError
 
 class InsurancePolicyTerminationLog(models.Model):
     _name = 'termination.log'
@@ -43,7 +42,9 @@ class InsurancePolicyTerminationLog(models.Model):
             record.status = 'draft'
 
     def action_create_credit_note(self):
-        config = self.env["insurance.config.settings"].search([], order="id desc", limit=1)
+        config = self.env["insurance.config.settings"].search([('company_id','=',self.env.company.id)], order="id desc", limit=1)
+        if not config:
+            raise ValidationError("No configuration found For this company!")
         account_move_obj = self.env['account.move']
         credit_lines_vals = []
         partner_id = 0

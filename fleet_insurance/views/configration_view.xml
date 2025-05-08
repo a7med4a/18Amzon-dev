@@ -1,4 +1,22 @@
 <odoo>
+
+    <record id="view_insurance_config_list" model="ir.ui.view">
+        <field name="name">insurance.config.settings.list</field>
+        <field name="model">insurance.config.settings</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="company_id"/>
+                <field name="insurance_journal_id"/>
+                <field name="insurance_expense_account_id"/>
+                <field name="account_pay_id"/>
+                <field name="refund_insurance_account_id"/>
+                <field name="refund_insurance_journal_id"/>
+                <field name="category_id" widget="many2many_tags"/>
+                <field name="tax_ids" widget="many2many_tags"/>
+            </list>
+        </field>
+    </record>
+
     <record id="view_insurance_config_form" model="ir.ui.view">
         <field name="name">insurance.config.settings.form</field>
         <field name="model">insurance.config.settings</field>
@@ -7,15 +25,16 @@
                 <sheet>
                     <group>
                         <group>
-                            <field name="insurance_journal_id"/>
-                            <field name="insurance_expense_account_id"/>
+                            <field name="company_id"/>
+                            <field name="insurance_journal_id" domain="[('company_id', '=', company_id)]"/>
+                            <field name="insurance_expense_account_id" />
                             <field name="account_pay_id"/>
                         </group>
                         <group>
                             <field name="refund_insurance_account_id"/>
-                            <field name="refund_insurance_journal_id"/>
-                            <field name="category_id" widget="many2many_tags"/>
-                            <field name="tax_ids" widget="many2many_tags"/>
+                            <field name="refund_insurance_journal_id" domain="[('company_id', '=', company_id)]"/>
+                            <field name="category_id" widget="many2many_tags" />
+                            <field name="tax_ids" widget="many2many_tags" domain="[('company_id', '=', company_id)]"/>
                         </group>
                     </group>
                 </sheet>
@@ -26,7 +45,7 @@
     <record id="insurance_config_action" model="ir.actions.act_window">
         <field name="name">Insurance Configuration</field>
         <field name="res_model">insurance.config.settings</field>
-        <field name="view_mode">form</field>
+        <field name="view_mode">list,form</field>
         <field name="target">current</field>
     </record>
 

@@ -44,6 +44,9 @@ class BulkInstallmentPaymentWizard(models.TransientModel):
             })
 
             payment.action_validate()
+            if po.bill_id and po.bill_id.state == 'posted':
+                po.bill_id.reconcile_advance_payments(payment)
+                po.bill_id._compute_amount()
 
 
 class BulkInstallmentPaymentLine(models.TransientModel):

@@ -19,29 +19,29 @@ class ResPartner(models.Model):
         return defaults
 
     create_from_rental = fields.Boolean(string="Create From Rental",  )
-    date_of_birth = fields.Date(string='Date of Birth', tracking=True)
+    date_of_birth = fields.Date(string='Date of Birth', required=True, tracking=True)
     age = fields.Char(string='Age', compute='_compute_age', store=True, tracking=True)
     id_type = fields.Selection([
         ('resident', 'Resident'),
         ('national', 'National'),
         ('visitor', 'Visitor'),
         ('citizens', 'Citizens Of The GCC'),
-    ], default='resident', string='ID Type', tracking=True)
-    id_no = fields.Char(string='ID No', tracking=True)
-    id_expiry_date = fields.Date(string='ID Expiry Date', tracking=True)
-    version_no = fields.Integer(string='Version No', tracking=True)
-    nationality = fields.Many2one('res.country', string='Nationality', tracking=True)
-    license_expiry_date = fields.Date(string='License Expiry Date', tracking=True)
+    ], default='resident', string='ID Type', tracking=True, required=True)
+    id_no = fields.Char(string='ID No', tracking=True, required=True)
+    id_expiry_date = fields.Date(string='ID Expiry Date', tracking=True, required=True)
+    version_no = fields.Integer(string='Version No', tracking=True, required=True)
+    nationality = fields.Many2one('res.country', string='Nationality', tracking=True, required=True)
+    license_expiry_date = fields.Date(string='License Expiry Date', tracking=True, required=True)
     license_type = fields.Selection([
         ('private', 'Private'),
         ('heavy', 'Heavy'),
         ('temporary', 'Temporary/Visitor '),
         ('public', 'Public Transport '),
         ('heavy', 'Heavy Vehicle License'),
-    ], default='private', string='License Type', tracking=True)
-    place_of_issue = fields.Char(string='Place of Issue', tracking=True)
+    ], default='private', string='License Type', tracking=True, required=True)
+    place_of_issue = fields.Char(string='Place of Issue', tracking=True, required=True)
 
-    mobile2 = fields.Char(string="Mobile Number", tracking=True)
+    mobile2 = fields.Char(string="Mobile Number", tracking=True, required=True)
     _sql_constraints = [
         ('mobile2_unique', 'UNIQUE(mobile2)', 'mobile2 number must be unique.'),
         ('mobile2_length', 'CHECK(LENGTH(mobile2) = 12)', 'mobile2 number must be exactly 12 digits.'),

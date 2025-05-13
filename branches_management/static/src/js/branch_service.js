@@ -87,22 +87,51 @@ function getCompanyIds() {
 
 export const BranchService = {
     dependencies: ["company", "action", "orm"],
-    start(env, {company, action, orm, branch }) {
-        const allowedBranches = session.user_branches.allowed_branches;
-        const allowedCompanies = session.user_companies.allowed_companies;
-        const allowedBranchesesWithAncestors = {
-            ...allowedBranches,
+    start(env, { company, action, orm, branch }) {
+        const UPDATE_METHODS = ["write", "create", "unlink"];
+        const allowedBranches = session?.user_branches?.allowed_branches || {};
+        const allowedCompanies = session?.user_companies?.allowed_companies || {};
+        let activeCompanies = [];
+        activeCompanies = getCompanyIds() || [];
+        if (!Array.isArray(activeCompanies)) {
+            activeCompanies = [];
+        }
+        const availableBranchesFromSession = Object.values(allowedBranches);
+        let allowedBranchesView = availableBranchesFromSession.filter(branch => {
+            if (!branch || typeof branch.company === "undefined") {
+                console.warn("Invalid branch object:", branch);
+                return false;
+            }
+            return activeCompanies.includes(branch.company);
+        });
+        let allowedBranchesesWithAncestors = [...allowedBranchesView];
+        let activeBranchIds = [];
+        let activeCompanyIds = [];
+        activeBranchIds = computeActiveBranchIds(getBranchIds() || []) || [];
+        activeCompanyIds = computeActiveCompanyIds(getCompanyIds() || []) || [];
+        if (!Array.isArray(activeBranchIds)) activeBranchIds = [];
+        if (!Array.isArray(activeCompanyIds)) activeCompanyIds = [];
+        const selectValidBranch = () => {
+            const currentBranchId = activeBranchIds[0];
+            const currentBranch = currentBranchId && allowedBranches[currentBranchId] ? allowedBranches[currentBranchId] : null;
+            if (!currentBranch || !activeCompanyIds.includes(currentBranch.company)) {
+                const validBranch = allowedBranchesesWithAncestors.find(branch =>
+                    activeCompanyIds.includes(branch.company)
+                );
+                return validBranch ? [validBranch.id] : [];
+            }
+            return [currentBranchId];
         };
-        const activeBranchIds = computeActiveBranchIds(getBranchIds());
-        const activeCompanyIds = computeActiveCompanyIds(getCompanyIds());
-
-        // update browser data
-        const bidsHash = formatBranchIds(activeBranchIds, BIDS_HASH_SEPARATOR);
-        const cidsHash = formatBranchIds(activeCompanyIds, CIDS_HASH_SEPARATOR);
-        router.replaceState({ bids: bidsHash, cids:cidsHash }, { lock: true });
-        cookie.set("bids", activeBranchIds.join(BIDS_HASH_SEPARATOR));
-        cookie.set("cids", activeCompanyIds.join(CIDS_HASH_SEPARATOR));
-        user.updateContext({ allowed_branch_ids: activeBranchIds ,allowed_company_ids: activeCompanyIds});
+        activeBranchIds = selectValidBranch();
+        const updateBrowserData = () => {
+            const bidsHash = formatBranchIds(activeBranchIds, BIDS_HASH_SEPARATOR);
+            const cidsHash = formatBranchIds(activeCompanyIds, CIDS_HASH_SEPARATOR);
+            router.replaceState({ bids: bidsHash, cids: cidsHash }, { lock: true });
+            cookie.set("bids", activeBranchIds.join(BIDS_HASH_SEPARATOR));
+            cookie.set("cids", activeCompanyIds.join(CIDS_HASH_SEPARATOR));
+            user.updateContext({ allowed_branch_ids: activeBranchIds, allowed_company_ids: activeCompanyIds });
+        };
+        updateBrowserData();
 
         env.bus.addEventListener("RPC:RESPONSE", (ev) => {
             const { data, error } = ev.detail;
@@ -126,25 +155,30 @@ export const BranchService = {
             },
 
             get currentBranch() {
-                return allowedBranches[activeBranchIds[0]];
+                const branchId = activeBranchIds[0];
+                return branchId && allowedBranches[branchId] ? allowedBranches[branchId] : null;
             },
 
             getBranch(branchId) {
-                return allowedBranchesesWithAncestors[branchId];
+                const branchMap = Object.fromEntries(
+                    allowedBranchesesWithAncestors.map(b => [b.id, b])
+                );
+                return branchMap[branchId] || null;
             },
-
-            /**
-             * @param {Array<>} BranchIds - List of Branches to log into
-             */
-            setBranches(BranchIds, companyIds) {
-                const newBranchIds = BranchIds.length ? BranchIds : [activeBranchIds[0]];
-                const bidsHash = formatBranchIds(newBranchIds, BIDS_HASH_SEPARATOR);
-                const newCompanyIds = companyIds.length ? companyIds : [activeCompanyIds[0]];
-                const cidsHash = formatBranchIds(newCompanyIds, CIDS_HASH_SEPARATOR);
-                router.pushState({ bids: bidsHash , cids: cidsHash}, { lock: true });
-                cookie.set("bids", formatBranchIds(newBranchIds));
-                cookie.set("cids", formatBranchIds(newCompanyIds));
-                browser.setTimeout(() => browser.location.reload()); // history.pushState is a little async
+            setBranches(branchIds, companyIds) {
+                const newBranchIds = Array.isArray(branchIds) && branchIds.length ? branchIds : (activeBranchIds[0] ? [activeBranchIds[0]] : []);
+                const newCompanyIds = Array.isArray(companyIds) && companyIds.length ? companyIds : (activeCompanyIds[0] ? [activeCompanyIds[0]] : []);
+                activeCompanyIds = newCompanyIds;
+                allowedBranchesView = availableBranchesFromSession.filter(branch => {
+                    if (!branch || typeof branch.company === "undefined") return false;
+                    return activeCompanyIds.includes(branch.company);
+                });
+                allowedBranchesesWithAncestors.splice(0, allowedBranchesesWithAncestors.length, ...allowedBranchesView);
+                activeBranchIds = newBranchIds;
+                activeBranchIds = selectValidBranch();
+                updateBrowserData();
+                env.bus.trigger("UPDATE_BRANCHES");
+                action.doAction("reload_context");
             },
         };
     },

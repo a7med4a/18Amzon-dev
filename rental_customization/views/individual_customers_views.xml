@@ -11,6 +11,7 @@
                              <field name="account_receivable_id"/>
                             <field name="category_id" widget="many2many_tags"/>
                             <field name="is_default"/>
+                            <field name="type"/>
                         </group>
                     </sheet>
                 </form>
@@ -25,6 +26,7 @@
                      <field name="account_receivable_id"  />
                     <field name="category_id" widget="many2many_tags"/>
                     <field name="is_default"/>
+                    <field name="type"/>
                 </list>
             </field>
         </record>

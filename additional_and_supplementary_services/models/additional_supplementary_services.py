@@ -13,6 +13,11 @@ class AdditionalSupplementaryServices(models.Model):
     calculation = fields.Selection(
         selection=[('once', 'Once'), ('repeated', 'Repeated')], required=True)
     price = fields.Float(required=True)
+    contract_type = fields.Selection(
+        string='Type',
+        selection=[('rental', 'Rental'), 
+                   ('long_term', 'Long Term'), ],
+        default='rental')
 
     @api.constrains('price')
     def _check_price(self):

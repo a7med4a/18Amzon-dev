@@ -11,7 +11,7 @@ class RentalConfigSettings(models.Model):
     @api.model
     def default_get(self, fields_list):
         result = super().default_get(fields_list)
-        config = self.search([], order="id desc", limit=1)
+        config = self.search([('type', '=', 'rental')], order="id desc", limit=1)
         if config:
             field_names = ['trip_days_account_id', 'trip_days_label',
                            'extra_km_account_id', 'extra_km_label']
@@ -32,20 +32,18 @@ class RentalConfigSettings(models.Model):
                                ("type_tax_use", "=", "sale")])
     company_id = fields.Many2one(
         'res.company', string='Company', default=lambda self: self.env.company)
+    type = fields.Selection(
+        string='Type',
+        selection=[('rental', 'Rental'),
+                   ('long_term', 'Long Term'), ],
+        default='rental',required=True)
+
 
     @api.model_create_multi
     def create(self, vals_list):
-        config = self.search([], order="id desc", limit=1)
-        if config and vals_list:
-            # if many vals get first one
-            val = vals_list[0]
-            tax_list = val.pop('tax_ids')
-            tax_ids = []
-            for tax in tax_list:
-                tax_ids.append(tax[1])
-            val.update({
-                'tax_ids': [(6, 0, tax_ids)]
-            })
-            config.write(val)
-            return config
+        for vals in vals_list:
+            config = self.search([('type', '=', vals['type'])], order="id desc", limit=1)
+            if config:
+                config.write(vals)
+                return config
         return super().create(vals_list)

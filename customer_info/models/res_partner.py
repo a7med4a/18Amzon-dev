@@ -10,8 +10,13 @@ class ResPartner(models.Model):
 
     def default_get(self, fields):
         defaults = super(ResPartner, self).default_get(fields)
-        if self.env.context.get('default_create_from_rental'):
-            config = self.env['individual.customer.config'].search([], limit=1)
+        if self.env.context.get('default_contract_type') == 'rental':
+            config = self.env['individual.customer.config'].search([('type', '=','rental')], limit=1)
+            if config:
+                defaults['property_account_receivable_id'] = config.account_receivable_id.id
+                defaults['category_id'] = config.category_id
+        if self.env.context.get('default_contract_type') == 'long_term':
+            config = self.env['individual.customer.config'].search([('type', '=','long_term')], limit=1)
             if config:
                 defaults['property_account_receivable_id'] = config.account_receivable_id.id
                 defaults['category_id'] = config.category_id
@@ -40,8 +45,12 @@ class ResPartner(models.Model):
         ('heavy', 'Heavy Vehicle License'),
     ], default='private', string='License Type', tracking=True, required=True)
     place_of_issue = fields.Char(string='Place of Issue', tracking=True, required=True)
-
     mobile2 = fields.Char(string="Mobile Number", tracking=True, required=True)
+    contract_type = fields.Selection(
+        string='Type',
+        selection=[('rental', 'Rental'),
+                   ('long_term', 'Long Term'), ],
+        default='rental')
     _sql_constraints = [
         ('mobile2_unique', 'UNIQUE(mobile2)', 'mobile2 number must be unique.'),
         ('mobile2_length', 'CHECK(LENGTH(mobile2) = 12)', 'mobile2 number must be exactly 12 digits.'),

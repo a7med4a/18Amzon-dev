@@ -1,0 +1,23 @@
+<odoo>
+    <data>
+        <menuitem id="long_term_rental_main_menu" name="Long Term Rental" web_icon="long_term_rental,static/icons/car.png"/>
+        <menuitem id="long_term_rental_customer" name="Long Term Customers" sequence="1" parent="long_term_rental_main_menu"/>
+
+        <menuitem name="Long Term Rental Customers" id="menu_long_term_rental_customer_data"
+                  parent="long_term_rental_customer" sequence="1"
+                  action="long_term_rental.long_term_individual_customers_action"/>
+
+        <menuitem name="Blacklist Long Term Customers" id="long_term_rental_menu_blacklist"
+                  action="long_term_rental.long_term_rental_customers_action_blocked"
+                  parent="long_term_rental_customer" sequence="2"/>
+
+        <menuitem name="Long Term Pricing Request" id="long_term_pricing_request_menu"
+                  action="long_term_rental.action_long_term_pricing_request"
+                  parent="long_term_rental_main_menu" sequence="2"/>
+
+        <menuitem name="Contract" id="menu_long_term_contract_main" parent="long_term_rental_main_menu"
+                  sequence="3"/>
+
+        <menuitem id="menu_long_term_rental_contract" name="Long Term Contracts" parent="menu_long_term_contract_main" action="long_term_rental.action_long_term_rental_contract_final" sequence="10" />
+    </data>
+</odoo>

@@ -1,0 +1,128 @@
+<odoo>
+    <data>
+
+        <record id="long_term_pricing_request_view_list" model="ir.ui.view">
+            <field name="name">long_term_pricing_request_view_list</field>
+            <field name="model">long.term.pricing.request</field>
+            <field name="arch" type="xml">
+                <list string="long_term_pricing_request_list">
+                    <field name="name"/>
+                    <field name="company_id"/>
+                    <field name="description"/>
+                    <field name="create_uid"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_long_term_pricing_form" model="ir.ui.view">
+            <field name="name">long.term.pricing.request.form</field>
+            <field name="model">long.term.pricing.request</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="action_reset_draft" string="Reset To Draft" type="object"
+                                confirm="Are you sure you want to reset back to draft state ?"
+                                class="btn-primary" invisible="state not in  ('cancelled','refused')"/>
+                        <button name="action_under_review" string="Request Validation" type="object"
+                                confirm="Are you sure you want to transfer to under review state ?"
+                                class="btn-primary" invisible="state != 'draft'"/>
+                        <button name="action_confirm" string="Approve" type="object"
+                                class="btn-success" invisible="state != 'under_review'"
+                                confirm="Are you sure you want to Confirm PR Request ?"/>
+                        <button name="action_refuse" string="Reject" type="object"
+                                class="btn-danger" invisible="state != 'under_review'"
+                                confirm="Are you sure you want to Refuse PR Request ?"/>
+                        <button name="action_cancel" string="Cancel" type="object"
+                                confirm="Are you sure you want to Cancel PR Request ?"
+                                class="btn-secondary" invisible="state not in ('draft')"/>
+                        <button name="action_expired" string="Expire" type="object"
+                                confirm="Are you sure you want to Expire PR Request ?"
+                                class="btn-danger" invisible="state not in ('confirmed')"/>
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_title">
+                            <label for="name" class="oe_edit_only"/>
+                            <h1>
+                                <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="flex-grow: 1;">
+                                        <field name="name"/>
+                                    </div>
+                                </div>
+                            </h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="company_id" readonly="state != 'draft'"
+                                       options="{'no_open': True, 'no_create': True}"/>
+                                <field name="description" readonly="state != 'draft'"/>
+                            </group>
+                            <group>
+                                <field name="create_uid" options="{'no_open': True, 'no_create': True}"/>
+                                <field name="active" invisible="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="PO lines">
+                                <field name="long_term_pricing_request_line_ids" readonly="state != 'draft'">
+                                    <list editable="bottom">
+                                        <field name="vehicle_id" optional='show'
+                                               options="{'no_open': True, 'no_create': True}"/>
+                                        <field name="model_id" optional='show'
+                                               options="{'no_open': True, 'no_create': True}"/>
+                                        <field name="rental_pricing_monthly" optional='show'/>
+                                        <field name="vehicle_status" optional='show'/>
+                                        <field name="pricing_status" optional='show'/>
+                                        <button name="action_running" type="object" string="Running" class="btn-success"
+                                                invisible="pricing_status == 'running'" title="Running"/>
+                                        <button name="action_expired" type="object" string="Expired" class="btn-danger"
+                                                invisible="pricing_status == 'expired'" title="Expired"/>
+                                    </list>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_long_term_pricing_request" model="ir.actions.act_window">
+            <field name="name">Long Term Pricing Request</field>
+            <field name="res_model">long.term.pricing.request</field>
+            <field name="view_mode">list,form</field>
+        </record>
+
+
+        <record id="view_long_term_pricing_line_form" model="ir.ui.view">
+            <field name="name">long.term.pricing.request.line.form</field>
+            <field name="model">long.term.pricing.request.line</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="vehicle_id" optional='show'
+                                       options="{'no_open': True, 'no_create': True}" context="{'search_by_license_plate': True}"/>
+                                <field name="model_id" optional='show'
+                                       options="{'no_open': True, 'no_create': True}"/>
+                                <field name="rental_pricing_monthly" optional='show'/>
+                                <field name="vehicle_status" optional='show'/>
+                                <field name="pricing_status" optional='show'/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+
+        <record id="seq_long_term_pricing_request" model="ir.sequence">
+            <field name="name">Long Term Pricing Request</field>
+            <field name="code">long.term.pricing.request.seq</field>
+            <field name="prefix">LRP/</field>
+            <field name="padding">5</field>
+        </record>
+
+    </data>
+</odoo>

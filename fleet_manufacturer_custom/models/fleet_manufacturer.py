@@ -17,6 +17,7 @@ class ManufacturerInherit(models.Model):
 
     last_update = fields.Datetime(string="Last Update", tracking=True, compute="_compute_last_update", store=True)
     last_changes = fields.Text(string="Last Changes", tracking=True)
+    min_normal_day_price = fields.Float()
 
     @api.depends('vehicle_detail_ids')
     def _compute_last_update(self):

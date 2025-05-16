@@ -90,7 +90,7 @@ class ContractFinesDiscountWizLine(models.TransientModel):
     wizard_id = fields.Many2one(
         'rental.contract.fines.discount.wiz', string='Wizard Reference')
     config_id = fields.Many2one(
-        'contract.fines.discount.config', string='Configuration', required=True)
+        'contract.fines.discount.config', string='Configuration', required=True,domain="[('contract_type', '=', 'rental')]")
     price = fields.Float(
         string='Price', related='config_id.price', readonly=True)
     name = fields.Char(string='Description', required=True)

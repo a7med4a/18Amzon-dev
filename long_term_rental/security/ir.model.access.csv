@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_long_term_pricing_request,long.term.pricing.request,model_long_term_pricing_request,base.group_user,1,1,1,1
+access_long_term_pricing_request_line,long.term.pricing.reques.linet,model_long_term_pricing_request_line,base.group_user,1,1,1,1
+access_long_terms_rental_contract,long.term.rental.contract,model_long_term_rental_contract,base.group_user,1,1,1,1
+access_long_term_rental_contract_payment_register,long.term.rental.contract.payment.register,model_long_term_rental_contract_payment_register,base.group_user,1,1,1,1
+access_contract_installment_line,contract.installment.line,model_contract_installment_line,base.group_user,1,1,1,1

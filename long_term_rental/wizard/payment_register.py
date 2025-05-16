@@ -5,14 +5,14 @@ from odoo.exceptions import UserError
 
 
 class PaymentRegister(models.TransientModel):
-    _name = 'rental.contract.payment.register'
-    _description = 'Rental Contract Register Payment'
+    _name = 'long.term.rental.contract.payment.register'
+    _description = 'Long Term Rental Contract Register Payment'
 
     def _default_amount(self):
         return self._get_due_amount()
 
     def _default_currency(self):
-        contract = self.env['rental.contract'].browse(
+        contract = self.env['long.term.rental.contract'].browse(
             self._context.get('active_id'))
         return contract.company_currency_id
 
@@ -35,24 +35,30 @@ class PaymentRegister(models.TransientModel):
         selection=[('advance', 'مقدم'),('extension', 'تمديد'),('close', 'إغلاق'),('debit', 'سداد مديونية'),('extension_offline', 'تمديد بدون منصة'),
                    ('suspended_payment', 'سداد عقد معلق'), ],
         required=True, )
-
+    contract_type = fields.Selection(string='Type',selection=[('rental', 'Rental'),('long_term', 'Long Term'),],default='long_term')
+    long_term_rental_contract_id = fields.Many2one('long.term.rental.contract', string='Rental Contract')
 
     @api.depends('journal_id', 'currency_id')
     def _compute_payment_method_line_fields(self):
         for wizard in self:
             if wizard.journal_id:
-                wizard.available_payment_method_line_ids = wizard.journal_id._get_available_payment_method_lines(
-                    'inbound')
+                wizard.available_payment_method_line_ids = wizard.journal_id._get_available_payment_method_lines('inbound')
             else:
                 wizard.available_payment_method_line_ids = False
 
     def _get_due_amount(self):
-        contract = self.env['rental.contract'].browse(
+        contract = self.env['long.term.rental.contract'].browse(
             self._context.get('active_id'))
-        return contract.total_amount - contract.paid_amount
+        if contract.contract_type == 'long_term':
+            return contract.advanced_payment - contract.advanced_paid_amount
+        elif contract.contract_type == 'rental':
+            return contract.total_amount - contract.advanced_paid_amount
+        else:
+            return 0
+
 
     def action_register_payment(self):
-        contract = self.env['rental.contract'].browse(
+        contract = self.env['long.term.rental.contract'].browse(
             self._context.get('active_id'))
         if self.amount > self._get_due_amount():
             raise UserError(
@@ -65,7 +71,7 @@ class PaymentRegister(models.TransientModel):
             'amount': self.amount,
             'currency_id': self.currency_id.id,
             'memo': self.communication,
-            'rental_contract_id': contract.id,
+            'term_long_rental_contract_id': contract.id,
             'company_id': contract.company_id.id,
             'date': self.payment_date,
             'payment_type_selection': self.payment_type_selection,
@@ -74,6 +80,7 @@ class PaymentRegister(models.TransientModel):
         })
         if payment:
             payment.action_post()
+            contract.write({'advanced_paid_amount': contract.advanced_paid_amount + self.amount})
         return {
             'name': _('Payment'),
             'view_mode': 'form',

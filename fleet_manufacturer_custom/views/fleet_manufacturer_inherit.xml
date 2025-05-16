@@ -30,9 +30,9 @@
                                     <field name="end_date"/>
                                     <field name="branch_id"/>
                                     <field name="state"/>
-                                    <button name="action_confirm" type="object" class="fa fa-check btn-success"/>
-                                    <button name="action_set_draft" type="object" class="fa fa-backward btn-warning"/>
-                                    <button name="action_expire" type="object" class="fa fa-ban btn-danger"/>
+                                    <button name="action_confirm" type="object" class="fa fa-check btn-success" title="Set to Active"/>
+                                    <button name="action_set_draft" type="object" class="fa fa-backward btn-warning" title="Set to Draft"/>
+                                    <button name="action_expire" type="object" class="fa fa-ban btn-danger" title="Set to Expired"/>
                                 </list>
                             </field>
 

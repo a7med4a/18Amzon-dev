@@ -1,0 +1,374 @@
+<odoo>
+
+
+  <record id="view_long_term_rental_contract_form" model="ir.ui.view">
+    <field name="name">long.term.rental.contract.form</field>
+    <field name="model">long.term.rental.contract</field>
+    <field name="arch" type="xml">
+      <form string="Rental Contract">
+        <header>
+          <!-- Draft Buttons -->
+          <button name="next_draft_state" type="object" class="oe_highlight" invisible="state != 'draft' or draft_state == 'financial_info'" icon="fa-arrow-circle-o-right" string="Next" />
+          <button name="prev_draft_state" type="object" class="oe_highlight" invisible="state != 'draft' or draft_state == 'customer_info'" icon="fa-arrow-circle-o-left" string="Back" />
+          <button name="action_open" type="object" invisible="state != 'draft' or draft_state != 'financial_info'" string="Open" class="oe_highlight" confirm="Are you sure you want to open this contract?" />
+          <!-- After draft -->
+          <button name="action_pay" type="object" invisible="draft_state != 'financial_info'" string="Pay" class="oe_highlight" />
+          <button name="calculate_installment" type="object" invisible="draft_state != 'financial_info' or state != 'draft'" string="Calculate Installment" class="oe_highlight" />
+          <!-- Open Buttons -->
+          <button name="%(rental_contract.rental_contract_fines_wiz_action)d" type="action" invisible="state in ['draft', 'closed']" string="Add Fines" class="oe_highlight" />
+          <button name="%(rental_contract.rental_contract_discount_wiz_action)d" type="action" invisible="state in ['draft', 'closed']" string="Add Discount Voucher" class="oe_highlight" />
+          <button name="action_close_info" type="object" invisible="state != 'opened'" string="Close" class="oe_highlight" />
+          <!-- Close Info Buttons -->
+          <button name="action_close" type="object" invisible="state != 'close_info'" string="Close" class="oe_highlight" />
+          <!-- Delivery InDebit / Pending Button -->
+          <button name="action_final_close" type="object" invisible="state not in ['delivered_pending', 'delivered_debit']" string="Close" class="oe_highlight" confirm="Are you sure you want to close this contract?"/>
+          <!-- Cancel Button -->
+          <button name="action_cancel" type="object" invisible="state != 'draft'" string="Cancel" />
+          <!-- State Fields -->
+          <field name="draft_state" widget="statusbar" readonly="0" invisible="state != 'draft'" />
+          <field name="state" widget="statusbar" statusbar_visible="opened,close_info,closed" invisible="state == 'draft'" />
+        </header>
+        <sheet>
+          <!-- button box -->
+          <div class="oe_button_box" name="button_box">
+
+            <button class="oe_stat_button" name="view_contract_additional_supplement_service" type="object" icon="fa-bars" invisible="additional_supplement_service_count == 0" groups="base.group_system">
+              <div class="o_stat_info">
+                <span class="o_stat_value">
+                  <field name="additional_supplement_service_count" />
+                </span>
+                <span class="o_stat_text">Services</span>
+              </div>
+            </button>
+
+
+            <button class="oe_stat_button" name="view_related_payments" type="object" icon="fa-dollar" invisible="payment_count == 0">
+              <div class="o_stat_info">
+                <span class="o_stat_value">
+                  <field name="payment_count" />
+                </span>
+                <span class="o_stat_text">Payments</span>
+              </div>
+            </button>
+
+          </div>
+
+          <!-- title -->
+          <div class="oe_title">
+            <h1>
+              <field name="name" />
+            </h1>
+          </div>
+          <!-- customer_info -->
+          <group invisible="(state == 'draft' and draft_state != 'customer_info') or state == 'close_info'" string="Customer Info">
+            <group>
+              <field name="contract_type" invisible="1"/>
+              <field name="company_id" options="{'no_create': True, 'no_open': True}" readonly="state != 'draft'" />
+              <field name="partner_id" invisible="contract_type == 'rental'" domain="[('contract_type', '=', 'long_term')]" options="{'no_create': True}" context="{'form_view_ref': 'customer_info.view_partner_form_rental', 'search_by_mobile': True}" readonly="state != 'draft'" />
+              <field name="partner_mobile" />
+              <field name="partner_id_no" />
+            </group>
+          </group>
+          <!-- vehicle_info -->
+          <group invisible="(state == 'draft' and draft_state != 'vehicle_info') or state == 'close_info'" string="Vehicle Info">
+            <group>
+              <field name="vehicle_id" required="draft_state != 'customer_info'" options="{'no_create': True}" readonly="state != 'draft'" domain="[('state_id.type', '=', 'ready_to_rent'), ('usage_type', '=', 'long_term'), ('branch_id.branch_type', '=', 'long_term')]" invisible="contract_type == 'rental'"/>
+              <field name="license_plate"/>
+              <field name="model_id" options="{'no_create': True, 'no_open': True}"/>
+              <field name="category_id" options="{'no_create': True, 'no_open': True}"/>
+              <field name="out_odometer" readonly="state != 'draft'" />
+            </group>
+            <group>
+              <field name="long_term_pricing_request" readonly="1"/>
+            </group>
+          </group>
+          <group invisible="(state == 'draft' and draft_state != 'vehicle_info') or state == 'close_info'" name="out_check_list" string="Out CheckList">
+            <group>
+              <field name="out_ac" required="draft_state != 'customer_info'" readonly="state != 'draft'" />
+              <field name="out_radio_stereo" required="draft_state != 'customer_info'" readonly="state != 'draft'" />
+              <field name="out_screen" required="draft_state != 'customer_info'" readonly="state != 'draft'" />
+              <field name="out_spare_tire_tools" required="draft_state != 'customer_info'" readonly="state != 'draft'" />
+              <field name="out_tires" required="draft_state != 'customer_info'" readonly="state != 'draft'" />
+              <field name="out_spare_tires" required="draft_state != 'customer_info'" readonly="state != 'draft'" />
+            </group>
+            <group >
+              <field name="out_speedometer" required="draft_state != 'customer_info'" readonly="state != 'draft'" />
+              <field name="out_keys" required="draft_state != 'customer_info'" readonly="state != 'draft'" />
+              <field name="out_care_seats" required="draft_state != 'customer_info'" readonly="state != 'draft'" />
+              <field name="out_oil_change_km" required="draft_state != 'customer_info'" readonly="state != 'draft'" />
+              <field name="out_fuel_type_code" required="draft_state != 'customer_info'" readonly="state != 'draft'" />
+              <field name="out_keys_number" required="draft_state != 'customer_info'" readonly="state != 'draft'" />
+            </group>
+            <group >
+              <field name="out_safety_triangle" required="draft_state != 'customer_info'" readonly="state != 'draft'" />
+              <field name="out_fire_extinguisher" required="draft_state != 'customer_info'" readonly="state != 'draft'" />
+              <field name="out_first_aid_kit" required="draft_state != 'customer_info'" readonly="state != 'draft'" />
+              <field name="out_oil_type" required="draft_state != 'customer_info'" readonly="state != 'draft'" />
+              <field name="out_oil_change_date" required="draft_state != 'customer_info'" readonly="state != 'draft'" />
+              <field name="out_vehicle_status" required="draft_state != 'customer_info'" readonly="state != 'draft'" />
+            </group>
+          </group>
+          <!-- contract_info -->
+          <group invisible="(state == 'draft' and draft_state != 'contract_info') or state == 'close_info'" string="Contract Info">
+            <group>
+              <field name="vehicle_branch_id" />
+              <field name="pickup_date" required="draft_state not in ['customer_info', 'vehicle_info']" readonly="state != 'draft'" />
+              <field name="contract_start_date" required="draft_state not in ['customer_info', 'vehicle_info']" readonly="state != 'draft'" />
+              <label for="duration" />
+              <div class="o_row">
+                  <field name="duration" required="draft_state not in ['customer_info', 'vehicle_info']" readonly="state != 'draft'" /> Month
+              </div>
+              <field name="contract_end_date" required="draft_state not in ['customer_info', 'vehicle_info']" />
+            </group>
+            <group invisible="state == 'draft' and draft_state != 'contract_info'">
+              <field name="drop_off_date" readonly="True"/>
+            </group>
+          </group>
+
+          <!-- additional_suppl_service -->
+          <group invisible="(state == 'draft' and draft_state != 'additional_suppl_service') or state == 'close_info'">
+            <field name="additional_supplement_service_line_ids" invisible="1" />
+            <group string="Additional Services">
+              <field name="additional_service_ids" options="{'no_open': True, 'no_create': True}" widget="many2many_checkboxes" nolabel="1" readonly="state != 'draft'" domain="[('type', '=', 'additional'), ('id', 'in', additional_supplement_service_line_ids)]" />
+            </group>
+            <group string="Supplementary Services">
+              <field name="supplementary_service_ids" options="{'no_open': True, 'no_create': True}" widget="many2many_checkboxes" nolabel="1" readonly="state != 'draft'" domain="[('type', '=', 'supplementary'), ('id', 'in', additional_supplement_service_line_ids)]" />
+            </group>
+          </group>
+          <!-- financial_info -->
+
+          <group invisible="(state == 'draft' and draft_state != 'financial_info') or state == 'close_info'"
+                 string="Financial Info">
+            <group>
+              <field name="monthly_rate"/>
+              <field name="one_time_services"/>
+              <field name="duration" readonly="1"/>
+              <field name="advanced_payment"/>
+              <field name="ownership_amount"/>
+            </group>
+            <group>
+              <field name="total_amount"/>
+              <field name="tax_percentage"/>
+              <field name="amount_before_tax"/>
+              <field name="tax_amount"/>
+              <field name="advanced_paid_amount"/>
+              <field name="paid_amount" invisible="1"/>
+              <field name="remaining_amount"/>
+              <field name="monthly_installment"/>
+            </group>
+          </group>
+
+          <!-- Current Due Amount -->
+
+          <group invisible="state == 'draft'" string="Current Due Amount">
+            <group>
+              <label for="display_actual_days" string="Actual" invisible="state != 'opened'" style="font-weight:bold;" />
+              <div class="o_row o_row_readonly" invisible="state != 'opened'">
+                <label for="display_actual_days" string="Days" />
+                <field name="display_actual_days" />
+                <label for="display_actual_hours" string="Hours" />
+                <field name="display_actual_hours" />
+              </div>
+              <label for="display_current_days" string="Current" invisible="state != 'opened'" style="font-weight:bold;" />
+              <div class="o_row o_row_readonly" invisible="state != 'opened'">
+                <label for="display_current_days" string="Days" />
+                <field name="display_current_days" />
+                <label for="display_current_hours" string="Hours" />
+                <field name="display_current_hours" />
+              </div>
+
+              <label for="actual_days" string="Actual" invisible="state in ['draft', 'opened']" style="font-weight:bold;" />
+              <div class="o_row o_row_readonly" invisible="state in ['draft', 'opened']">
+                <label for="actual_days" string="Days" />
+                <field name="actual_days" readonly="1" />
+                <label for="actual_hours" string="Hours" />
+                <field name="actual_hours" readonly="1" />
+              </div>
+              <label for="current_days" string="Current" invisible="state  in ['draft', 'opened']" style="font-weight:bold;" />
+              <div class="o_row o_row_readonly" invisible="state in ['draft', 'opened']">
+                <label for="current_days" string="Days" />
+                <field name="current_days" readonly="1" />
+                <label for="current_hours" string="Hours" />
+                <field name="current_hours" readonly="1" />
+              </div>
+
+              <field name="assumed_amount" />
+              <field name="paid_amount" />
+            </group>
+
+            <group>
+              <field name="display_current_amount" invisible="state != 'opened'" />
+              <field name="current_amount" invisible="state in ['draft', 'opened']" />
+              <label for="current_km_extra_amount" />
+              <div class="o_row">
+                <field name="current_km_extra_amount" readonly="1" />
+                <button name="view_calculate_km" type="object" class="oe_highlight" icon="fa-external-link" string="Calculate KM" />
+              </div>
+              <div class="row">
+                <div class="col-7">
+                  <h3 style="padding-bottom:7px; font-weight:bold; color:red;">Current Due Amount :</h3>
+                </div>
+                <div class="col-5">
+                  <h3>
+                    <field name="current_due_amount" style="font-weight:bold; color:red;" readonly="1" />
+                  </h3>
+
+                </div>
+              </div>
+            </group>
+          </group>
+
+          <group invisible="state in ['draft', 'opened']" name="in_check_list" string="In CheckList">
+            <group>
+              <field name="in_ac" required="state == 'close_info'" readonly="state != 'close_info'" />
+              <field name="in_radio_stereo" required="state == 'close_info'" readonly="state != 'close_info'" />
+              <field name="in_screen" required="state == 'close_info'" readonly="state != 'close_info'" />
+              <field name="in_spare_tire_tools" required="state == 'close_info'" readonly="state != 'close_info'" />
+              <field name="in_tires" required="state == 'close_info'" readonly="state != 'close_info'" />
+              <field name="in_spare_tires" required="state == 'close_info'" readonly="state != 'close_info'" />
+            </group>
+            <group >
+              <field name="in_speedometer" required="state == 'close_info'" readonly="state != 'close_info'" />
+              <field name="in_keys" required="state == 'close_info'" readonly="state != 'close_info'" />
+              <field name="in_care_seats" required="state == 'close_info'" readonly="state != 'close_info'" />
+              <field name="in_oil_change_km" required="state == 'close_info'" readonly="state != 'close_info'" />
+              <field name="in_fuel_type_code" required="state == 'close_info'" readonly="state != 'close_info'" />
+              <field name="in_keys_number" required="state == 'close_info'" readonly="state != 'close_info'" />
+            </group>
+            <group >
+              <field name="in_safety_triangle" required="state == 'close_info'" readonly="state != 'close_info'" />
+              <field name="in_fire_extinguisher" required="state == 'close_info'" readonly="state != 'close_info'" />
+              <field name="in_first_aid_kit" required="state == 'close_info'" readonly="state != 'close_info'" />
+              <field name="in_oil_type" required="state == 'close_info'" readonly="state != 'close_info'" />
+              <field name="in_oil_change_date" required="state == 'close_info'" readonly="state != 'close_info'" />
+              <field name="in_vehicle_status" required="state == 'close_info'" readonly="state != 'close_info'" />
+            </group>
+          </group>
+          <group invisible="state in ['draft', 'opened']" name="accident_damage">
+            <group>
+              <field name="vehicle_in_state" readonly="state != 'close_info'" />
+              <field name="vehicle_in_state_other_reason" readonly="state != 'close_info'" required="vehicle_in_state == 'other'" invisible="vehicle_in_state != 'other'"/>
+            </group>
+            <group string="Accident Announcement" invisible="vehicle_in_state != 'accident'">
+              <field name="city_id" required="state == 'close_info' and vehicle_in_state == 'accident'" readonly="state != 'close_info'" />
+              <field name="report_source" required="state == 'close_info' and vehicle_in_state == 'accident'" readonly="state != 'close_info'" />
+              <field name="other_report_source" invisible="report_source != 'other'" required="state == 'close_info' and vehicle_in_state == 'accident' and report_source == 'other'" readonly="state != 'close_info'" />
+              <field name="announcement_date" required="state == 'close_info' and vehicle_in_state == 'accident'" readonly="state != 'close_info'" />
+              <field name="accident_date" required="state == 'close_info' and vehicle_in_state == 'accident'" readonly="state != 'close_info'" />
+            </group>
+          </group>
+          <notebook invisible="(state == 'draft' and draft_state != 'financial_info') or state == 'close_info'">
+            <page string="Installments lines">
+              <field name="contract_installment_ids" readonly="state != 'draft'">
+                <list create="0">
+                  <field name="name" optional='show'/>
+                  <field name="installment_date" optional='show'/>
+                  <field name="monthly_installment" optional='show' sum="Total"/>
+                  <field name="paid_amount" optional='show' sum="Total Paid"/>
+                  <field name="remaining_amount" optional='show' sum="1"/>
+                  <field name="payment_status" optional='show' widget="badge"/>
+                  <field name="due_status" optional='show' widget="badge"/>
+                </list>
+              </field>
+            </page>
+          </notebook>
+        </sheet>
+        <!-- Chatter -->
+        <chatter />
+      </form>
+    </field>
+  </record>
+
+
+  <record id="view_long_term_rental_contract_tree" model="ir.ui.view">
+    <field name="name">long.term.rental.contract.tree</field>
+    <field name="model">long.term.rental.contract</field>
+    <field name="arch" type="xml">
+      <list string="Long Term Rental Contracts">
+        <field name="name" />
+        <field name="partner_id" />
+        <field name="vehicle_id" />
+        <field name="pickup_date"/>
+        <field name="drop_off_date" />
+        <field name="current_due_amount" />
+        <field name="paid_amount" />
+        <field name="state" />
+        <field name="vehicle_in_state" widget="badge"
+                       decoration-warning="vehicle_in_state == 'accident'"
+                       decoration-danger="vehicle_in_state == 'damage'"
+                       decoration-info="vehicle_in_state == 'other'"/>
+        <field name="invoice_damage_accident" decoration-info="invoice_damage_accident == 'invoiced'" widget="badge"/>
+      </list>
+    </field>
+  </record>
+
+
+
+    <record id='long_term_rental_contract_view_kanban' model='ir.ui.view'>
+        <field name="name">long.term.rental.contract.kanban</field>
+        <field name="model">long.term.rental.contract</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" group_create="false" group_edit="false" group_delete="false" sample="1">
+                <templates>
+                    <t t-name="card" class="flex-row">
+                        <aside class="d-flex align-items-center me-2">
+                            <field name="image_128" widget="image" options="{'img_class': 'object-fit-cover'}"/>
+                        </aside>
+                        <main>
+                            <div>
+                                <field class="fw-bolder fs-5" name="name"/>
+                            </div>
+                            <div>
+                                <field class="fw-bolder fs-5" name="vehicle_id"/>
+                            </div>
+                            <div>
+                                PickUp:
+                                <field class="fw-bolder fs-5" name="pickup_date"/>
+                            </div>
+                            <div>
+                                DropOff:
+                                <field class="fw-bolder fs-5" name="drop_off_date"/>
+                            </div>
+                            <div>
+                                Due Amount:
+                                <field class="fw-bolder fs-5" name="current_due_amount"/>
+                            </div>
+                            <div>
+                                Paid Amount:
+                                <field class="fw-bolder fs-5" name="paid_amount"/>
+                            </div>
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+
+  <record id="action_long_term_rental_contract_final" model="ir.actions.act_window">
+    <field name="name">Long Term Rental Contracts</field>
+    <field name="res_model">long.term.rental.contract</field>
+    <field name="view_mode">kanban,list,form</field>
+    <field name="view_ids" eval="[
+            (5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('long_term_rental.view_long_term_rental_contract_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('long_term_rental.view_long_term_rental_contract_form')}),
+            (0, 0, {'view_mode': 'kanban', 'view_id': ref('long_term_rental.long_term_rental_contract_view_kanban')})]"/>
+    <field name="domain">[('contract_type','=','long_term')]</field>
+    <field name="context">{'default_contract_type': 'long_term'}</field>
+    <field name="help" type="html">
+      <p class="oe_view_nocontent_create">
+        Create your first Long Term rental contract
+      </p>
+    </field>
+  </record>
+
+  <record id="seq_long_term_rental_contract" model="ir.sequence">
+    <field name="name">Long Term Rental Contract</field>
+    <field name="code">long.term.rental.contract.seq</field>
+    <field name="prefix">LRC/</field>
+    <field name="padding">5</field>
+  </record>
+
+
+</odoo>

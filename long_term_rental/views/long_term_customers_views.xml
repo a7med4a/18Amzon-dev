@@ -1,0 +1,29 @@
+<odoo>
+    <data>
+
+        <record id="long_term_individual_customers_action" model="ir.actions.act_window">
+            <field name="name">Long-Term Rental Customer</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">list,form</field>
+            <field name="view_ids" eval="[
+            (5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('customer_info.view_partner_tree_rental')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('customer_info.view_partner_form_rental')})]"/>
+            <field name="domain">[('contract_type', '=', 'long_term')]</field>
+            <field name="context">{'default_is_company':False,'default_contract_type': 'long_term'}</field>
+        </record>
+
+        <record id="long_term_rental_customers_action_blocked" model="ir.actions.act_window">
+            <field name="name">Long Term Rental Customers</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">list,form</field>
+            <field name="view_ids" eval="[
+            (5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('customer_info.view_partner_tree_rental')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('customer_info.view_partner_form_rental')})]"/>
+            <field name="domain">[('contract_type','=','long_term'),('blacklist_status', 'in', ['warning','blocked'])]</field>
+            <field name="context">{'default_is_company':False,'default_contract_type': 'long_term'}</field>
+        </record>
+
+    </data>
+</odoo>

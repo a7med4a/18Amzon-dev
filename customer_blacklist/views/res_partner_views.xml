@@ -71,8 +71,8 @@
             (5, 0, 0),
             (0, 0, {'view_mode': 'list', 'view_id': ref('customer_info.view_partner_tree_rental')}),
             (0, 0, {'view_mode': 'form', 'view_id': ref('customer_info.view_partner_form_rental')})]"/>
-            <field name="domain">[('create_from_rental', '=', True),('blacklist_status', 'in', ['warning','blocked'])]</field>
-            <field name="context">{'default_create_from_rental': True,'default_is_company': False}</field>
+            <field name="domain">[('create_from_rental', '=', True),('contract_type','=','rental'),('blacklist_status', 'in', ['warning','blocked'])]</field>
+            <field name="context">{'default_create_from_rental': True,'default_is_company': False,'default_contract_type': 'rental'}</field>
         </record>
 
         <menuitem id="menu_rental_blacklist_customers"

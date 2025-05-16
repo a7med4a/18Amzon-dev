@@ -9,6 +9,7 @@
                     <field name="type"/>
                     <field name="calculation"/>
                     <field name="price"/>
+                    <field name="contract_type"/>
                 </list>
             </field>
         </record>

@@ -10,8 +10,10 @@ from odoo.osv import expression
 class InheritAccountMove(models.Model):
     _inherit = 'account.move'
 
-    insurance_policy_id = fields.Many2one('insurance.policy', string="Insurance Policy")
+    insurance_policy_id = fields.Many2one('insurance.policy', string="Insurance Policy Reference", readonly=True)
     insurance_policy_ids = fields.One2many('insurance.policy', 'vendor_bill_id', string="Vendor Bills")
+    is_insurance_bill = fields.Boolean(string='Is Insurance Bill', readonly=True)
+    is_insurance_credit_note = fields.Boolean(string='Is Insurance credit note', readonly=True)
 
     def unlink(self):
         for rec in self:

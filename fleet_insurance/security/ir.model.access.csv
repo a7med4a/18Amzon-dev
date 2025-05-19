@@ -6,3 +6,4 @@ access_insurance_config_settings,insurance.config.settings,model_insurance_confi
 access_termination_log,termination.log,model_termination_log,,1,1,1,1
 access_insurance_policy_terminate_line,insurance.policy.terminate.line,model_insurance_policy_terminate_line,,1,1,1,1
 access_import.vehicle,import.vehicle,model_import_vehicle,,1,1,1,1
+access_cancel_insurance_policy,cancel.insurance.policy,model_cancel_insurance_policy,,1,1,1,1

@@ -1,0 +1,21 @@
+<odoo>
+    <data>
+
+        <!-- Inherit Form View to Modify it -->
+        <record id="view_move_form_insurance_policy" model="ir.ui.view">
+            <field name="name">Account Move Insurance Policy</field>
+            <field name="model">account.move</field>
+            <field name="inherit_id" ref="account.view_move_form"/>
+            <field name="arch" type="xml">
+
+                <xpath expr="//field[@name='invoice_vendor_bill_id']" position="after">
+                    <field name="insurance_policy_id" invisible="insurance_policy_id == False" options="{'no_open': True, 'no_create': True}"/>
+                    <field name="is_insurance_bill" invisible="is_insurance_bill == False"/>
+                    <field name="is_insurance_credit_note" invisible="is_insurance_credit_note == False"/>
+                </xpath>
+
+            </field>
+        </record>
+
+    </data>
+</odoo>

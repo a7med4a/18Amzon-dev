@@ -6,11 +6,12 @@
         <field name="arch" type="xml">
             <list>
                 <field name="name"/>
+                <field name="insurance_number"/>
                 <field name="description"/>
                 <field name="insurance_company"/>
+                <field name="company"/>
                 <field name="insurance_type"/>
-                <field name="status_color" widget="color_picker" invisible="1"/>
-                <field name="status" widget="badge" options="{'color_field': 'status_color'}"/>
+                <field name="status" widget="badge" decoration-info="status in ('quotation', 'under_review')" decoration-danger="status in ('cancelled','expired')" decoration-success="status == 'approved'" />
             </list>
         </field>
     </record>
@@ -67,6 +68,8 @@
                             <field name="show_cancel_button" invisible="1"/>
                             <field name="company" readonly="status == 'approved'"/>
                             <field name="insurance_type" readonly="status == 'approved'"/>
+                            <field name="has_plat_number"/>
+                            <field name="has_vin_sn"/>
                         </group>
                         <group>
                             <field name="start_date" readonly="status == 'approved'"/>
@@ -82,9 +85,9 @@
                             <field name="policy_lines_ids" form_view_ref="False">
                                 <list editable="bottom" create="true" edit="true">
                                     <field name="id" optional='show'/>
-                                    <field name="vehicle_id"
-                                           options="{'no_create': True, 'no_open': True, 'no_edit': True}"
-                                           readonly="bill_status == 'true'"/>
+                                    <field name="vin_sn" optional='show' readonly="bill_status == 'true'"/>
+                                    <field name="vehicle_id" optional='show'
+                                           options="{'no_create': True, 'no_open': True, 'no_edit': True}"/>
                                     <field name="plat_number" optional='show'/>
                                     <field name="model" optional='show'/>
                                     <field name="purchase_market_value" optional='show'
@@ -121,6 +124,15 @@
                                 </group>
                             </group>
                         </page>
+                        <page string="Cancellation Policy" readonly="status != 'quotation'">
+                            <field name="cancel_insurance_policy_ids" readonly="status != 'quotation'">
+                                <list editable="bottom">
+                                    <field name="from_month" optional='show'/>
+                                    <field name="to_month" optional='show'/>
+                                    <field name="percentage" optional='show'/>
+                                </list>
+                            </field>
+                        </page>
                     </notebook>
                 </sheet>
                 <chatter/>
@@ -128,10 +140,26 @@
         </field>
     </record>
 
+    <record id="insurance_policy_search_view" model="ir.ui.view">
+       <field name="name">insurance.policy.search</field>
+       <field name="model">insurance.policy</field>
+        <field name="arch" type="xml">
+            <search string="Insurance Search">
+                <field name="insurance_number" string="Insurance Number"/>
+                <field name="has_plat_number"
+                       string="Plate Number"
+                       filter_domain="[('has_plat_number', 'ilike', self)]"/>
+                <field name="has_vin_sn"
+                       string="Chassis Number"
+                       filter_domain="[('has_vin_sn', 'ilike', self)]"/>
+            </search>
+        </field>
+    </record>
+
     <record id="action_insurance_policy" model="ir.actions.act_window">
         <field name="name">Insurance Policies</field>
         <field name="res_model">insurance.policy</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">list,form,search</field>
     </record>
 
     <menuitem id="menu_insurance_policy" name="Insurance Policy"
@@ -147,9 +175,9 @@
         <field name="domain">[('insurance_policy_id', '=', active_id)]</field>
     </record>
 
-    <record id="cron_insurance_line_status" model="ir.cron">
-        <field name="name">Control Status</field>
-        <field name="model_id" ref="model_insurance_policy_line"/>
+    <record id="cron_insurance_status" model="ir.cron">
+        <field name="name">Insurance Policy Control Status</field>
+        <field name="model_id" ref="model_insurance_policy"/>
         <field name="state">code</field>
         <field name="code">
             model.update_insurance_status()
@@ -173,6 +201,22 @@
                 <field name="daily_rate" optional='show'/>
                 <field name="insurance_status" optional='show' readonly="1"/>
             </list>
+        </field>
+    </record>
+
+    <record id="cancel_insurance_policy_view_form" model="ir.ui.view">
+        <field name="name">cancel_insurance_policy_view_form</field>
+        <field name="model">cancel.insurance.policy</field>
+        <field name="arch" type="xml">
+            <form string="cancel_insurance_policy_form">
+                <sheet>
+                    <group>
+                        <field name="from_month"/>
+                        <field name="to_month"/>
+                        <field name="percentage"/>
+                    </group>
+                </sheet>
+            </form>
         </field>
     </record>
 </odoo>

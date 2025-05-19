@@ -20,6 +20,8 @@
         'views/insurance_company_data.xml',
         'views/termination_log_view.xml',
         'views/res_partner_inherit_view.xml',
+        'views/account_move_inherit.xml',
+        'views/financial_info_view.xml',
     ],
 }
 

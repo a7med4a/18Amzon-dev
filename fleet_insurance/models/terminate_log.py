@@ -6,12 +6,16 @@ class InsurancePolicyTerminationLog(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
     vehicle_id= fields.Many2one('fleet.vehicle',string="Chassis Number",readonly=True)
-    police_id= fields.Many2one('insurance.policy')
+    police_id= fields.Many2one('insurance.policy',string="Insurance Policy Reference",readonly=True)
     police_line_id= fields.Many2one('insurance.policy.line')
     stop_date = fields.Date(string="Stop Date", required=True)
     estimated_refunded_amount = fields.Float(string="Estimated Refunded Amount",readonly=True)
     actual_refunded_amount = fields.Float(string="Actual Refunded Amount",tracking=True)
     termination_details = fields.Text(string="Termination Details")
+    type = fields.Selection(string='Type',selection=[('refunded', 'Refunded'), ('cancel', 'Cancellation'), ],readonly=True)
+    from_month = fields.Integer(string='From',readonly=True)
+    to_month = fields.Integer(string='To',readonly=True)
+    percentage = fields.Float(string='Percentage(%)',readonly=True)
     credit_note_status = fields.Selection([
         ('true', 'True'),
         ('false', 'False'),],default="false",readonly=True)
@@ -67,6 +71,7 @@ class InsurancePolicyTerminationLog(models.Model):
                 'move_type': 'in_refund',
                 'partner_id': partner_id,
                 'insurance_policy_id': insurance_policy_id,
+                'is_insurance_credit_note':True,
                 'invoice_line_ids': [(0, 0, line) for line in credit_lines_vals],
                 'currency_id': self.env.company.currency_id.id,
             }

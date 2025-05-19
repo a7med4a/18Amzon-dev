@@ -1,3 +1,4 @@
+from email.policy import default
 
 from odoo.exceptions import ValidationError
 from odoo import models, fields, api, _
@@ -11,7 +12,9 @@ from dateutil.relativedelta import relativedelta
 
 class InsurancePolicy(models.Model):
     _name = 'insurance.policy'
+    _description = 'Insurance Policy'
     _inherit = ['mail.thread', 'mail.activity.mixin']
+    _rec_names_search = ['policy_lines_ids.plate_number']
 
     name = fields.Char(string="Reference", required=True, copy=False, readonly=True, default="New")
     description = fields.Text(string="Description")
@@ -21,7 +24,7 @@ class InsurancePolicy(models.Model):
         ('third_party', 'Third Party'),
         ('full', 'Full'),
     ], required=True, string="Insurance Type", default="third_party")
-    insurance_number = fields.Integer(string="Insurance Number")
+    insurance_number = fields.Char(string="Insurance Number")
     insurance_journal_id = fields.Many2one("account.journal", string="Insurance Journal",domain=[("type", "=", "purchase")])
     refund_insurance_journal_id = fields.Many2one('account.journal', string="Refund Insurance Journal")
     company = fields.Many2one('res.company', string="Company", default=lambda self: self.env.company.id)
@@ -38,7 +41,6 @@ class InsurancePolicy(models.Model):
         ('cancelled', 'Cancelled'),
         ('expired', 'Expired'),
     ], default="quotation", string="Status", tracking=True)
-    status_color = fields.Integer(compute="_compute_state_color")
     vendor_bill_id = fields.Many2one('account.move')
     vendor_bill_ids = fields.One2many('account.move', 'insurance_policy_id', string="Vendor Bills")
     note = fields.Html(
@@ -47,6 +49,21 @@ class InsurancePolicy(models.Model):
     category_id = fields.Many2many(related='insurance_company.category_id', string="Category", readonly=False)
     account_payable = fields.Many2one(related='insurance_company.property_account_payable_id', string='Account Payable',
                                       readonly=False)
+    cancel_insurance_policy_ids = fields.One2many('cancel.insurance.policy', 'insurance_policy_id')
+    has_plat_number = fields.Char(string='Plate Number (Search)',compute='_compute_has_plat_chassis_number',store=True)
+    has_vin_sn = fields.Char(string='Chassis Number (Search)',compute='_compute_has_plat_chassis_number',store=True)
+
+    @api.depends('policy_lines_ids.plat_number','policy_lines_ids.vin_sn')
+    def _compute_has_plat_chassis_number(self):
+        for rec in self:
+            if rec.policy_lines_ids :
+                plate_values = [str(plate) for plate in rec.policy_lines_ids.mapped('plat_number') if plate]
+                rec.has_plat_number = ', '.join(plate_values) if plate_values else False
+                vin_sn_values = [str(vin) for vin in rec.policy_lines_ids.mapped('vin_sn') if vin]
+                rec.has_vin_sn = ', '.join(vin_sn_values) if vin_sn_values else False
+            else:
+                rec.has_plat_number = ''
+                rec.has_vin_sn = ''
 
     @api.depends('policy_lines_ids', 'policy_lines_ids.bill_status','status')
     def _compute_show_cancel_button(self):
@@ -63,17 +80,6 @@ class InsurancePolicy(models.Model):
             else :
                 rec.show_cancel_button = False
 
-    @api.depends('status')
-    def _compute_state_color(self):
-        """Assign colors to states for the badge widget"""
-        color_mapping = {
-            'quotation': 1,
-            'under_review': 1,
-            'approved': 10,
-            'cancelled': 5,
-        }
-        for record in self:
-            record.status_color = color_mapping.get(record.status, 'secondary')
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -90,7 +96,7 @@ class InsurancePolicy(models.Model):
                 bill_status_found = any(line.bill_status == "false" for line in rec.policy_lines_ids)
                 rec.show_create_bill = bill_status_found
                 for line in rec.policy_lines_ids:
-                    line.update_insurance_status()
+                    line.update_insurance_line_status()
             if rec.status in ['under_review', 'approved']:
                 for line in rec.policy_lines_ids:
                     line.check_insurance_amount()
@@ -175,6 +181,8 @@ class InsurancePolicy(models.Model):
                     bill_vals = {
                         'move_type': 'in_invoice',
                         'partner_id': policy.insurance_company.id,
+                        'insurance_policy_id': policy.id,
+                        'is_insurance_bill': True,
                         'journal_id': config.insurance_journal_id.id,
                         'invoice_line_ids': bill_lines,
                         'currency_id': self.env.company.currency_id.id,
@@ -403,7 +411,7 @@ class InsurancePolicy(models.Model):
             for row, line in enumerate(rec.policy_lines_ids, start=1):
                 worksheet.write_row(row, 0, [
                     line.id or 0,
-                    line.vehicle_id.name or "N/A",
+                    line.vin_sn or "N/A",
                     line.purchase_market_value or 0.0,
                     line.insurance_rate or 0.0,
                     line.minimum_insurance_rate or 0.0,
@@ -465,14 +473,28 @@ class InsurancePolicy(models.Model):
             new_policy.start_date = new_policy.end_date - relativedelta(years=1)
         return new_policy
 
+    @api.model
+    def update_insurance_status(self):
+        today = date.today()
+        policies_not_expired = self.search([('status', 'not in', ('expired','cancelled'))])
+        for rec in policies_not_expired:
+            if rec.end_date and rec.end_date < today:
+                rec.status = 'expired'
+                rec.policy_lines_ids.write({'insurance_status': 'expired'})
+            else:
+                for line in rec.policy_lines_ids:
+                    line.update_insurance_line_status()
+
+
 
 class InsurancePolicyLine(models.Model):
     _name = 'insurance.policy.line'
     _rec_name = "vehicle_id"
 
     policy_id = fields.Many2one('insurance.policy', string="Insurance Policy")
-    vehicle_id = fields.Many2one('fleet.vehicle', string="Chassis Number", domain=[("active", "=", True)])
+    vehicle_id = fields.Many2one('fleet.vehicle',compute="_compute_vehicle_id", string="Vehicle",default=False,required=True, domain=[("active", "=", True)])
     plat_number = fields.Char(string="Plat number", related='vehicle_id.license_plate', store=True)
+    vin_sn = fields.Char(string="Chassis Number", store=True)
     model = fields.Char(string="Model", related='vehicle_id.model_id.name', store=True)
     purchase_market_value = fields.Float(string="Purchase Market Value")
     insurance_rate = fields.Float(string="Insurance Rate", required=True)
@@ -494,6 +516,10 @@ class InsurancePolicyLine(models.Model):
         ('expired', 'Expired')
     ], string="Insurance Status", default="draft",copy=False, required=True, store=True)
 
+    @api.depends('vin_sn')
+    def _compute_vehicle_id(self):
+        for rec in self:
+            rec.vehicle_id = self.env['fleet.vehicle'].search([('vin_sn', '=', rec.vin_sn)], limit=1)
     @api.constrains('start_date')
     def _check_start_date(self):
         for record in self:
@@ -552,17 +578,38 @@ class InsurancePolicyLine(models.Model):
                 record.insurance_duration = 0
 
     @api.model
-    def update_insurance_status(self):
+    def update_insurance_line_status(self):
         today = date.today()
         policy_lines = self.search([])
         for rec in policy_lines:
-            if rec.start_date and rec.insurance_status == 'draft' and rec.start_date <= today:
-                rec.insurance_status = 'running'
-            elif rec.end_date and rec.end_date < today:
+            if rec.end_date and rec.end_date < today:
                 rec.insurance_status = 'expired'
+            elif rec.start_date and rec.insurance_status == 'draft' and rec.start_date <= today:
+                rec.insurance_status = 'running'
+
 
     def unlink(self):
         for rec in self:
             if rec.bill_status == "true":
                 raise ValidationError("Cannot delete a True Bill status insurance policy line!")
         return super().unlink()
+
+
+class CancelInsurancePolicy(models.TransientModel):
+    _name = "cancel.insurance.policy"
+    _description = "Cancel Insurance Policy"
+
+    from_month = fields.Integer(string='From',required=True)
+    to_month = fields.Integer(string='To',required=True)
+    percentage = fields.Float(string='Percentage(%)',required=True)
+    insurance_policy_id = fields.Many2one('insurance.policy', string="Insurance Policy", required=True)
+
+    @api.constrains('from_month', 'to_month', 'percentage')
+    def _check_percentage(self):
+        for rec in self:
+            if rec.from_month > rec.to_month:
+                raise ValidationError("From Month must be less than To Month!")
+            elif rec.from_month < 1 or rec.to_month < 1:
+                raise ValidationError("From Month and To Month must be greater than 0!")
+            elif rec.percentage < 0:
+                raise ValidationError("Percentage must be greater than 0!")

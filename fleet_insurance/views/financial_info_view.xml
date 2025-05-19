@@ -1,0 +1,47 @@
+<odoo>
+    <data>
+
+        <record id="action_move_in_invoice_policy_insurance" model="ir.actions.act_window">
+            <field name="name">Bills</field>
+            <field name="res_model">account.move</field>
+            <field name="view_mode">list,kanban,form,activity</field>
+            <field name="view_id" ref="account.view_in_invoice_bill_tree"/>
+            <field name="search_view_id" ref="account.view_account_bill_filter"/>
+            <field name="domain">[('move_type', 'in', ['in_invoice', 'in_refund']), ('insurance_policy_id', '!=',False), ('is_insurance_bill', '=', True)]</field>
+            <field name="context">{'search_default_in_invoice': 1, 'default_move_type': 'in_invoice',
+                'display_account_trust': True}
+            </field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create a vendor bill
+                </p>
+                <p>
+                    Capture invoices, register payments and keep track of the discussions with your vendors.
+                </p>
+            </field>
+        </record>
+
+
+      <record id="action_move_in_refund_type_policy_insurance" model="ir.actions.act_window">
+            <field name="name">Refunds</field>
+            <field name="res_model">account.move</field>
+            <field name="view_mode">list,kanban,form,activity</field>
+            <field name="view_id" ref="account.view_in_invoice_refund_tree"/>
+            <field name="search_view_id" ref="account.view_account_bill_filter"/>
+            <field name="domain">[('move_type', 'in', ['in_invoice', 'in_refund']),('insurance_policy_id', '!=', False), ('is_insurance_credit_note', '=', True)]</field>
+            <field name="context">{'search_default_in_refund': 1, 'default_move_type': 'in_refund'}</field>
+            <field name="help" type="html">
+              <p class="o_view_nocontent_smiling_face">
+                Create a vendor credit note
+              </p><p>
+                Note that the easiest way to create a vendor credit note is to do it directly from the vendor bill.
+              </p>
+            </field>
+        </record>
+
+        <menuitem id="menu_financial_info" name="Financial Information" parent="fleet_insurance.menu_insurance_root" sequence="4"/>
+        <menuitem id="menu_financial_bill" name="Bills" parent="fleet_insurance.menu_financial_info" action="action_move_in_invoice_policy_insurance"/>
+        <menuitem id="menu_financial_credit_note" name="Credit Note" parent="fleet_insurance.menu_financial_info" action="action_move_in_refund_type_policy_insurance"/>
+        <menuitem id="menu_financial_terminate_log" name="Termination Logs" parent="fleet_insurance.menu_financial_info" action="fleet_insurance.termination_log_action"/>
+    </data>
+</odoo>

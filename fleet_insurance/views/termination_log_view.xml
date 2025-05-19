@@ -5,6 +5,7 @@
         <field name="arch" type="xml">
             <list>
                 <field name="vehicle_id"/>
+                <field name="police_id"/>
                 <field name="stop_date"/>
                 <field name="estimated_refunded_amount"/>
             </list>
@@ -32,16 +33,28 @@
                 </header>
                 <sheet>
                     <group>
-                        <field name="vehicle_id"/>
-                        <field name="stop_date"/>
+                        <field name="vehicle_id" options="{'no_open': True, 'no_create': True}"/>
+                        <field name="police_id" options="{'no_open': True, 'no_create': True}"/>
+                        <field name="stop_date" readonly="status == 'terminated'"/>
                         <field name="estimated_refunded_amount"/>
-                        <field name="actual_refunded_amount"/>
+                        <field name="actual_refunded_amount" readonly="credit_note_status == 'true'"/>
                         <field name="credit_note_status"/>
+                        <field name="type"/>
+                        <field name="from_month" invisible="type != 'cancel'"/>
+                        <field name="to_month" invisible="type != 'cancel'"/>
+                        <field name="percentage" invisible="type != 'cancel'"/>
                     </group>
                 </sheet>
                 <chatter/>
             </form>
         </field>
+    </record>
+
+    <record id="termination_log_action" model="ir.actions.act_window">
+        <field name="name">termination.log.action</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">termination.log</field>
+        <field name="view_mode">list,form</field>
     </record>
 
 </odoo>

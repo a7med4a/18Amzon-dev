@@ -68,8 +68,8 @@
                             <field name="show_cancel_button" invisible="1"/>
                             <field name="company" readonly="status == 'approved'"/>
                             <field name="insurance_type" readonly="status == 'approved'"/>
-                            <field name="has_plat_number"/>
-                            <field name="has_vin_sn"/>
+                            <field name="has_plat_number" invisible="1"/>
+                            <field name="has_vin_sn" invisible="1"/>
                         </group>
                         <group>
                             <field name="start_date" readonly="status == 'approved'"/>

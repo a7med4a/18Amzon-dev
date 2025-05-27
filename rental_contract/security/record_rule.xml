@@ -1,4 +1,4 @@
-<odoo noupdate="1">
+<odoo>
     <record id="contract_setting_comp_rule" model="ir.rule">
         <field name="name">Rental Contract Setting multi-company</field>
         <field name="model_id" ref="model_rental_config_settings"/>
@@ -15,6 +15,12 @@
         <field name="name">Rental Contract multi-company</field>
         <field name="model_id" ref="model_rental_contract"/>
         <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'parent_of', company_ids)]</field>
+    </record>
+
+    <record id="rental_contract_branches_rule" model="ir.rule">
+            <field name="name">Rental Contract pickup branch rule</field>
+            <field name="model_id" ref="model_rental_contract"/>
+            <field name="domain_force">[('vehicle_branch_id', 'in', user.branch_ids.ids + [False])]</field>
     </record>
 
 </odoo>

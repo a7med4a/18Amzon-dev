@@ -14,11 +14,13 @@
           <!-- After draft -->
           <button name="action_pay" type="object" invisible="draft_state != 'financial_info'" string="Pay" class="oe_highlight" />
           <!-- Open Buttons -->
-          <button name="%(rental_contract.rental_contract_fines_wiz_action)d" type="action" invisible="state in ['draft', 'closed']" string="Add Fines" class="oe_highlight" />
-          <button name="%(rental_contract.rental_contract_discount_wiz_action)d" type="action" invisible="state in ['draft', 'closed']" string="Add Discount Voucher" class="oe_highlight" />
+          <button name="%(rental_contract.rental_contract_fines_wiz_action)d" type="action" invisible="state in ['draft']" string="Add Fines" class="oe_highlight" />
+          <button name="%(rental_contract.rental_contract_discount_wiz_action)d" type="action" invisible="state in ['draft']" string="Add Discount Voucher" class="oe_highlight" />
+          <button name="create_late_log" type="object" invisible="state != 'opened'" string="Extend" class="oe_highlight" />
           <button name="action_close_info" type="object" invisible="state != 'opened'" string="Close" class="oe_highlight" />
           <!-- Close Info Buttons -->
-          <button name="action_close" type="object" invisible="state != 'close_info'" string="Close" class="oe_highlight" />
+          <button name="action_close" type="object" invisible="state != 'close_info' or vehicle_in_state == 'none'" string="Close" class="oe_highlight"/>
+          <button name="action_close" type="object" invisible="state != 'close_info' or vehicle_in_state != 'none'" string="Close" class="oe_highlight" confirm="You select none in has accident / damage?" />
           <!-- Delivery InDebit / Pending Button -->
           <button name="action_final_close" type="object" invisible="state not in ['delivered_pending', 'delivered_debit']" string="Close" class="oe_highlight" confirm="Are you sure you want to close this contract?"/>
           <!-- Cancel Button -->
@@ -31,14 +33,14 @@
           <!-- button box -->
           <div class="oe_button_box" name="button_box">
 
-            <button class="oe_stat_button" name="view_contract_additional_supplement_service" type="object" icon="fa-bars" invisible="additional_supplement_service_count == 0" groups="base.group_system">
+            <!-- <button class="oe_stat_button" name="view_contract_additional_supplement_service" type="object" icon="fa-bars" invisible="additional_supplement_service_count == 0" groups="base.group_system">
               <div class="o_stat_info">
                 <span class="o_stat_value">
                   <field name="additional_supplement_service_count" />
                 </span>
                 <span class="o_stat_text">Services</span>
               </div>
-            </button>
+            </button> -->
 
             <button class="oe_stat_button" name="view_schedular_invoice_log" type="object" icon="fa-bars" invisible="state == 'draft'" groups="base.group_system">
               <div class="o_stat_info">
@@ -103,19 +105,27 @@
               </div>
             </button>
 
+            <button class="oe_stat_button" name="view_contract_late_log" type="object" icon="fa-bars" invisible="late_log_count == 0">
+              <div class="o_stat_info">
+                <span class="o_stat_value">
+                  <field name="late_log_count" />
+                </span>
+                <span class="o_stat_text">Extend Log</span>
+              </div>
+            </button>
           </div>
 
-          <!-- title -->
-          <div class="oe_title" invisible="state == 'draft'">
-            <h1>
+          <div class="d-flex">
+            <h2 class="flex-grow-1" dir="ltr">
               <field name="name" />
-            </h1>
+            </h2>
+            <field name="contract_late_status" widget="badge" decoration-success="contract_late_status == 'extended'" decoration-danger="contract_late_status == 'late'"/>
           </div>
           <!-- customer_info -->
           <group invisible="(state == 'draft' and draft_state != 'customer_info') or state == 'close_info'" string="Customer Info">
             <group>
               <field name="company_id" options="{'no_create': True, 'no_open': True}" readonly="state != 'draft'" />
-              <field name="partner_id" options="{'no_create': True}" context="{'form_view_ref': 'customer_info.view_partner_form_rental', 'search_by_mobile': True}" readonly="state != 'draft'" />
+              <field name="partner_id" options="{'no_create': True, 'no_open': True}" context="{'form_view_ref': 'customer_info.view_partner_form_rental', 'search_by_mobile': True}" readonly="state != 'draft'" />
               <field name="partner_mobile" />
               <field name="partner_id_no" />
               <field name="source_contract" readonly="state != 'draft'"/>
@@ -128,14 +138,14 @@
             <group>
               <label for="vehicle_id" />
               <div class="o_row">
-                <field name="vehicle_id" required="draft_state != 'customer_info'" options="{'no_create': True}" readonly="state != 'draft'" />
-                <field name="vehicle_model_datail_id" invisible="1" />
+                <field name="vehicle_id" required="draft_state != 'customer_info'" options="{'no_create': True, 'no_open': True}" readonly="state != 'draft'" />
+                <field name="vehicle_model_datail_id" invisible="1" options="{'no_open': True, 'no_create': True}"/>
                 <button name="view_vehicle_model_pricing" type="object" class="oe_highlight" icon="fa-external-link" string="View Model Pricing" />
               </div>
               <field name="license_plate" />
-              <field name="model_id" />
-              <field name="category_id" />
-              <field name="out_odometer" readonly="state != 'draft'" />
+              <field name="model_id" options="{'no_open': True, 'no_create': True}" />
+              <field name="category_id" options="{'no_open': True, 'no_create': True}" />
+              <field name="out_odometer" readonly="1" force_save="1"/>
             </group>
           </group>
           <group invisible="(state == 'draft' and draft_state != 'vehicle_info') or state == 'close_info'" name="out_check_list" string="Out CheckList">
@@ -167,14 +177,14 @@
           <!-- contract_info -->
           <group invisible="(state == 'draft' and draft_state != 'contract_info') or state == 'close_info'" string="Contract Info">
             <group>
-              <field name="vehicle_branch_id" />
+              <field name="vehicle_branch_id"  options="{'no_open': True, 'no_create': True}"/>
               <field name="pickup_date" required="draft_state not in ['customer_info', 'vehicle_info']" readonly="state != 'draft'" />
               <field name="duration" required="draft_state not in ['customer_info', 'vehicle_info']" readonly="state != 'draft'" />
               <field name="rental_plan" required="draft_state not in ['customer_info', 'vehicle_info']" readonly="state != 'draft'" />
               <field name="authorization_type" required="draft_state not in ['customer_info', 'vehicle_info']" readonly="state != 'draft'" />
-              <field name="authorization_country_id" options="{'no_create': True}" required="draft_state not in ['customer_info', 'vehicle_info'] and authorization_type == 'external'" invisible="authorization_type != 'external'" readonly="state != 'draft'" />
+              <field name="authorization_country_id" options="{'no_create': True, 'no_open': True}" required="draft_state not in ['customer_info', 'vehicle_info'] and authorization_type == 'external'" invisible="authorization_type != 'external'" readonly="state != 'draft'" />
               <field name="need_extra_driver" required="draft_state not in ['customer_info', 'vehicle_info']" readonly="state != 'draft'" />
-              <field name="extra_driver_id" required="draft_state not in ['customer_info', 'vehicle_info'] and need_extra_driver == 'true'" invisible="need_extra_driver != 'true'" options="{'no_create': True}" context="{'form_view_ref': 'customer_info.view_partner_form_rental', 'search_by_mobile': True}" readonly="state != 'draft'" />
+              <field name="extra_driver_id" required="draft_state not in ['customer_info', 'vehicle_info'] and need_extra_driver == 'true'" invisible="need_extra_driver != 'true'" options="{'no_create': True, 'no_open': True}" context="{'form_view_ref': 'customer_info.view_partner_form_rental', 'search_by_mobile': True}" readonly="state != 'draft'" />
             </group>
             <group invisible="state == 'draft' and draft_state != 'contract_info'">
               <field name="expected_return_date" />
@@ -195,7 +205,7 @@
           <!-- financial_info -->
           <group invisible="(state == 'draft' and draft_state != 'financial_info') or state == 'close_info'" string="Financial Info">
             <group>
-              <field name="daily_rate" />
+              <field name="daily_rate" readonly="state != 'draft'" required="draft_state == 'financial_info'"/>
               <field name="daily_additional_services_rate" />
               <field name="daily_supplementary_services_rate" />
               <field name="daily_authorization_country_rate" />
@@ -231,6 +241,13 @@
                 <label for="display_current_hours" string="Hours" />
                 <field name="display_current_hours" />
               </div>
+              <label for="display_late_days" string="Late" invisible="state != 'opened'" style="font-weight:bold;"/>
+              <div class="o_row o_row_readonly" invisible="state != 'opened'">
+                <label for="display_late_days" string="Days"/>
+                <field name="display_late_days"  decoration-danger="duration &lt; display_current_days"/>
+                <label for="display_late_hours" string="Hours"/>
+                <field name="display_late_hours"  decoration-danger="duration &lt; display_current_days"/>
+              </div>
 
               <label for="actual_days" string="Actual" invisible="state in ['draft', 'opened']" style="font-weight:bold;" />
               <div class="o_row o_row_readonly" invisible="state in ['draft', 'opened']">
@@ -247,14 +264,21 @@
                 <field name="current_hours" readonly="1" />
               </div>
 
+              <label for="late_days" string="Late" invisible="state  in ['draft', 'opened']" style="font-weight:bold;"/>
+              <div class="o_row o_row_readonly" invisible="state in ['draft', 'opened']">
+                <label for="late_days" string="Days"/>
+                <field name="late_days" readonly="1" decoration-danger="duration &lt; current_days" />
+                <label for="late_hours" string="Hours"/>
+                <field name="late_hours" readonly="1" decoration-danger="duration &lt; current_days" />
+              </div>
+
               <field name="assumed_amount" />
-              <field name="paid_amount" />
               <field name="discount_voucher_amount" />
             </group>
 
             <group>
               <field name="display_current_amount" invisible="state != 'opened'" />
-              <field name="current_amount" invisible="state in ['draft', 'opened']" />
+              <field name="current_amount" invisible="state in ['draft', 'opened']" readonly="1"/>
               <field name="current_fines_amount" />
               <field name="current_accident_damage_amount" readonly="state not in ['draft', 'opened']" />
               <label for="current_km_extra_amount" />
@@ -262,6 +286,8 @@
                 <field name="current_km_extra_amount" readonly="1" />
                 <button name="view_calculate_km" type="object" class="oe_highlight" icon="fa-external-link" string="Calculate KM" />
               </div>
+              <field name="total_current_amount" />
+              <field name="paid_amount" />
               <div class="row">
                 <div class="col-7">
                   <h3 style="padding-bottom:7px; font-weight:bold; color:red;">Current Due Amount :</h3>
@@ -301,14 +327,18 @@
               <field name="in_oil_change_date" required="state == 'close_info'" readonly="state != 'close_info'" />
               <field name="in_vehicle_status" required="state == 'close_info'" readonly="state != 'close_info'" />
             </group>
+            <group>
+              <field name="in_branch_domain" invisible="1"/>
+              <field name="in_branch_id" required="state == 'close_info'" readonly="state != 'close_info'" domain="in_branch_domain"/>
+            </group>
           </group>
           <group invisible="state in ['draft', 'opened']" name="accident_damage">
             <group>
-              <field name="vehicle_in_state" readonly="state != 'close_info'" />
+              <field name="vehicle_in_state" readonly="state != 'close_info'" required="state == 'close_info'"/>
               <field name="vehicle_in_state_other_reason" readonly="state != 'close_info'" required="vehicle_in_state == 'other'" invisible="vehicle_in_state != 'other'"/>
             </group>
             <group string="Accident Announcement" invisible="vehicle_in_state != 'accident'">
-              <field name="city_id" required="state == 'close_info' and vehicle_in_state == 'accident'" readonly="state != 'close_info'" />
+              <field name="city_id" required="state == 'close_info' and vehicle_in_state == 'accident'" readonly="state != 'close_info'"  options="{'no_open': True, 'no_create': True}"/>
               <field name="report_source" required="state == 'close_info' and vehicle_in_state == 'accident'" readonly="state != 'close_info'" />
               <field name="other_report_source" invisible="report_source != 'other'" required="state == 'close_info' and vehicle_in_state == 'accident' and report_source == 'other'" readonly="state != 'close_info'" />
               <field name="announcement_date" required="state == 'close_info' and vehicle_in_state == 'accident'" readonly="state != 'close_info'" />
@@ -333,7 +363,7 @@
           <div class="oe_title">
             <label for="model_pricing_vehicle_brand_id" class="oe_edit_only" />
             <h1>
-              <field name="model_pricing_vehicle_brand_id" />
+              <field name="model_pricing_vehicle_brand_id" options="{'no_open': True, 'no_create': True}" />
             </h1>
           </div>
           <group>
@@ -350,7 +380,7 @@
             <group>
               <field name="model_pricing_start_date" />
               <field name="model_pricing_end_date" />
-              <field name="vehicle_branch_id" />
+              <field name="vehicle_branch_id" options="{'no_open': True, 'no_create': True}" />
               <field name="model_pricing_max_normal_day_price" />
               <field name="model_pricing_max_weekly_day_price" />
               <field name="model_pricing_max_monthly_day_price" />
@@ -377,47 +407,73 @@
 
               <label for="in_odometer" string="KM In" />
               <div>
-                <field name="in_odometer" class="oe_inline" readonly="state != 'opened'" />
+                <field name="in_odometer" class="oe_inline" readonly="state not in ['opened', 'close_info']" />
                 <span> KM </span>
               </div>
 
               <label for="out_odometer" string="KM Out" />
               <div>
-                <field name="out_odometer" class="oe_inline" readonly="1" />
+                <field name="out_odometer" class="oe_inline" readonly="1" force_save="1"/>
                 <span> KM </span>
               </div>
 
               <label for="model_pricing_free_kilometers" string="Free KM Per Day" />
               <div>
-                <field name="model_pricing_free_kilometers" class="oe_inline" />
+                <field name="model_pricing_free_kilometers" class="oe_inline" readonly="1" />
                 <span> KM </span>
               </div>
 
-              <label for="display_current_days" string="Current Duration" />
-              <div>
+              <label for="display_current_days" string="Current Duration" invisible="state != 'opened'"/>
+              <div invisible="state != 'opened'">
                 <field name="display_current_days" class="oe_inline" />
                 <span> Days </span>
               </div>
 
-              <label for="total_free_km" string="Total Free KM" />
-              <div>
-                <field name="total_free_km" class="oe_inline" />
+              <label for="current_days" string="Current Duration" invisible="state in ['draft', 'opened']"/>
+              <div invisible="state in ['draft', 'opened']">
+                <field name="current_days" class="oe_inline" readonly="1" />
+                <span> Days </span>
+              </div>
+
+              <label for="display_total_free_km" string="Total Free KM" invisible="state != 'opened'" />
+              <div invisible="state != 'opened'">
+                <field name="display_total_free_km" class="oe_inline" />
                 <span> KM </span>
               </div>
 
-              <label for="consumed_km" string="Consumed KM" />
-              <div>
-                <field name="consumed_km" class="oe_inline" />
+              <label for="total_free_km" string="Total Free KM"  invisible="state in ['draft', 'opened']"/>
+              <div invisible="state in ['draft', 'opened']">
+                <field name="total_free_km" class="oe_inline" readonly="1"/>
                 <span> KM </span>
               </div>
 
-              <label for="total_extra_km" string="Total Extra KM" />
-              <div>
-                <field name="total_extra_km" class="oe_inline" />
+              <label for="display_consumed_km" string="Consumed KM" invisible="state != 'opened'"/>
+              <div  invisible="state != 'opened'">
+                <field name="display_consumed_km" class="oe_inline" />
                 <span> KM </span>
               </div>
 
-              <field name="display_current_km_extra_amount" />
+
+              <label for="consumed_km" string="Consumed KM" invisible="state in ['draft', 'opened']"/>
+              <div invisible="state in ['draft', 'opened']">
+                <field name="consumed_km" class="oe_inline" readonly="1" />
+                <span> KM </span>
+              </div>
+
+              <label for="display_total_extra_km" string="Total Extra KM" invisible="state != 'opened'" />
+              <div  invisible="state != 'opened'">
+                <field name="display_total_extra_km" class="oe_inline" />
+                <span> KM </span>
+              </div>
+
+              <label for="total_extra_km" string="Total Extra KM" invisible="state in ['draft', 'opened']" />
+              <div invisible="state in ['draft', 'opened']">
+                <field name="total_extra_km" class="oe_inline" readonly="1"/>
+                <span> KM </span>
+              </div>
+
+              <field name="display_current_km_extra_amount" invisible="state != 'opened'"/>
+              <field name="current_km_extra_amount" invisible="state in ['draft', 'opened']" readonly="1"/>
 
             </group>
           </group>
@@ -457,7 +513,7 @@
         <field name="current_due_amount" />
         <field name="paid_amount" />
         <field name="state" />
-        <field name="source_contract" />
+        <field name="source_contract" options="{'no_open': True, 'no_create': True}"/>
         <field name="vehicle_in_state" widget="badge"
                        decoration-warning="vehicle_in_state == 'accident'"
                        decoration-danger="vehicle_in_state == 'damage'"

@@ -42,7 +42,7 @@ class VehicleModelDetail(models.Model):
     start_date = fields.Date(required=True)
     end_date = fields.Date()
     # branch = fields.Char(tracking=True)
-    branch_id = fields.Many2one(
+    branch_ids = fields.Many2many(
         comodel_name='res.branch', string='Branch', tracking=True)
     state = fields.Selection(
         string='State',
@@ -85,39 +85,40 @@ class VehicleModelDetail(models.Model):
 
         print("**** _check_duplicate_and_overlap")
         for rec in self:
-            domain = [
-                ('fleet_vehicle_model_id', '=', rec.fleet_vehicle_model_id.id),
-                ('branch_id', '=', rec.branch_id.id),
-                ('state', 'in', ('draft', 'running')),  # فقط السجلات النشطة
-                ('id', '!=', rec.id),  # استثناء السجل الحالي عند التعديل
-            ]
+            for branch_id in rec.branch_ids:
+                domain = [
+                    ('fleet_vehicle_model_id', '=', rec.fleet_vehicle_model_id.id),
+                    ('branch_ids', 'in', [branch_id.id]),
+                    ('state', 'in', ('draft', 'running')),  # فقط السجلات النشطة
+                    ('id', '!=', rec.id),  # استثناء السجل الحالي عند التعديل
+                ]
 
-            overlapping_ids = self.search(domain)
-            print("**** overlapping_ids ==>", overlapping_ids)
-            overlapping = False
-            print("**** rec.start_date ==>", rec.start_date)
-            print("**** rec.end_date ==>", rec.end_date)
-            for line in overlapping_ids:
-                if not line.end_date and not rec.end_date:
-                    overlapping = True
-                    break
-                if rec.end_date and rec.end_date >= line.start_date and not line.end_date:
-                    overlapping = True
-                    break
-                elif line.end_date and not rec.end_date and rec.start_date <= line.end_date:
-                    overlapping = True
-                    break
-                elif line.end_date and rec.end_date:
-                    if (line.start_date <= rec.start_date <= line.end_date) or (line.start_date <= rec.end_date <= line.end_date):
+                overlapping_ids = self.search(domain)
+                print("**** overlapping_ids ==>", overlapping_ids)
+                overlapping = False
+                print("**** rec.start_date ==>", rec.start_date)
+                print("**** rec.end_date ==>", rec.end_date)
+                for line in overlapping_ids:
+                    if not line.end_date and not rec.end_date:
                         overlapping = True
                         break
-                    elif (line.start_date > rec.start_date <= line.end_date) or (line.start_date <= rec.end_date <= line.end_date):
+                    if rec.end_date and rec.end_date >= line.start_date and not line.end_date:
                         overlapping = True
                         break
+                    elif line.end_date and not rec.end_date and rec.start_date <= line.end_date:
+                        overlapping = True
+                        break
+                    elif line.end_date and rec.end_date:
+                        if (line.start_date <= rec.start_date <= line.end_date) or (line.start_date <= rec.end_date <= line.end_date):
+                            overlapping = True
+                            break
+                        elif (line.start_date > rec.start_date <= line.end_date) or (line.start_date <= rec.end_date <= line.end_date):
+                            overlapping = True
+                            break
 
-            if overlapping:
-                raise ValidationError(
-                    f"There is a time overlap for the same model '{rec.fleet_vehicle_model_id.name}' and branch '{rec.branch_id.name}'.")
+                if overlapping:
+                    raise ValidationError(
+                        f"There is a time overlap for the same model '{rec.fleet_vehicle_model_id.name}' and branch '{branch_id.name}'.")
 
     @api.model_create_multi
     def create(self, vals):
@@ -129,3 +130,14 @@ class VehicleModelDetail(models.Model):
         result = super(VehicleModelDetail, self).write(vals)
         self._check_duplicate_and_overlap()
         return result
+
+    @api.model
+    def schedular_update_state(self):
+        today_date = fields.Date.today()
+        draft_pricing_ids = self.search(
+            [('state', '=', 'draft'), ('start_date', '<=', today_date)])
+        running_pricing_ids = self.search(
+            [('state', '=', 'running'), ('start_date', '<=', today_date)])
+        draft_pricing_ids.write({'state': 'running'})
+        running_pricing_ids.filtered(
+            lambda p: p.end_date and p.end_date < today_date).write({'state': 'expired'})

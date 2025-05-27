@@ -12,7 +12,7 @@
                     <notebook>
                         <page string="Vehicle Details">
                             <field name="vehicle_detail_ids">
-                                <list editable="bottom">
+                                <list>
                                     <field name="fleet_vehicle_model_id" domain="[('id', 'in',model_ids )]"/>
                                     <field name="free_kilometers"/>
                                     <field name="extra_kilometers_cost"/>
@@ -28,7 +28,7 @@
                                     <field name="full_tank_cost"/>
                                     <field name="start_date"/>
                                     <field name="end_date"/>
-                                    <field name="branch_id"/>
+                                    <field name="branch_ids" widget="many2many_tags" required="True"/>
                                     <field name="state"/>
                                     <button name="action_confirm" type="object" class="fa fa-check btn-success" title="Set to Active"/>
                                     <button name="action_set_draft" type="object" class="fa fa-backward btn-warning" title="Set to Draft"/>

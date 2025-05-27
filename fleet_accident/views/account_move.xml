@@ -8,4 +8,12 @@
         <field name="domain">[('accident_due_amount_line_id.accident_id', 'in', active_ids)]</field>
         <field name="context">{'entry_permits': True}</field>
     </record>
+
+    <record id="action_fleet_accident_invoice" model="ir.actions.act_window">
+        <field name="name">Fleet Accident Invoice</field>
+        <field name="res_model">account.move</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[("accident_due_amount_line_id","!=",False)]</field>
+    </record>
+
 </odoo>

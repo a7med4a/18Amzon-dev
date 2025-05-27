@@ -8,6 +8,8 @@
                 <field name="type"/>
                 <field name="price"/>
                 <field name="account_id"/>
+                <field name="tax_ids" widget="many2many_tags" required="1"/>
+                <field name="company_id" readonly="1"/>
                 <field name="contract_type"/>
             </list>
         </field>

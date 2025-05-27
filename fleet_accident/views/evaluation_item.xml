@@ -7,6 +7,7 @@
         <field name="arch" type="xml">
             <list string="Evaluation Item" editable="bottom">
                 <field name="name"/>
+                <field name="company_id" readonly="1"/>
             </list>
         </field>
     </record>

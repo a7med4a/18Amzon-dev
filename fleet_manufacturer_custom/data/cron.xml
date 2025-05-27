@@ -1,0 +1,14 @@
+<odoo>
+    
+    <record id="fleet_vehicle_model_detail_update_state_cron" model="ir.cron">
+        <field name="name">Update Fleet Model Pricing Status</field>
+        <field name="model_id" ref="model_fleet_vehicle_model_detail" />
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="nextcall" eval="DateTime.now().replace(hour=21).strftime('%Y-%m-%d %H:%M:%S')" />
+        <field name="state">code</field>
+        <field name="code">model.schedular_update_state()</field>
+    </record>
+
+</odoo>
+   

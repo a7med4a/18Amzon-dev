@@ -27,6 +27,8 @@ class DefaultAccidentItem(models.Model):
         'account.account', string='Account', required=True)
     tax_ids = fields.Many2many('account.tax', string='Taxes')
 
+    company_id = fields.Many2one('res.company', string='Company', required=True,
+                                 default=lambda self: self.env.company, domain=lambda self: [('id', 'in', self.env.companies.ids)])
     _sql_constraints = [
         ('accident_item_uniq', 'unique(accident_item)',
          'Accident Item must be unique!'),

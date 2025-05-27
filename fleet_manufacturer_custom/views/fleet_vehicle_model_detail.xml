@@ -1,0 +1,42 @@
+<odoo>
+    <record id="fleet_vehicle_model_details_view_form" model="ir.ui.view">
+        <field name="name">fleet.vehicle.model.detail.view.form</field>
+        <field name="model">fleet.vehicle.model.detail</field>
+        <field name="arch" type="xml">
+            <form string="Vehicle Model Details">
+                <header invisible="context.get('exit_permits') or context.get('entry_permits')">
+                    <field name="state" widget="statusbar" statusbar_visible="draft,running,expired"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="fleet_vehicle_model_id" class="oe_edit_only" />
+                        <h1>
+                            <field name="fleet_vehicle_model_id" readonly="state != 'draft'"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="free_kilometers" readonly="state != 'draft'" />
+                            <field name="extra_kilometers_cost" readonly="state != 'draft'" />
+                            <field name="number_delay_hours_allowed" readonly="state != 'draft'" />
+                            <field name="min_normal_day_price" readonly="state != 'draft'" />
+                            <field name="min_weekly_day_price" readonly="state != 'draft'" />
+                            <field name="min_monthly_day_price" readonly="state != 'draft'" />
+                            <field name="min_customer_age" readonly="state != 'draft'" />
+                            <field name="full_tank_cost" readonly="state != 'draft'" />
+                        </group>
+                        <group>
+                            <field name="start_date" readonly="state != 'draft'" />
+                            <field name="end_date" readonly="state != 'draft'" />
+                            <field name="branch_ids" widget="many2many_tags" required="True" readonly="state != 'draft'"/>
+                            <field name="max_normal_day_price" readonly="state != 'draft'" />
+                            <field name="max_weekly_day_price" readonly="state != 'draft'" />
+                            <field name="max_monthly_day_price" readonly="state != 'draft'" />
+                            <field name="max_customer_age" readonly="state != 'draft'" />
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

@@ -28,6 +28,7 @@
                             <field name="extra_km_label"/>
                             <field name="extra_km_account_id"/>
                             <field name="tax_ids" widget="many2many_tags"/>
+                            <field name="company_id" readonly="1"/>
                             <field name="type"/>
                         </group>
                     </group>

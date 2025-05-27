@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api, _
+from odoo.addons.account.models import company
 from odoo.exceptions import UserError, ValidationError
 
 
@@ -10,6 +11,8 @@ class ContractFinesDiscountWiz(models.TransientModel):
 
     rental_contract_id = fields.Many2one(
         'rental.contract', string='Rental Contract', required=True)
+    company_id = fields.Many2one(
+        'res.company', string='Company', related="rental_contract_id.company_id")
     type = fields.Selection([
         ('fine', 'Fine'),
         ('discount', 'Discount'),
@@ -75,7 +78,7 @@ class ContractFinesDiscountWiz(models.TransientModel):
         }
 
         account_move_id = self.env['account.move'].sudo().create(entry_vals)
-        # account_move_id.action_post()
+        account_move_id.action_post()
 
         self.rental_contract_id.write(
             {'fines_discount_line_ids': fines_discount_line_ids})
@@ -95,4 +98,4 @@ class ContractFinesDiscountWizLine(models.TransientModel):
         string='Price', related='config_id.price', readonly=True)
     name = fields.Char(string='Description', required=True)
     tax_ids = fields.Many2many(
-        'account.tax', string='taxes', domain="[('type_tax_use', '=', 'sale')]")
+        'account.tax', string='taxes', related="config_id.tax_ids")

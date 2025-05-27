@@ -2,7 +2,7 @@
     <data>
         <record id="view_long_term_rental_contract_payment_register_form" model="ir.ui.view">
             <field name="name">long.term.rental.contract.payment.register.form</field>
-            <field name="model">rental.contract.payment.register</field>
+            <field name="model">long.term.rental.contract.payment.register</field>
             <field name="arch" type="xml">
                 <form string="Pay">
                     <sheet>

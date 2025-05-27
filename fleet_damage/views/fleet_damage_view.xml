@@ -6,7 +6,6 @@
             <list>
                 <field name="name"/>
                 <field name="vehicle_id"/>
-                <field name="rental_contract_id"/>
                 <field name="customer_id"/>
                 <field name="id_no"/>
                 <field name="evaluation_type"/>
@@ -63,9 +62,6 @@
                             <field name="category_id" options="{'no_create': True, 'no_open': True, 'no_edit': True}"/>
                         </group>
                         <group string="Customer Info">
-                            <field name="rental_contract_id"
-                                   readonly="customer_id == False or source == 'rental' or state != 'draft'"
-                                   options="{'no_create': True, 'no_open': True, 'no_edit': True}"/>
                             <field name="customer_id" readonly="state != 'draft'  or source == 'rental' " options="{'no_create': True, 'no_open': True, 'no_edit': True}"/>
                             <field name="id_no" readonly="state != 'draft'  or source == 'rental'" options="{'no_create': True, 'no_open': True, 'no_edit': True}"/>
                             <field name="source" readonly="1"/>

@@ -1,0 +1,26 @@
+<odoo>
+    <record id="fleet_accident_comp_rule" model="ir.rule">
+        <field name="name">Fleet Accident multi-company</field>
+        <field name="model_id" ref="model_fleet_accident"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'parent_of', company_ids)]</field>
+    </record>
+
+    <record id="default_accident_item_comp_rule" model="ir.rule">
+        <field name="name">Default Accident Items multi-company</field>
+        <field name="model_id" ref="model_default_accident_item"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'parent_of', company_ids)]</field>
+    </record>
+
+    <record id="fleet_accident_evaluation_item_comp_rule" model="ir.rule">
+        <field name="name">Accident Evaluation Items multi-company</field>
+        <field name="model_id" ref="model_fleet_accident_evaluation_item"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'parent_of', company_ids)]</field>
+    </record>
+
+    <record id="fleet_accident_evaluation_party_comp_rule" model="ir.rule">
+        <field name="name">Accident Evaluation Party multi-company</field>
+        <field name="model_id" ref="model_fleet_accident_evaluation_party"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'parent_of', company_ids)]</field>
+    </record>
+
+</odoo>

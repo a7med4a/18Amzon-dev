@@ -9,7 +9,7 @@
 
                <xpath expr="//field[@name='journal_id']" position="after">
 
-                   <field name="rental_contract_id" invisible="partner_type != 'customer'" readonly="state != 'draft'"/>
+                   <field name="rental_contract_id" invisible="partner_type != 'customer'" readonly="state != 'draft'" string="Contract NO."/>
                    <field name="payment_type_selection" invisible="partner_type != 'customer'" readonly="state != 'draft'"/>
 
                </xpath>

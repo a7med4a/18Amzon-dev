@@ -1,0 +1,131 @@
+<odoo>
+
+    <!-- Main Form View -->
+    <record id="contract_late_log_view_form" model="ir.ui.view">
+        <field name="name">rental.contract.late.log.view.form</field>
+        <field name="model">rental.contract.late.log</field>
+        <field name="arch" type="xml">
+            <form string="Late Log" create="0" edit="0">
+                <header>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="rental_contract_id" class="oe_edit_only" />
+                        <h1>
+                            <field name="rental_contract_id" options="{'no_open': True, 'no_create': True}" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="log_date_time" />
+                            <field name="current_days" />
+                            <field name="current_hours" />
+                            <field name="late_days" />
+                            <field name="late_hours" />
+                            <field name="extended_days"/>
+                            <field name="total_per_day"/>
+                        </group>
+                        <group>
+                            <field name="current_payment"/>
+                            <field name="extended_payment"/>
+                            <field name="total_payment"/>
+                            <field name="create_payment" />
+                            <field name="journal_id" required="create_payment" invisible="not create_payment"/>
+                            <field name="payment_date" required="create_payment" invisible="not create_payment"/>
+                            <field name="payment_method_line_id"/>
+                            <field name="communication" invisible="not create_payment"/>
+                            <field name="payment_id" options="{'no_open': True, 'no_create': True}" />
+                        </group>
+                    </group>
+                    <group string="History">
+                        <group string="Old Values">
+                            <field name="old_expected_return_date" />
+                            <field name="old_duration" />
+                            <field name="old_total_amount" />
+                            <field name="old_paid_amount" />
+                            <field name="old_due_amount" />
+                        </group>
+                        <group string="New Values">
+                            <field name="new_expected_return_date" />
+                            <field name="new_duration" />
+                            <field name="new_total_amount" />
+                            <field name="new_paid_amount" />
+                            <field name="new_due_amount" />
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <!-- Wizard View -->
+    <record id="contract_create_late_log_view_form" model="ir.ui.view">
+        <field name="name">rental.contract.create.late.log.view.form</field>
+        <field name="model">rental.contract.late.log</field>
+        <field name="priority">1000</field>
+        <field name="arch" type="xml">
+            <form string="Create Late Log">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="rental_contract_id" class="oe_edit_only" />
+                        <h1>
+                            <field name="rental_contract_id" options="{'no_open': True, 'no_create': True}" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="extended_payment" required="True"/>
+                            <field name="extended_days"/>
+                            <field name="total_per_day" readonly="True"/>
+                            <field name="current_payment"/>
+                            <field name="total_payment"/>
+                        </group>
+                        <group>
+                            <field name="create_payment"/>
+                            <field name="journal_id" required="create_payment" invisible="not create_payment" domain="[('type', 'in', ['bank', 'cash'])]" options="{'no_open': True, 'no_create': True}"/>
+                            <field name="payment_date" required="create_payment" invisible="not create_payment"/>
+                            <field name="payment_method_line_id" invisible="1"/>
+                            <field name="communication" invisible="not create_payment"/>
+                        </group>
+                    </group>
+                    <group invisible="1">
+                        <group>
+                            <field name="log_date_time" />
+                            <field name="current_days" />
+                            <field name="current_hours" />
+                            <field name="late_days" />
+                            <field name="late_hours" />
+                            <field name="old_expected_return_date" />
+                            <field name="new_expected_return_date" />
+                            <field name="old_duration" />
+                            <field name="new_duration" />
+                            <field name="old_total_amount" />
+                            <field name="new_total_amount" />
+                            <field name="old_paid_amount" />
+                            <field name="new_paid_amount" />
+                            <field name="old_due_amount" />
+                            <field name="new_due_amount" />
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="contract_late_log_view_list" model="ir.ui.view">
+        <field name="name">rental.contract.late.log.view.list</field>
+        <field name="model">rental.contract.late.log</field>
+        <field name="arch" type="xml">
+            <list string="Late Log">
+                <field name="rental_contract_id"/>
+                <field name="extended_days"/>
+                <field name="extended_payment"/>
+                <field name="payment_date"/>
+                <field name="old_expected_return_date" />
+                <field name="new_expected_return_date" />
+                <field name="payment_id" />
+                <field name="state" />
+            </list>
+        </field>
+    </record>
+</odoo>

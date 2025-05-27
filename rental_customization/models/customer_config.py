@@ -30,7 +30,7 @@ class IndividualCustomerConfig(models.Model):
     is_default = fields.Boolean(string="Set Default")
     type = fields.Selection(
         string='Type',
-        selection=[('rental', 'Rental'), 
+        selection=[('rental', 'Rental'),
                    ('long_term', 'Long Term'), ],
         default='rental')
 

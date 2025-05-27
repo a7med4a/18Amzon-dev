@@ -5,8 +5,21 @@
         <field name="inherit_id" ref="fleet_accident.fleet_accident_view_form" />
         <field name="arch" type="xml">
             <xpath expr="//field[@name='partner_id']" position="after">
-                <field name="rental_contract_id" readonly="state in ['invoicing', 'closed', 'cancel']" />
+                <field name="rental_contract_id" readonly="state in ['invoicing', 'closed', 'cancel'] or not partner_id" 
+                domain="[('partner_id', '=', partner_id), ('state', 'in', [('delivered_debit', 'closed', 'delivered_pending')])]"
+                options="{'no_open': True, 'no_create': True}"/>
             </xpath>
+        </field>
+    </record>
+
+    <record id="fleet_accident_search" model="ir.ui.view">
+        <field name="name">fleet.accident.search</field>
+        <field name="model">fleet.accident</field>
+        <field name="inherit_id" ref="fleet_accident.fleet_accident_search" />
+        <field name="arch" type="xml">
+        <xpath expr="//field[@name='partner_id']" position="after">
+            <field name="rental_contract_id" />    
+        </xpath>
         </field>
     </record>
 

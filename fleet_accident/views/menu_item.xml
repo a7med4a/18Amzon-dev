@@ -13,6 +13,12 @@
         parent="fleet_accident_root_menu"
         action="fleet_accident_action"
         sequence="10" />
+        
+    <menuitem id="menu_fleet_accident_invoice_menu" 
+        name="Invoice Accident" 
+        parent="fleet_accident.fleet_accident_root_menu" 
+        action="action_fleet_accident_invoice" 
+        sequence="15"/>
 
     <menuitem id="fleet_accident_configuration_menu"
         name="Configuration"

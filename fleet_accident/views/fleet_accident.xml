@@ -13,23 +13,23 @@
                     <button string="Back To Announcement" class="btn-secondary" type="object" name="button_announcement" invisible="state != 'accident_report'"/>
 
                     <!-- Waiting Evaluation -->
-                    <button string="To Insurance Approve" class="btn-primary" type="object" name="button_insurance_approve" invisible="state != 'evaluation'"/>
+                    <button string="To Insurance Approve" class="btn-success" type="object" name="button_insurance_approve" invisible="state != 'evaluation'"/>
                     <button string="Back To Report" class="btn-secondary" type="object" name="button_accident_report" invisible="state != 'evaluation'"/>
 
                     <!-- Waiting Insurance Approve -->
-                    <button string="To Invoicing" class="btn-primary" type="object" name="button_invoicing" invisible="state != 'insurance_approve'"/>
-                    <button string="Compute Due Amount" class="btn-primary" type="object" name="compute_due_amount" invisible="state != 'insurance_approve'"/>
-                    <button string="Recompute Due Amount" class="btn-primary" type="object" name="recompute_due_amount" invisible="state != 'insurance_approve'"/>
+                    <button string="To Invoicing" class="btn-info" type="object" name="button_invoicing" invisible="state != 'insurance_approve'"/>
+                    <button string="Compute Due Amount" class="btn-warning" type="object" name="compute_due_amount" invisible="state != 'insurance_approve'"/>
+                    <!-- <button string="Recompute Due Amount" class="btn-primary" type="object" name="recompute_due_amount" invisible="state != 'insurance_approve'"/> -->
                     <button string="Back To Evaluation" class="btn-secondary" type="object" name="button_evaluation" invisible="state != 'insurance_approve'"/>
 
                     <!-- Waiting Invoicing -->
-                    <button string="Close " class="btn-primary" type="object" name="button_closed" invisible="state != 'invoicing'"/>
+                    <button string="Close " class="btn-success" type="object" name="button_closed" invisible="state != 'invoicing'"/>
 
                     <!-- Cancel -->
-                    <button string="Set to announcement " class="btn-primary" type="object" name="button_announcement" invisible="state != 'cancel'"/>
+                    <button string="Set to announcement " class="btn-info" type="object" name="button_announcement" invisible="state != 'cancel'"/>
 
 
-                    <button string="Cancel" class="btn-secondary" type="object" name="button_cancel" invisible="state not in ['announcement', 'accident_report', 'evaluation']"/>
+                    <button string="Cancel" class="btn-danger" type="object" name="button_cancel" invisible="state not in ['announcement', 'accident_report', 'evaluation']"/>
                     <field name="state" widget="statusbar" statusbar_visible="announcement,accident_report,evaluation,insurance_approve,invoicing,closed"/>
                 </header>
                 <sheet>
@@ -50,6 +50,10 @@
                     <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
                     <field name="image_128" widget="image" class="oe_avatar"/>
                     <div class="oe_title">
+                    <label for="name" class="oe_edit_only" />
+                        <h1>
+                        <field name="name" readonly="1" />
+                        </h1>
                         <label for="fleet_vehicle_id"/>
                         <h1>
                             <field name="fleet_vehicle_id" class="w-100" readonly="state in ['invoicing', 'closed', 'cancel']"/>
@@ -58,6 +62,7 @@
                     <group col="2">
                         <group string="Accident Information">
                             <field name="accident_category" readonly="state in ['invoicing', 'closed', 'cancel']"/>
+                            <field name="company_id" readonly="state in ['invoicing', 'closed', 'cancel']"/>
                             <field name="partner_id" readonly="state in ['invoicing', 'closed', 'cancel']"/>
                             <field name="endurance_rate"/>
                             <field name="endurance_customer"/>
@@ -84,7 +89,7 @@
                                 <field name="customer_percentage" readonly="accident_type == 'not_covered' or state in ['invoicing', 'closed', 'cancel']" required="state != 'announcement'"/>
                                 <span class="oe_inline">%</span>
                             </div>
-                            <field name="customer_percentage"/>
+                            <!-- <field name="customer_percentage"/> -->
                             <field name="other_party_no" invisible="accident_type == 'not_covered'" required="accident_type != 'not_covered' and state != 'announcement'" readonly="state in ['invoicing', 'closed', 'cancel']"/>
                             <field name="other_party1_id" invisible="accident_type == 'not_covered' or other_party_no &lt; 1" 
                                 required="accident_type != 'not_covered' and state != 'announcement' and other_party_no &gt; 0"
@@ -193,27 +198,35 @@
                 <field name="endurance_rate"/>
                 <field name="endurance_customer"/>
                 <field name="insurance_type"/>
+                <field name="compensation_type"/>
+                <field name="accident_type"/>
+                <field name="accident_report_no"/>
+                <field name="report_source"/>
+                <field name="accident_date"/>
+                <field name="state"/>
             </list>
         </field>
     </record>
 
     <record id="fleet_accident_search" model="ir.ui.view">
-    <field name="name">fleet.accident.search</field>
-    <field name="model">fleet.accident</field>
-    <field name="arch" type="xml">
-      <search>
-        <field name="fleet_vehicle_id" />
-        <field name="state" />
+        <field name="name">fleet.accident.search</field>
+        <field name="model">fleet.accident</field>
+        <field name="arch" type="xml">
+        <search>
+            <field name="fleet_vehicle_id" string="License Plate"/>
+            <field name="accident_report_no" />
+            <field name="partner_id" />
+            <field name="state" />
 
-        <filter string="Fleet"
-          name="fleet_vehicle_id_group"
-          context="{'group_by':'fleet_vehicle_id'}" />
+            <filter string="Fleet"
+            name="fleet_vehicle_id_group"
+            context="{'group_by':'fleet_vehicle_id'}" />
 
-        <filter string="Status"
-          name="state_group"
-          context="{'group_by':'state'}" />
-      </search>
-    </field>
+            <filter string="Status"
+            name="state_group"
+            context="{'group_by':'state'}" />
+        </search>
+        </field>
   </record>
 
     <record id="fleet_accident_action" model="ir.actions.act_window">

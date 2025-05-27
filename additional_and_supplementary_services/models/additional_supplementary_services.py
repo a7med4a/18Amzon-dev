@@ -15,9 +15,14 @@ class AdditionalSupplementaryServices(models.Model):
     price = fields.Float(required=True)
     contract_type = fields.Selection(
         string='Type',
-        selection=[('rental', 'Rental'), 
+        selection=[('rental', 'Rental'),
                    ('long_term', 'Long Term'), ],
         default='rental')
+
+    company_id = fields.Many2one(
+        'res.company', string='Company', default=lambda self: self.env.company,
+        domain=lambda self: [('id', 'in', self.env.companies.ids)])
+
 
     @api.constrains('price')
     def _check_price(self):

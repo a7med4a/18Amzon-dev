@@ -7,6 +7,7 @@ import xlsxwriter
 import base64
 from odoo.osv import expression
 
+
 class InheritAccountMove(models.Model):
     _inherit = 'account.move'
 
@@ -15,14 +16,3 @@ class InheritAccountMove(models.Model):
         comodel_name='fleet.damage',
         string='Damage',
         required=False)
-
-    def button_cancel(self):
-        res = super().button_cancel()
-        if self.damage_id and self.damage_id.rental_contract_id:
-            self.damage_id.rental_contract_id.current_accident_damage_amount =0
-        return res
-    def unlink(self):
-        res = super().button_cancel()
-        if self.damage_id and self.damage_id.rental_contract_id :
-            self.damage_id.rental_contract_id.current_accident_damage_amount = 0
-        return res

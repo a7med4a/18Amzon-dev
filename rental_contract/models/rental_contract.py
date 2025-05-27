@@ -35,11 +35,17 @@ class RentalContract(models.Model):
         string="Mobile Number", related='partner_id.mobile2', readonly=True, store=True)
     partner_id_no = fields.Char(
         string="ID No", related='partner_id.id_no', readonly=True, store=True)
+    source_contract = fields.Many2one(comodel_name='contract.source', string='Source Contract',
+                                      required=True, default=lambda self: self._get_default_source_contract())
+    reservation_number = fields.Boolean(
+        related='source_contract.reservation_number')
+    reservation_no = fields.Char(
+        "Reservation Number", default=lambda self: False)
 
     # Vehicle Info Fields
 
     vehicle_id = fields.Many2one('fleet.vehicle', string='Vehicle',
-                                 domain=lambda self: [('branch_id', 'in', self.env.branches.ids), ('state_id.type', '=', 'ready_to_rent')])
+                                 domain=lambda self: [('branch_id', 'in', self.env.branches.ids), ('state_id.type', '=', 'ready_to_rent'), ('company_id', '=', self.env.company.id)])
     image_128 = fields.Image(related='vehicle_id.image_128')
     vehicle_model_datail_id = fields.Many2one(
         'fleet.vehicle.model.detail', string='Vehicle Model Detail', compute="_compute_vehicle_model_datail_id", readonly=True)
@@ -127,7 +133,7 @@ class RentalContract(models.Model):
         ('external', 'External')
     ], string='Authorization Type', default='internal')
     authorization_country_id = fields.Many2one(
-        'additional.supplementary.services.line', string='Authorization Country', domain="[('type', '=', 'external_authorization')]")
+        'additional.supplementary.services.line', string='Authorization Country', domain="[('type', '=', 'external_authorization'),('id', 'in', additional_supplement_service_line_ids)]")
     need_extra_driver = fields.Selection([
         ('true', 'True'),
         ('false', 'False'),
@@ -186,6 +192,17 @@ class RentalContract(models.Model):
     current_days = fields.Integer('Current Days', default=0)
     current_hours = fields.Integer('Current Hours', default=0)
 
+    display_late_days = fields.Integer(
+        'Late Days', compute='_compute_display_open_state_fields')
+    display_late_hours = fields.Integer(
+        'Late Hours', compute='_compute_display_open_state_fields')
+    late_days = fields.Integer('Late Days', default=0)
+    late_hours = fields.Integer('Late Hours', default=0)
+    contract_late_status = fields.Selection([
+        ('late', 'Late'),
+        ('extended', 'Extended')
+    ], string='Late Status', compute="_compute_contract_late_status", store=True)
+
     assumed_amount = fields.Monetary(
         compute='_compute_assumed_amount', store=True, currency_field='company_currency_id')
     display_current_amount = fields.Monetary(
@@ -209,13 +226,20 @@ class RentalContract(models.Model):
     # Calculate KM Popup Fields
     in_odometer = fields.Float(
         'Odometer')
-    total_free_km = fields.Float(compute="_compute_total_free_km")
-    consumed_km = fields.Float(
+    display_total_free_km = fields.Float(
+        compute="_compute_display_total_free_km")
+    total_free_km = fields.Float()
+    display_consumed_km = fields.Float(
         compute='_compute_consumed_extra_km')
-    total_extra_km = fields.Float(
+    consumed_km = fields.Float()
+    display_total_extra_km = fields.Float(
         compute='_compute_consumed_extra_km')
+    total_extra_km = fields.Float()
     display_current_km_extra_amount = fields.Monetary(
         'Current KM Extra Amount', currency_field='company_currency_id', compute="_compute_display_current_km_extra_amount")
+
+    total_current_amount = fields.Monetary(
+        'Total Current Amount', currency_field='company_currency_id', compute='_compute_current_due_amount', store=True)
 
     current_due_amount = fields.Monetary(
         'Current KM Extra Amount', currency_field='company_currency_id', compute='_compute_current_due_amount', store=True)
@@ -285,13 +309,17 @@ class RentalContract(models.Model):
     in_vehicle_status = fields.Selection(
         selection=VEHICLE_STATUS,
         string='Vehicle Status')
+    in_branch_id = fields.Many2one(
+        'res.branch', string='Entry Branch')
+    in_branch_domain = fields.Binary(
+        string="In Branch domain", help="Dynamic domain used for the in branch", compute="_compute_in_branch_domain")
 
     vehicle_in_state = fields.Selection([
         ('none', 'None'),
         ('damage', 'Damage'),
         ('accident', 'Accident'),
         ('other', 'Other'),
-    ], string='Has accident / damage')
+    ], string='Has accident / Damage')
 
     vehicle_in_state_other_reason = fields.Char('Other Reason')
 
@@ -315,8 +343,15 @@ class RentalContract(models.Model):
     damage_ids = fields.One2many(
         'fleet.damage', 'rental_contract_id', string='Damage')
     damage_count = fields.Integer(
-        'invoice_count', compute="_compute_damage_count", store=True)
-    contract_type = fields.Selection(string='Type',selection=[('rental', 'Rental'),('long_term', 'Long Term'),],default='rental')
+        'damage Count', compute="_compute_damage_count", store=True)
+
+    late_log_ids = fields.One2many(
+        'rental.contract.late.log', 'rental_contract_id', string='Late Logs')
+    late_log_count = fields.Integer(
+        'Late count', compute="_compute_late_log_count", store=True)
+
+    contract_type = fields.Selection(string='Type', selection=[(
+        'rental', 'Rental'), ('long_term', 'Long Term'),], default='rental')
     # Status Fields
     state = fields.Selection([
         ('draft', 'Draft'),
@@ -378,21 +413,22 @@ class RentalContract(models.Model):
 
     schedular_invoice_log_count = fields.Integer(
         compute="_compute_schedular_invoice_log_count", store=True)
-    source_contract = fields.Many2one(comodel_name='contract.source',string='Source Contract',required=True,default=lambda self: self._get_default_source_contract())
-    reservation_number = fields.Boolean(related='source_contract.reservation_number')
-    reservation_no = fields.Char("Reservation Number", default=lambda self: False)
+    source_contract = fields.Many2one(comodel_name='contract.source', string='Source Contract',
+                                      required=True, default=lambda self: self._get_default_source_contract())
+    reservation_number = fields.Boolean(
+        related='source_contract.reservation_number')
+    reservation_no = fields.Char(
+        "Reservation Number", default=lambda self: False)
     invoice_damage_accident = fields.Selection([
         ('invoiced', 'Invoiced'),
         ('none', 'None')], string='Invoice Accident/Damage', readonly=True)
-
-
 
     @api.depends('vehicle_id', 'draft_state')
     def _compute_vehicle_model_datail_id(self):
         for record in self:
             if record.draft_state == 'vehicle_info' and record.vehicle_id:
                 record.vehicle_model_datail_id = self.env['fleet.vehicle.model.detail'].search(
-                    [('branch_id', '=', record.vehicle_id.branch_id.id), ('vehicle_model_brand_id', '=', record.vehicle_id.model_id.brand_id.id), ('state', '=', 'running')], limit=1)
+                    [('branch_ids', 'in', record.vehicle_id.branch_id.ids), ('vehicle_model_brand_id', '=', record.vehicle_id.model_id.brand_id.id), ('fleet_vehicle_model_id', '=', record.vehicle_id.model_id.id), ('state', '=', 'running')], limit=1)
             else:
                 record.vehicle_model_datail_id = False
 
@@ -467,6 +503,9 @@ class RentalContract(models.Model):
         for record in self:
             if record.authorization_country_id and record.authorization_type == 'external':
                 record.daily_authorization_country_rate = record.authorization_country_id.price
+            elif record.authorization_type == 'internal':
+                record.daily_authorization_country_rate = sum(record.additional_supplement_service_line_ids.filtered(
+                    lambda l: l.type == 'internal_authorization').mapped('price'))
             else:
                 record.daily_authorization_country_rate = 0.0
 
@@ -521,7 +560,7 @@ class RentalContract(models.Model):
             else:
                 rec.tax_percentage = 0.0
 
-    @api.depends('state', 'pickup_date')
+    @api.depends('state', 'pickup_date', 'duration')
     def _compute_display_open_state_fields(self):
         for record in self:
             if record.state == 'opened':
@@ -536,21 +575,42 @@ class RentalContract(models.Model):
                 display_current_days = display_actual_days if display_actual_hours < 4 else display_actual_days + 1
                 display_current_hours = display_actual_hours if display_actual_hours < 4 else 0
 
+                display_late_days = display_current_days - record.duration\
+                    if record.duration < display_current_days else 0
+                display_late_hours = display_current_hours\
+                    if record.duration <= display_current_days and display_current_hours > 0 else 0
+
                 record.actual_days = display_actual_days
                 record.actual_hours = display_actual_hours
                 record.current_days = display_current_days
                 record.current_hours = display_current_hours
+                record.late_days = display_late_days
+                record.late_hours = display_late_hours
 
             else:
                 display_actual_days = 0
                 display_actual_hours = 0
                 display_current_days = 0
                 display_current_hours = 0
+                display_late_days = 0
+                display_late_hours = 0
 
             record.display_actual_days = display_actual_days
             record.display_actual_hours = display_actual_hours
             record.display_current_days = display_current_days
             record.display_current_hours = display_current_hours
+            record.display_late_days = display_late_days
+            record.display_late_hours = display_late_hours
+
+    @api.depends('duration', 'current_days', 'late_log_ids', 'late_log_ids.state', 'state')
+    def _compute_contract_late_status(self):
+        for rec in self:
+            if rec.duration < rec.current_days:
+                rec.contract_late_status = 'late'
+            elif rec.late_log_ids.filtered(lambda l: l.state == 'success'):
+                rec.contract_late_status = 'extended'
+            else:
+                rec.contract_late_status = False
 
     @api.depends('total_per_day', 'duration')
     def _compute_assumed_amount(self):
@@ -588,40 +648,61 @@ class RentalContract(models.Model):
             record.discount_voucher_amount = sum(record.fines_discount_line_ids.filtered(
                 lambda l: l.type == 'discount').mapped('price'))
 
-    @api.depends('model_pricing_free_kilometers', 'display_current_days')
-    def _compute_total_free_km(self):
+    @api.depends('model_pricing_free_kilometers', 'display_current_days', 'state')
+    def _compute_display_total_free_km(self):
         for record in self:
-            record.total_free_km = record.model_pricing_free_kilometers * \
-                record.display_current_days
+            if record.state in ['opened', 'close_info']:
+                display_total_free_km = record.model_pricing_free_kilometers * \
+                    record.display_current_days
+                record.total_free_km = display_total_free_km
 
-    @api.depends('in_odometer', 'out_odometer', 'total_free_km')
+            else:
+                display_total_free_km = 0.0
+
+            record.display_total_free_km = display_total_free_km
+
+    @api.depends('in_odometer', 'out_odometer', 'display_total_free_km', 'state')
     def _compute_consumed_extra_km(self):
         for record in self:
-            consumed_km = record.in_odometer - record.out_odometer
-            record.consumed_km = consumed_km
-            record.total_extra_km = consumed_km - \
-                record.total_free_km if record.total_free_km < consumed_km else 0.0
+            if record.state in ['opened', 'close_info']:
+                display_consumed_km = record.in_odometer - record.out_odometer
+                display_total_extra_km = display_consumed_km - \
+                    record.display_total_free_km if record.display_total_free_km < display_consumed_km else 0.0
+                record.consumed_km = display_consumed_km
+                record.total_extra_km = display_total_extra_km
 
-    @api.depends('total_extra_km', 'model_pricing_extra_kilometers_cost')
+            else:
+                display_consumed_km = 0.0
+                display_total_extra_km = 0.0
+
+            record.display_consumed_km = display_consumed_km
+            record.display_total_extra_km = display_total_extra_km
+
+    @api.depends('display_total_extra_km', 'model_pricing_extra_kilometers_cost')
     def _compute_display_current_km_extra_amount(self):
         for record in self:
-            record.display_current_km_extra_amount = record.total_extra_km * \
+            record.display_current_km_extra_amount = record.display_total_extra_km * \
                 record.model_pricing_extra_kilometers_cost
 
     @api.depends('current_amount', 'current_fines_amount', 'current_accident_damage_amount', 'discount_voucher_amount', 'current_km_extra_amount', 'paid_amount')
     def _compute_current_due_amount(self):
         for record in self:
-            record.current_due_amount = record.current_amount + record.current_fines_amount\
-                + record.current_accident_damage_amount + record.current_km_extra_amount\
-                - (record.discount_voucher_amount + record.paid_amount)
+            total_current_amount = record.current_amount + record.current_fines_amount\
+                + record.current_accident_damage_amount + record.current_km_extra_amount + record.one_time_services\
+                - record.discount_voucher_amount
+            record.total_current_amount = total_current_amount
+            record.current_due_amount = total_current_amount - record.paid_amount
 
-    @api.depends('account_move_ids', 'account_move_ids.move_type','damage_ids','damage_ids.invoice_id','damage_ids.state')
+    @api.depends('account_move_ids', 'account_move_ids.move_type', 'damage_ids', 'damage_ids.invoice_id', 'damage_ids.state')
     def _compute_move_count(self):
         for record in self:
-            invoice_contract_related = len(record.account_move_ids.filtered(lambda move: move.move_type == 'out_invoice'))
-            invoice_damage_relate=len(record.damage_ids.filtered(lambda damage: damage.invoice_id != False and damage.invoice_id.state == 'posted'))
-            print(record.damage_ids.filtered(lambda damage: damage.invoice_id != False))
-            record.invoice_count=invoice_contract_related + invoice_damage_relate
+            invoice_contract_related = len(record.account_move_ids.filtered(
+                lambda move: move.move_type == 'out_invoice'))
+            invoice_damage_relate = len(record.damage_ids.filtered(
+                lambda damage: damage.invoice_id != False and damage.invoice_id.state == 'posted'))
+            print(record.damage_ids.filtered(
+                lambda damage: damage.invoice_id != False))
+            record.invoice_count = invoice_contract_related + invoice_damage_relate
             record.credit_note_count = len(record.account_move_ids.filtered(
                 lambda move: move.move_type == 'out_refund'))
 
@@ -646,6 +727,19 @@ class RentalContract(models.Model):
     def _compute_damage_count(self):
         for rec in self:
             rec.damage_count = len(rec.damage_ids)
+
+    @api.depends('late_log_ids')
+    def _compute_late_log_count(self):
+        for rec in self:
+            rec.late_log_count = len(rec.late_log_ids)
+
+    def _compute_in_branch_domain(self):
+        for rec in self:
+            domain = [
+                ('id', 'in', self.env.user.branch_ids.ids),
+                ('company_id', '=', rec.company_id.id)
+            ]
+            rec.in_branch_domain = domain
 
     @api.constrains('partner_id')
     def _check_contract_partner_id_validity(self):
@@ -680,6 +774,13 @@ class RentalContract(models.Model):
                 raise ValidationError(
                     _(f"Selected Vehicle Exists On Contract {conflict_contract.name} That In {conflict_contract.state} State"))
 
+    @api.constrains('rental_plan', 'duration')
+    def _check_rental_plan(self):
+        for record in self:
+            if (record.duration < 7 and record.rental_plan != 'daily') or (record.duration < 30 and record.rental_plan not in ['daily', 'weekly']):
+                raise ValidationError(
+                    _(f"You Can't select rental plan {record.rental_plan} for duration {record.duration}"))
+
     @api.constrains('daily_rate', 'rental_plan')
     def _check_daily_rate_validation(self):
         for rec in self.filtered(lambda c: c.daily_rate and c.rental_plan):
@@ -710,6 +811,16 @@ class RentalContract(models.Model):
     #     for rec in self:
     #         if rec.reservation_number and rec.reservation_no <= 0:
     #             raise ValidationError("Reservation Number must be more than 0")
+
+    def _check_non_zero_daily_rate(self):
+        for rec in self:
+            if rec.daily_rate <= 0.0:
+                raise ValidationError(_("Daily rate can't be zero or less"))
+
+    def update_state_after_close(self):
+        for rec in self:
+            if rec.state == 'closed' and rec.current_due_amount > 0:
+                rec.state = 'delivered_debit'
 
     # Accounting Functions
 
@@ -873,9 +984,13 @@ class RentalContract(models.Model):
         if date_from != self.pickup_date:
             pickup_date_day_hour_dict = self.get_day_hour(
                 self.pickup_date, date_to)
+            pickup_date_current_hours = pickup_date_day_hour_dict.get(
+                'current_hours')
+            current_days = pickup_date_day_hour_dict.get(
+                'current_days') - sum(self.schedular_invoice_log_ids.mapped('current_days'))
             day_hour_dict.update(
-                {'current_hours': pickup_date_day_hour_dict.get('current_hours')})
-
+                {'current_hours': pickup_date_current_hours, 'current_days': current_days})
+        day_hour_dict.update({'date_from': date_from, 'date_to': date_to})
         return day_hour_dict
 
     def get_schedular_day_hour(self, date_time):
@@ -901,7 +1016,8 @@ class RentalContract(models.Model):
         day_hour_dict = self.get_day_hour(date_from, date_to)
         # postponement Current hours to be total calculated in closing invoice
         if date_from == self.pickup_date:
-            day_hour_dict.update({'current_hours': 0})
+            day_hour_dict.update(
+                {'current_hours': 0, 'current_days': day_hour_dict.get('actual_days')})
 
         day_hour_dict.update({'date_from': date_from, 'date_to': date_to})
         return day_hour_dict
@@ -981,6 +1097,16 @@ class RentalContract(models.Model):
             invoice_vals = contract._prepare_invoice_vals_from_dates(
                 day_hour_dict)
             if invoice_vals:
+                invoice_log_id = self.env['rental.contract.schedular.invoice.log'].sudo().create({
+                    'actual_days': day_hour_dict.get('actual_days'),
+                    'actual_hours': day_hour_dict.get('actual_hours'),
+                    'current_days': day_hour_dict.get('current_days'),
+                    'current_hours': day_hour_dict.get('current_hours'),
+                    'date_from': day_hour_dict.get('date_from'),
+                    'date_to': day_hour_dict.get('date_to'),
+                    'rental_contract_id': self.id
+                })
+                invoice_vals.update({'invoice_log_id': invoice_log_id.id})
                 invoice_vals_list.append(invoice_vals)
 
         invoices = self.env['account.move'].create(invoice_vals_list)
@@ -1019,10 +1145,13 @@ class RentalContract(models.Model):
             rec.model_pricing_end_date = rec.vehicle_model_datail_id.end_date
 
     def set_additional_supplementary_lines(self):
-        available_lines = self.env['additional.supplementary.services'].search([('contract_type', '=', 'rental')])
+        available_lines = self.env['additional.supplementary.services'].search(
+            [('contract_type', '=', 'rental')])
         for rec in self:
+            company_available_lines = available_lines.filtered(
+                lambda s: s.company_id == rec.company_id)
             additional_supplement_service_line_ids = [(5, 0, 0)]
-            for line in available_lines:
+            for line in company_available_lines:
                 additional_supplement_service_line_ids.append((0, 0, {
                     'name': line.name,
                     'type': line.type,
@@ -1033,7 +1162,8 @@ class RentalContract(models.Model):
             rec.additional_supplement_service_line_ids = additional_supplement_service_line_ids
 
     def get_rental_configuration(self):
-        all_config_allowed = self.env['rental.config.settings'].search([('type', '=', 'rental')])
+        all_config_allowed = self.env['rental.config.settings'].search(
+            [('type', '=', 'rental')])
         for rec in self:
             matched_record_config = all_config_allowed.filtered(
                 lambda c: c.company_id == rec.company_id)
@@ -1073,6 +1203,7 @@ class RentalContract(models.Model):
             record.in_oil_type = record.out_oil_type
             record.in_oil_change_date = record.out_oil_change_date
             record.in_vehicle_status = record.out_vehicle_status
+            record.in_branch_id = record.vehicle_branch_id
 
     def apply_in_check_list_to_vehicle(self):
         for record in self:
@@ -1094,6 +1225,7 @@ class RentalContract(models.Model):
             record.vehicle_id.oil_type = record.in_oil_type
             record.vehicle_id.oil_change_date = record.in_oil_change_date
             record.vehicle_id.vehicle_status = record.in_vehicle_status
+            record.vehicle_id.branch_id = record.in_branch_id
 
     def next_draft_state(self):
         if self.draft_state == 'customer_info':
@@ -1102,11 +1234,12 @@ class RentalContract(models.Model):
             self.check_model_pricing()
             self.check_customer_age()
             self.assign_model_pricing_fields()
+            self.set_additional_supplementary_lines()
             self.draft_state = 'contract_info'
         elif self.draft_state == 'contract_info':
-            self.set_additional_supplementary_lines()
             self.draft_state = 'additional_suppl_service'
         elif self.draft_state == 'additional_suppl_service':
+            self._compute_daily_authorization_country_rate()
             self.get_rental_configuration()
             self.assign_rental_configuration_fields()
             self.draft_state = 'financial_info'
@@ -1122,6 +1255,7 @@ class RentalContract(models.Model):
             self.draft_state = 'customer_info'
 
     def action_open(self):
+        self._check_non_zero_daily_rate()
         if not all(record.due_amount <= 0 for record in self):
             raise UserError(
                 _('You cannot open this contract because due amount must be less or equal zero.'))
@@ -1146,6 +1280,7 @@ class RentalContract(models.Model):
 
     def action_close_info(self):
         drop_off_date = fields.Datetime.now()
+        self._compute_display_open_state_fields()
         self.create_closing_invoice(drop_off_date)
         self.assign_in_check_list_fields()
         self.write({'state': 'close_info', 'drop_off_date': drop_off_date})
@@ -1222,6 +1357,7 @@ class RentalContract(models.Model):
         return {'type': 'ir.actions.act_window_close'}
 
     def action_pay(self):
+        self._check_non_zero_daily_rate()
         return {
             'type': 'ir.actions.act_window',
             'name': _('Pay'),
@@ -1289,7 +1425,7 @@ class RentalContract(models.Model):
             'name': _('Invoices'),
             'res_model': 'account.move',
             'view_mode': 'list,form',
-            'domain': ['|',('damage_id','in',self.damage_ids.ids),('rental_contract_id', '=', self.id), ('move_type', '=', 'out_invoice'), ('state', 'in', ('posted','draft'))]
+            'domain': ['|', ('damage_id', 'in', self.damage_ids.ids), ('rental_contract_id', '=', self.id), ('move_type', '=', 'out_invoice'), ('state', 'in', ('posted', 'draft'))]
         }
 
     def view_related_credit_note(self):
@@ -1342,6 +1478,44 @@ class RentalContract(models.Model):
             'view_mode': 'list,form',
             'domain': [('rental_contract_id', '=', self.id)],
             'context': {'create': 0}
+        }
+
+    def create_late_log(self):
+        self.ensure_one()
+        self._compute_display_open_state_fields()
+        view_id = self.env.ref(
+            'rental_contract.contract_create_late_log_view_form').id
+        context = {
+            'default_rental_contract_id': self.id,
+            'default_total_per_day': self.total_per_day,
+            'default_current_days': self.current_days,
+            'default_current_hours': self.current_hours,
+            'default_late_days': self.late_days,
+            'default_late_hours': self.late_hours,
+            'default_old_expected_return_date': self.expected_return_date,
+            'default_old_duration': self.duration,
+            'default_old_total_amount': self.total_amount,
+            'default_old_paid_amount': self.paid_amount,
+            'default_old_due_amount': self.due_amount,
+        }
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Create Late Log'),
+            'res_model': 'rental.contract.late.log',
+            'target': 'new',
+            'view_mode': 'form',
+            'views': [[view_id, 'form']],
+            'context': context
+        }
+
+    def view_contract_late_log(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Late Log'),
+            'res_model': 'rental.contract.late.log',
+            'view_mode': 'list,form',
+            'domain': [('id', 'in', self.late_log_ids.ids)]
         }
 
 
@@ -1417,3 +1591,143 @@ class ContractFinesDiscountConfigLines(models.Model):
             'analytic_distribution': analytic_data,
             'tax_ids': [(6, 0, self.rental_contract_id.rental_configuration_id.tax_ids.ids)]
         }
+
+
+class RentalContractLateLog(models.Model):
+    _name = 'rental.contract.late.log'
+    _description = 'Contract Late Log'
+
+    rental_contract_id = fields.Many2one(
+        'rental.contract', string='Contract', ondelete="cascade")
+    log_date_time = fields.Datetime('Log Date', default=fields.Datetime.now)
+    current_days = fields.Integer('Current Days', default=0)
+    current_hours = fields.Integer('Current Hours', default=0)
+    late_days = fields.Integer('Late Days')
+    late_hours = fields.Integer('Late Hours')
+    create_payment = fields.Boolean('Create Payment')
+
+    # Wizard Fields
+    extended_payment = fields.Float('Extended Payment')
+    total_per_day = fields.Float('Total Per Day')
+    current_payment = fields.Float(
+        'Current Payment', compute="_compute_current_payment", store=True)
+    total_payment = fields.Float(
+        'Total Payment', compute="_compute_total_payment", store=True)
+    extended_days = fields.Integer(
+        'Extended Days', compute="_compute_extended_days", store=True)
+
+    # Payment Fields
+    journal_id = fields.Many2one(
+        'account.journal', string='Journal')
+    payment_method_line_id = fields.Many2one(
+        'account.payment.method.line', string='Payment Method', compute="_compute_payment_method_line_id", store=True)
+    payment_date = fields.Date(
+        string='Payment Date', default=fields.Date.today())
+    currency_id = fields.Many2one(
+        'res.currency', related='rental_contract_id.company_currency_id', string='Currency', store=True)
+    communication = fields.Char(string='Memo')
+    payment_id = fields.Many2one('account.payment', string='Payment')
+
+    # Contract Old / New Vals
+    old_expected_return_date = fields.Datetime(
+        string='Old Expected Return Date')
+    new_expected_return_date = fields.Datetime(
+        string='New Expected Return Date')
+    old_duration = fields.Integer(string='Old Duration')
+    new_duration = fields.Integer(string='New Duration')
+    old_total_amount = fields.Float('Old Total Amount')
+    new_total_amount = fields.Float('New Total Amount')
+    old_paid_amount = fields.Float('Old Paid Amount')
+    new_paid_amount = fields.Float('New Paid Amount')
+    old_due_amount = fields.Monetary('Old Due Amount')
+    new_due_amount = fields.Monetary('New Due Amount')
+
+    state = fields.Selection([
+        ('success', 'Success'),
+        ('failed', 'Failed')
+    ], string='state')
+
+    @api.depends('rental_contract_id', 'old_paid_amount')
+    def _compute_current_payment(self):
+        for rec in self:
+            if rec.old_paid_amount and rec.rental_contract_id:
+                rec.current_payment = rec.old_paid_amount - \
+                    rec.rental_contract_id.one_time_services
+
+    @api.depends('extended_payment', 'current_payment')
+    def _compute_total_payment(self):
+        for rec in self:
+            rec.total_payment = rec.current_payment + rec.extended_payment
+
+    @api.depends('journal_id')
+    def _compute_payment_method_line_id(self):
+        for rec in self:
+            available_payment_method_line_ids = rec.journal_id._get_available_payment_method_lines(
+                'inbound')
+            rec.payment_method_line_id = available_payment_method_line_ids[0]\
+                if available_payment_method_line_ids else False
+
+    @api.depends('total_payment', 'total_per_day')
+    def _compute_extended_days(self):
+        for rec in self:
+            if rec.total_per_day:
+                rec.extended_days = (rec.total_payment //
+                                     rec.total_per_day) - rec.old_duration
+
+    def action_register_payment(self):
+        self.ensure_one()
+        payment = self.env['account.payment'].create({
+            'payment_type': 'inbound',
+            'partner_type': 'customer',
+            'partner_id': self.rental_contract_id.partner_id.id,
+            'journal_id': self.journal_id.id,
+            'amount': self.extended_payment,
+            'currency_id': self.currency_id.id,
+            'memo': self.communication,
+            'rental_contract_id': self.rental_contract_id.id,
+            'company_id': self.rental_contract_id.company_id.id,
+            'date': self.payment_date,
+            'payment_type_selection': 'extension',
+            'state': 'draft',
+            'payment_method_line_id': self.payment_method_line_id.id,
+        })
+        payment.action_post()
+        payment.action_validate()
+        return payment
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        logs = super().create(vals_list)
+
+        for log in logs:
+            payment = self.env['account.payment']
+            state = 'failed'
+            new_duration = log.old_duration
+            new_paid_amount = log.old_paid_amount
+            new_total_amount = log.old_total_amount
+            new_expected_return_date = log.old_expected_return_date
+            new_due_amount = log.old_due_amount
+            if log.create_payment:
+                payment = log.action_register_payment()
+            if log.create_payment and log.extended_days >= log.late_days:
+                state = 'success'
+                new_duration = log.old_duration + log.extended_days
+                new_paid_amount = log.old_paid_amount + log.extended_payment
+                new_total_amount = (
+                    log.total_per_day * new_duration) + log.rental_contract_id.one_time_services
+                new_expected_return_date = log.rental_contract_id.pickup_date + \
+                    datetime.timedelta(days=new_duration)
+                new_due_amount = new_total_amount - new_paid_amount
+
+            log.write({
+                'state': state,
+                'new_duration': new_duration,
+                'new_paid_amount': new_paid_amount,
+                'new_total_amount': new_total_amount,
+                'new_expected_return_date': new_expected_return_date,
+                'new_due_amount': new_due_amount,
+                'payment_id': payment.id if payment else False
+            })
+            log.rental_contract_id.duration = new_duration
+
+        return logs

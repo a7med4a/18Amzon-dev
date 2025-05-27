@@ -9,6 +9,8 @@
     'depends': ['fleet', 'customer_info', 'fleet_insurance', 'fleet_status'],
     'data': [
         'security/ir.model.access.csv',
+        'security/record_rule.xml',
+        'data/accident_sequence.xml',
         'views/evaluation_party.xml',
         'views/evaluation_item.xml',
         'views/default_accident_item.xml',

@@ -12,3 +12,5 @@ class EvaluationParty(models.Model):
         ('internal', 'Internal'),
         ('external', 'External')
     ], string='Type', required=True)
+    company_id = fields.Many2one('res.company', string='Company', required=True,
+                                 default=lambda self: self.env.company, domain=lambda self: [('id', 'in', self.env.companies.ids)])

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 
 class PaymentRegister(models.TransientModel):
@@ -19,44 +19,40 @@ class PaymentRegister(models.TransientModel):
     journal_id = fields.Many2one(
         'account.journal', string='Journal', required=True)
     payment_method_line_id = fields.Many2one(
-        'account.payment.method.line', string='Payment Method', required=True)
+        'account.payment.method.line', string='Payment Method', compute="_compute_payment_method_line_id", store=True)
     payment_date = fields.Date(
-        string='Payment Date', required=True, default=fields.Date.today())
+        string='Payment Date', default=fields.Date.today())
     amount = fields.Float(string='Amount', required=True,
                           default=_default_amount, readonly=False)
     currency_id = fields.Many2one(
         'res.currency', default=_default_currency, string='Currency', readonly=True)
     communication = fields.Char(string='Memo')
 
-    available_payment_method_line_ids = fields.Many2many(
-        'account.payment.method.line', compute='_compute_payment_method_line_fields')
     payment_type_selection = fields.Selection(
         string='Payment Type Selection',
-        selection=[('advance', 'مقدم'),('extension', 'تمديد'),('close', 'إغلاق'),('debit', 'سداد مديونية'),('extension_offline', 'تمديد بدون منصة'),
+        selection=[('advance', 'مقدم'), ('extension', 'تمديد'), ('close', 'إغلاق'), ('debit', 'سداد مديونية'), ('extension_offline', 'تمديد بدون منصة'),
                    ('suspended_payment', 'سداد عقد معلق'), ],
         required=True, )
 
-
-    @api.depends('journal_id', 'currency_id')
-    def _compute_payment_method_line_fields(self):
-        for wizard in self:
-            if wizard.journal_id:
-                wizard.available_payment_method_line_ids = wizard.journal_id._get_available_payment_method_lines(
-                    'inbound')
-            else:
-                wizard.available_payment_method_line_ids = False
+    @api.depends('journal_id')
+    def _compute_payment_method_line_id(self):
+        for rec in self:
+            available_payment_method_line_ids = rec.journal_id._get_available_payment_method_lines(
+                'inbound')
+            rec.payment_method_line_id = available_payment_method_line_ids[0]\
+                if available_payment_method_line_ids else False
 
     def _get_due_amount(self):
         contract = self.env['rental.contract'].browse(
             self._context.get('active_id'))
-        return contract.total_amount - contract.paid_amount
+        return contract.current_due_amount
 
     def action_register_payment(self):
         contract = self.env['rental.contract'].browse(
             self._context.get('active_id'))
-        if self.amount > self._get_due_amount():
-            raise UserError(
-                _('The amount to pay is greater than the due amount.'))
+        if not self.payment_method_line_id:
+            raise ValidationError(
+                _("Please Configure Incoming Payments in Selected Journal"))
         payment = self.env['account.payment'].create({
             'payment_type': 'inbound',
             'partner_type': 'customer',
@@ -72,6 +68,8 @@ class PaymentRegister(models.TransientModel):
             'state': 'draft',
             'payment_method_line_id': self.payment_method_line_id.id,
         })
+        payment.action_post()
+        payment.action_validate()
         if payment:
             payment.action_post()
         return {

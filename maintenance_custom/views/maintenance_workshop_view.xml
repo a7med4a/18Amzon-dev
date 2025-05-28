@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="maintenance_workshop_view_form" model="ir.ui.view">
+        <field name="name">maintenance_workshop_view_form</field>
+        <field name="model">maintenance.workshop</field>
+        <field name="arch" type="xml">
+            <form string="_form">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="type"/>
+                    </group>
+                    <notebook>
+                        <page string="Repair Task">
+                            <field name="repair_task_ids">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Product Category">
+                            <field name="workshop_product_category_ids">
+                                <list editable="bottom">
+                                    <field name="product_category"/>
+                                </list>
+                            </field>
+                        </page>
+                        </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <record id="maintenance_workshop_view_list" model="ir.ui.view">
+        <field name="name">maintenance_workshop_view_form</field>
+        <field name="model">maintenance.workshop</field>
+        <field name="arch" type="xml">
+            <list string="Workshop">
+                <field name="name"/>
+                <field name="type"/>
+            </list>
+        </field>
+    </record>
+    
+    <record id="maintenance_workshop_action" model="ir.actions.act_window">
+        <field name="name">maintenance workshop Action</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">maintenance.workshop</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- This Menu Item must have a parent and an action -->
+    <menuitem id="maintenance_workshop_menu" name="Workshop" parent="maintenance.menu_maintenance_configuration" action="maintenance_workshop_action"/>
+
+</odoo>

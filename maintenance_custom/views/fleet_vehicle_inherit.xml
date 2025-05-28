@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Inherit Form View to Modify it -->
+    <record id="view_fleet_vehicle_forVm_inherit" model="ir.ui.view">
+        <field name="name">Fleet Vehicle</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='open_assignation_logs']" position="after">
+                <button class="oe_stat_button" name="action_view_maintenance_request" type="object"
+                        icon="fa-bars">
+                    <div class="o_stat_info">
+                        <span class="o_stat_text">Maintenance Requests</span>
+                    </div>
+                </button>
+            </xpath>
+        </field>
+    </record>
+
+
+</odoo>

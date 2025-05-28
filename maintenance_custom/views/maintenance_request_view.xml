@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Inherit Form View to Modify it -->
+    <record id="maintenance_request_view_form_inherit_hr_inherit" model="ir.ui.view">
+        <field name="name">Equipment Maintenance Request</field>
+        <field name="model">maintenance.request</field>
+        <field name="inherit_id" ref="hr_maintenance.maintenance_request_view_form_inherit_hr"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='employee_id']" position="replace">
+                <field name="employee_id" string="Created By" invisible="True"
+                       options="{ 'no_open': True,'no_create': True}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Inherit Form View to Modify it -->
+    <record id="maintenance_request_view_form_inherit_worksheet_inherit" model="ir.ui.view">
+        <field name="name">Equipment Maintenance Request</field>
+        <field name="model">maintenance.request</field>
+        <field name="inherit_id" ref="maintenance_worksheet.maintenance_request_view_form_inherit_worksheet"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='worksheet_template_id']" position="replace"/>
+        </field>
+    </record>
+
+    <!-- Inherit Form View to Modify it -->
+    <record id="hr_equipment_request_view_form_inherit" model="ir.ui.view">
+        <field name="name">Equipment Maintenance Request</field>
+        <field name="model">maintenance.request</field>
+        <field name="inherit_id" ref="maintenance.hr_equipment_request_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='stage_id']" position="replace">
+                <field name="stage_id" widget="statusbar" invisible="archive"/>
+            </xpath>
+            <xpath expr="//field[@name='equipment_id']" position="attributes">
+                <attribute name="invisible">True</attribute>
+            </xpath>
+            <xpath expr="//field[@name='category_id']" position="attributes">
+                <attribute name="invisible">True</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='recurring_maintenance']" position="attributes">
+                <attribute name="invisible">True</attribute>
+            </xpath>
+            <xpath expr="//field[@name='user_id']" position="attributes">
+                <attribute name="invisible">True</attribute>
+            </xpath>
+            <xpath expr="//field[@name='maintenance_team_id']" position="attributes">
+                <attribute name="invisible">True</attribute>
+            </xpath>
+            <xpath expr="//field[@name='email_cc']" position="attributes">
+                <attribute name="invisible">True</attribute>
+            </xpath>
+            <xpath expr="//sheet//group//group//field[@name='company_id']" position="replace"/>
+            <xpath expr="//field[@name='schedule_date']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='maintenance_type']" position="attributes">
+                <attribute name="invisible">stage_type in ('closed', 'opened')</attribute>
+            </xpath>
+            <xpath expr="//field[@name='priority']" position="attributes">
+                <attribute name="invisible">True</attribute>
+            </xpath>
+            <xpath expr="//field[@name='duration']" position="attributes">
+                <attribute name="invisible">True</attribute>
+            </xpath>
+            <xpath expr="//span[hasclass('ml8')]" position="attributes">
+                <attribute name="invisible">True</attribute>
+            </xpath>
+            <xpath expr="//field[@name='request_date']" position="attributes">
+                <attribute name="invisible">True</attribute>
+            </xpath>
+            <xpath expr="//field[@name='close_date']" position="attributes">
+                <attribute name="invisible">True</attribute>
+            </xpath>
+            <xpath expr="//field[@name='maintenance_type']" position="after">
+                <field name="request_description" readonly="stage_type in ('opened','closed')"/>
+                <field name="damage_number" invisible="maintenance_type != 'damage'"/>
+                <field name="accident_number" invisible="maintenance_type != 'accident'"/>
+            </xpath>
+            <xpath expr="//sheet//div//label[@for='name']" position="replace">
+                <label for="name" string="Repair Description Number"/>
+            </xpath>
+            <xpath expr="//group//label[@for='duration']" position="replace"/>
+            <xpath expr="//field[@name='name']" position="attributes">
+                <attribute name="required">False</attribute>
+            </xpath>
+            <xpath expr="//page[1]" position="before">
+                <page string="Information">
+                    <group>
+                        <group string="Vehicle Info">
+                            <field name="vehicle_id" string="Plate Number"
+                                   options="{'no_create': True,'no_open': True}" readonly="stage_type in ('opened','closed')"/>
+                            <field name="model_id" options="{'no_create': True,'no_open': True}"/>
+                            <field name="vin_sn" string="Chassis Number"/>
+                            <field name="route_branch_domain" string="Route Number" invisible="1"/>
+                            <field name="usage_type"/>
+                            <field name="route_id" readonly="stage_type in ('opened','closed')" domain="route_branch_domain" options="{'no_open': True, 'no_create': True}"/>
+                        </group>
+                        <group string="Maintenance Info">
+                            <field name="maintenance_team_id" readonly="1"
+                                   options="{'no_create': True,'no_open': True}"/>
+                            <field name="employee_id" string="Created By" readonly="True"
+                                   options="{ 'no_open': True,'no_create': True}"/>
+                            <field name="request_creation_date" readonly="stage_type in ('closed', 'opened')"/>
+                            <field name="schedule_date" readonly="stage_type in ('closed', 'opened')"/>
+                            <field name="open_date" readonly="1"/>
+                            <field name="request_close_date" readonly="1"/>
+                            <label for="request_duration"/>
+                            <div>
+                                <field name="request_duration"
+                                       widget="float_time"
+                                       class="oe_inline"/>
+                                <span class="ml8">hours</span>
+                            </div>
+                            <field name="priority" widget="priority" readonly="stage_type in ('opened','closed')"/>
+                            <field name="company_id" readonly="1"
+                                   options="{'no_create': True,'no_open': True}"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+            <xpath expr="//button[@name='archive_equipment_request']" position="replace">
+                <button string="Repair Approval Request" name="action_repair_approval_request" class="btn-primary"
+                        type="object"
+                        invisible="stage_type != 'new' or maintenance_type not in ('damage', 'accident')"/>
+                <button string="Create Job Order" name="action_create_job_order" class="btn-primary" type="object"
+                        invisible="stage_type != 'opened'"/>
+                <button string="Validate" name="action_confirm" class="btn-success" type="object"
+                        invisible="stage_type != 'under_approval'"/>
+                <button string="Confirm" name="action_confirm" class="btn-success" type="object"
+                        invisible="stage_type != 'new' or maintenance_type in ('damage', 'accident')"/>
+                <button string="Close" name="action_close" class="btn-success" type="object"
+                        invisible="stage_type != 'opened'"/>
+                <button string="Cancel" name="action_cancel" class="btn-danger" type="object"
+                        invisible="stage_type not in ('new', 'opened')"/>
+                <button string="Reject" name="action_reject" class="btn-secondary" type="object"
+                        invisible="stage_type != 'under_approval'"/>
+                <button string="Set to Draft" name="action_reset_draft" class="btn-primary" type="object"
+                        invisible="stage_type not in ('rejected', 'cancelled')"/>
+            </xpath>
+
+            <xpath expr="//sheet//div" position="before">
+                <div class="oe_button_box" name="button_box">
+                    <button class="oe_stat_button" name="view_maintenance_job_order" type="object"
+                            icon="fa-bars" invisible="maintenance_job_order_count == 0">
+                        <div class="o_stat_info">
+                            <span class="o_stat_value">
+                                <field name="maintenance_job_order_count"/>
+                            </span>
+                            <span class="o_stat_text">Job Orders</span>
+                        </div>
+                    </button>
+                    <button class="oe_stat_button" name="view_maintenance_transfer" type="object"
+                            icon="fa-bars" invisible="transfer_count == 0">
+                        <div class="o_stat_info">
+                            <span class="o_stat_value">
+                                <field name="transfer_count"/>
+                            </span>
+                            <span class="o_stat_text">Transfers</span>
+                        </div>
+                    </button>
+                </div>
+
+            </xpath>
+
+        </field>
+    </record>
+
+    <record id="hr_equipment_request_view_tree_inherit" model="ir.ui.view">
+        <field name="name">Maintenance Request</field>
+        <field name="model">maintenance.request</field>
+        <field name="inherit_id" ref="maintenance.hr_equipment_request_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='company_id']" position="after">
+                <field name="schedule_date"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <record id="maintenance_team_view_tree_inherit" model="ir.ui.view">
+        <field name="name">Maintenance Team</field>
+        <field name="model">maintenance.team</field>
+        <field name="inherit_id" ref="maintenance.maintenance_team_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='company_id']" position="after">
+                <field name="route_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="maintenance_team_view_form_inherit" model="ir.ui.view">
+        <field name="name">Maintenance Team</field>
+        <field name="model">maintenance.team</field>
+        <field name="inherit_id" ref="maintenance.maintenance_team_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='company_id']" position="after">
+                <field name="route_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="seq_maintenance_request" model="ir.sequence">
+        <field name="name">Maintenance Request Sequence</field>
+        <field name="code">maintenance.request.seq</field>
+        <field name="prefix">MR/</field>
+        <field name="padding">5</field>
+    </record>
+
+</odoo>

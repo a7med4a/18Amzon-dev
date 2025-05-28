@@ -1,0 +1,118 @@
+<odoo>
+    <data>
+
+        <record id="maintenance_job_order_view_list" model="ir.ui.view">
+            <field name="name">maintenance_job_order_view_list</field>
+            <field name="model">maintenance.job.order</field>
+            <field name="arch" type="xml">
+                <list string="maintenance_job_order_list" create="0">
+                    <field name="name"/>
+                    <field name="maintenance_request_id"/>
+                    <field name="repair_task_ids" widget="many2many_tags"/>
+                    <field name="plate_number"/>
+                    <field name="vin_sn"/>
+                    <field name="maintenance_workshop_id"/>
+                    <field name="job_order_start_date"/>
+                    <field name="job_order_close_date"/>
+                    <field name="duration"/>
+                    <field name="technicians_ids" widget="many2many_tags"/>
+                    <field name="technicians_cost"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_maintenance_job_order_form" model="ir.ui.view">
+            <field name="name">maintenance.job.order.form</field>
+            <field name="model">maintenance.job.order</field>
+            <field name="arch" type="xml">
+                <form create="0">
+                    <header>
+                        <button name="action_in_progress" string="Start" type="object"
+                                confirm="Are you sure you want to transfer to start job order ?"
+                                class="btn-primary" invisible="state != 'under_process'"/>
+                        <button name="action_repaired" string="Done" type="object"
+                                class="btn-success" invisible="state != 'in_progress'"
+                                confirm="Are you sure you finished all repairs?"/>
+                        <button name="action_request_spare_parts" string="Request Spare Parts" type="object"
+                                class="btn-primary" invisible="state != 'in_progress'"/>
+                        <button name="action_cancelled" string="Cancel" type="object"
+                                confirm="Are you sure you want to Cancel this Job order ?"
+                                class="btn-secondary" invisible="state not in ('cancelled','under_process')"/>
+                        <button name="action_set_to_under_process" string="Reset To Under Process" type="object"
+                                confirm="Are you sure you want to reset back to under Process state ?"
+                                class="btn-secondary" invisible="state not in  ('in_progress','cancelled')"/>
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_title">
+                            <label for="name" class="oe_edit_only"/>
+                            <h1>
+                                <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="flex-grow: 1;">
+                                        <field name="name"/>
+                                    </div>
+                                </div>
+                            </h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="maintenance_request_id" readonly="1" options="{'no_open': True, 'no_create': True}"/>
+                                <field name="repair_task_ids" readonly="1" widget="many2many_tags"  options="{'no_open': True, 'no_create': True}"/>
+                                <field name="plate_number" readonly="1"/>
+                                <field name="vin_sn" readonly="1"/>
+                                <field name="maintenance_workshop_id" readonly="1" options="{'no_open': True, 'no_create': True}"/>
+                                <field name="workshop_type" readonly="1"/>
+                                <field name="note"/>
+                            </group>
+                            <group>
+                                <field name="create_uid" options="{'no_open': True, 'no_create': True}" readonly="1"/>
+                                <field name="job_order_creation_date" readonly="1"/>
+                                <field name="job_order_start_date" readonly="1"/>
+                                <field name="job_order_close_date" readonly="1"/>
+                                <field name="duration" />
+                                <field name="technicians_ids" readonly="1" widget="many2many_tags"/>
+                                <field name="technicians_cost"/>
+                                <field name="spare_parts_cost" />
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="PO lines">
+                                <field name="component_ids" readonly="state != 'under_process'">
+                                    <list editable="bottom">
+                                        <field name="product_category_id" optional='show' options="{'no_open': True, 'no_create': True}"/>
+                                        <field name="product_id" optional='show' options="{'no_open': True, 'no_create': True}" readonly="not product_category_id"/>
+                                        <field name="uom_id" optional='show' options="{'no_open': True, 'no_create': True}"/>
+                                        <field name="demand_qty" optional='show'/>
+                                        <field name="done_qty" optional='show' readonly="1"/>
+                                        <field name="spart_part_request" optional='show' widget="badge" decoration-success="spart_part_request == 'done'"/>
+                                        <field name="picking_status" optional='show' />
+                                    </list>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_maintenance_job_order" model="ir.actions.act_window">
+            <field name="name">Maintenance Job Order Sequence</field>
+            <field name="res_model">maintenance.job.order</field>
+            <field name="view_mode">list,form</field>
+        </record>
+
+        <!-- This Menu Item must have a parent and an action -->
+        <menuitem id="menu_maintenance_job_order" name="Job Orders" parent="hr.menu_hr_root" action="action_maintenance_job_order" sequence="94"/>
+
+
+
+        <record id="seq_maintenance_job_order" model="ir.sequence">
+            <field name="name">Maintenance Job Order Sequence</field>
+            <field name="code">maintenance.job.order.seq</field>
+            <field name="prefix">MJO/</field>
+            <field name="padding">5</field>
+        </record>
+
+    </data>
+</odoo>

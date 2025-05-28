@@ -1,0 +1,29 @@
+# -*- coding: utf-8 -*-
+
+{
+    'name': 'Maintenance Amazon',
+    'version': '1.0',
+    'sequence': 100,
+    'author': 'Ahmed Amen',
+    'category': 'Manufacturing/Maintenance',
+    'description': """Track equipment and maintenance requests""",
+    'depends': ['base','mail','hr','stock','maintenance','maintenance_worksheet','hr_maintenance','fleet_status','branch_routs'],
+    'summary': 'Track equipment and manage maintenance requests',
+    'data': [
+        'security/maintenance.xml',
+        'security/ir.model.access.csv',
+        'data/maintenance_data.xml',
+        'views/maintenance_stage_views.xml',
+        'views/maintenance_request_view.xml',
+        'views/maintenance_shift_view.xml',
+        'views/maintenance_workshop_view.xml',
+        'views/hr_employee_inherit.xml',
+        'views/maintenance_job_order_views.xml',
+        'views/fleet_vehicle_inherit.xml',
+        'views/preventive_maintenance_config.xml',
+        'wizard/job_order_wizard.xml',
+    ],
+    'installable': True,
+    'application': True,
+    'license': 'LGPL-3',
+}

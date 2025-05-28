@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- This group is only allowed to deal with equipment registration and maintenance -->
+    <record id="group_equipment_request_validate" model="res.groups">
+        <field name="name">Repair Approval Request Validate</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">The user will be able to Maintenance Requests.</field>
+    </record>
+
+
+<!--    <data noupdate="1">-->
+<!--        -->
+<!--    <record id="maintenance_equipment_category_comp_rule" model="ir.rule">-->
+<!--        <field name="name">Maintenance Equipment Category Multi-company rule</field>-->
+<!--        <field name="model_id" ref="model_maintenance_equipment_category"/>-->
+<!--        <field name="domain_force">[('company_id', 'in', company_ids + [False])]</field>-->
+<!--    </record>-->
+
+<!--    </data>-->
+
+</odoo>

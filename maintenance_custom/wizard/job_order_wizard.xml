@@ -1,0 +1,26 @@
+<odoo>
+    <data>
+        <record id="view_job_order_form" model="ir.ui.view">
+            <field name="name">maintenance.job.order.wizard.form</field>
+            <field name="model">maintenance.job.order.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Pay">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="maintenance_request_id" readonly="1"/>
+                                <field name="maintenance_workshop_id" options="{'no_open': True, 'no_create': True}"/>
+                                <field name="repair_task_ids" domain="[('maintenance_workshop_id', '=', maintenance_workshop_id)]" widget="many2many_tags" options="{'no_open': True, 'no_create': True}"/>
+                                <field name="technicians_ids" domain="[('is_technical', '=',True)]" widget="many2many_tags" options="{'no_open': True, 'no_create': True}"/>
+                            </group>
+                        </group>
+                    </sheet>
+                    <footer>
+                        <button name="action_create_job_order" string="Confirm" type="object" class="btn-primary"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

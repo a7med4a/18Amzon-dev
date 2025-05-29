@@ -428,7 +428,7 @@ class LongTermRentalContract(models.Model):
         for record in self:
             if record.draft_state == 'vehicle_info' and record.vehicle_id:
                 record.vehicle_model_datail_id = self.env['fleet.vehicle.model.detail'].search(
-                    [('branch_id', '=', record.vehicle_id.branch_id.id), ('vehicle_model_brand_id', '=', record.vehicle_id.model_id.brand_id.id), ('state', '=', 'running')], limit=1)
+                    [('branch_ids', 'in', [record.vehicle_id.branch_id.id]), ('vehicle_model_brand_id', '=', record.vehicle_id.model_id.brand_id.id), ('state', '=', 'running')], limit=1)
             else:
                 record.vehicle_model_datail_id = False
 

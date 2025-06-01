@@ -36,15 +36,15 @@ class InheritResPartner(models.Model):
             }
             domain=[('company_type','=','company'),('is_insurance_company','=',True)]
             partner_action_form.write({"context": context, "domain": domain})
-        if view_type == 'form' and options.get('action_id') == partner_action_form.id:
-            doc = etree.XML(res['arch'])
-            company_type_fields = doc.xpath("//div/field[@name='company_type']")
-            if company_type_fields:
-                company_type_fields[0].set("invisible", "1")
-            vat_fields = doc.xpath("//field[@name='vat']")
-            if vat_fields:
-                new_field = etree.Element("field", name="is_insurance_company", string="Is Insurance Company?", readonly="1")
-                vat_fields[0].addnext(new_field)
-            res['arch'] = etree.tostring(doc, encoding='unicode')
+            if view_type == 'form' and options.get('action_id') == partner_action_form.id:
+                doc = etree.XML(res['arch'])
+                company_type_fields = doc.xpath("//div/field[@name='company_type']")
+                if company_type_fields:
+                    company_type_fields[0].set("invisible", "1")
+                vat_fields = doc.xpath("//field[@name='vat']")
+                if vat_fields:
+                    new_field = etree.Element("field", name="is_insurance_company", string="Is Insurance Company?", readonly="1")
+                    vat_fields[0].addnext(new_field)
+                res['arch'] = etree.tostring(doc, encoding='unicode')
         return res
 

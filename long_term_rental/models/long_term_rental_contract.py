@@ -918,11 +918,11 @@ class LongTermRentalContract(models.Model):
                     _(f"Configure Model Pricing For {rec.vehicle_id.display_name}"))
 
     #Done
-    def check_customer_age(self):
-        for rec in self:
-            if rec.vehicle_model_datail_id.min_customer_age > float(rec.partner_id.age) or rec.vehicle_model_datail_id.max_customer_age < float(rec.partner_id.age):
-                raise ValidationError(
-                    _("Selected customer age is out of vehicle age range !"))
+    # def check_customer_age(self):
+    #     for rec in self:
+    #         if rec.vehicle_model_datail_id.min_customer_age > float(rec.partner_id.age) or rec.vehicle_model_datail_id.max_customer_age < float(rec.partner_id.age):
+    #             raise ValidationError(
+    #                 _("Selected customer age is out of vehicle age range !"))
 
     ##Done
     def assign_model_pricing_fields(self):
@@ -968,9 +968,9 @@ class LongTermRentalContract(models.Model):
         for rec in self:
             matched_record_config = all_config_allowed.filtered(
                 lambda c: c.company_id == rec.company_id)
-            if not matched_record_config:
-                raise ValidationError(
-                    _("Add Rental configuration for current company"))
+            # if not matched_record_config:
+            #     raise ValidationError(
+            #         _("Add Rental configuration for current company"))
             rec.rental_configuration_id = matched_record_config[0]
 
     ##Done
@@ -1032,7 +1032,6 @@ class LongTermRentalContract(models.Model):
         if self.draft_state == 'customer_info':
             self.draft_state = 'vehicle_info'
         elif self.draft_state == 'vehicle_info':
-            self.check_customer_age()
             self.assign_model_pricing_fields()
             self.check_vehicle_long_term_pricing()
             self.draft_state = 'contract_info'
@@ -1040,7 +1039,6 @@ class LongTermRentalContract(models.Model):
             self.set_additional_supplementary_lines()
             self.draft_state = 'additional_suppl_service'
         elif self.draft_state == 'additional_suppl_service':
-            self.get_rental_configuration()
             self.assign_rental_configuration_fields()
             self.draft_state = 'financial_info'
 

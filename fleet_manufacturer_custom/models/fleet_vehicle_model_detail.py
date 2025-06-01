@@ -44,9 +44,6 @@ class VehicleModelDetail(models.Model):
     # branch = fields.Char(tracking=True)
     branch_ids = fields.Many2many(
         comodel_name='res.branch',
-        relation='fleet_vehicle_model_detail_res_branch_rel',
-        column1='model_detail_id',
-        column2='branch_id',
         string='Branch', tracking=True
     )
     state = fields.Selection(

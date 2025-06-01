@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Inherit Form View to Modify it -->
+    <record id="view_picking_form_inherit" model="ir.ui.view">
+        <field name="name">Stock Picking</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='owner_id']" position="after">
+                <field name="maintenance_job_order_id" readonly="1" invisible="not maintenance_job_order_id" options="{ 'no_open': True,'no_create': True}"/>
+                <field name="number"/>
+            </xpath>
+        </field>
+    </record>
+
+
+</odoo>

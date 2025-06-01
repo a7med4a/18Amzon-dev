@@ -44,7 +44,7 @@
     </record>
     
     <record id="maintenance_workshop_action" model="ir.actions.act_window">
-        <field name="name">maintenance workshop Action</field>
+        <field name="name">Maintenance Workshop</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">maintenance.workshop</field>
         <field name="view_mode">list,form</field>

@@ -18,3 +18,9 @@ class MaintenanceJobOrderWizard(models.TransientModel):
             vals = {'maintenance_request_id': rec.maintenance_request_id.id,'maintenance_workshop_id': rec.maintenance_workshop_id.id, 'repair_task_ids': rec.repair_task_ids.ids,
                     'technicians_ids': rec.technicians_ids.ids, 'job_order_creation_date': fields.Datetime.now()}
             self.env['maintenance.job.order'].create(vals)
+
+    @api.onchange('maintenance_workshop_id')
+    def _remove_repairs_technician_related(self):
+        for job in self:
+            job.repair_task_ids=[(5,0,0)]
+            job.technicians_ids=[(5,0,0)]

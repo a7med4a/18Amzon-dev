@@ -1,6 +1,7 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_maintenance_workshop,maintenance.workshop,model_maintenance_workshop,base.group_user,1,1,1,1
 access_maintenance_shift,maintenance.shift,model_maintenance_shift,base.group_user,1,1,1,1
+access_maintenance_shift_name,maintenance.shift.name,model_maintenance_shift_name,base.group_user,1,1,1,1
 access_workshop_repair_task,workshop.repair.task,model_workshop_repair_task,base.group_user,1,1,1,1
 access_workshop_product_category,workshop.product.category,model_workshop_product_category,base.group_user,1,1,1,1
 access_maintenance_job_order,maintenance.job.order,model_maintenance_job_order,base.group_user,1,1,1,1

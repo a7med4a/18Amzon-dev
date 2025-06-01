@@ -21,6 +21,7 @@
         'views/maintenance_job_order_views.xml',
         'views/fleet_vehicle_inherit.xml',
         'views/preventive_maintenance_config.xml',
+        'views/stock_picking_inherit.xml',
         'wizard/job_order_wizard.xml',
     ],
     'installable': True,

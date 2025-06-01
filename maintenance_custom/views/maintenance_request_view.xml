@@ -80,8 +80,12 @@
                 <field name="accident_number" invisible="maintenance_type != 'accident'"/>
             </xpath>
             <xpath expr="//sheet//div//label[@for='name']" position="replace">
-                <label for="name" string="Repair Description Number"/>
+                <label for="name" string="Maintenance Request Number"/>
             </xpath>
+            <xpath expr="//field[@name='maintenance_type']" position="replace">
+                <field name="maintenance_type" widget="radio"/>
+            </xpath>
+            <xpath expr="//field[@name='kanban_state']" position="replace"/>
             <xpath expr="//group//label[@for='duration']" position="replace"/>
             <xpath expr="//field[@name='name']" position="attributes">
                 <attribute name="required">False</attribute>
@@ -90,20 +94,22 @@
                 <page string="Information">
                     <group>
                         <group string="Vehicle Info">
-                            <field name="vehicle_id" string="Plate Number"
+                            <field name="vehicle_domain" invisible="1"/>
+                            <field name="vehicle_id" string="Plate Number" domain="vehicle_domain"
                                    options="{'no_create': True,'no_open': True}" readonly="stage_type in ('opened','closed')"/>
                             <field name="model_id" options="{'no_create': True,'no_open': True}"/>
                             <field name="vin_sn" string="Chassis Number"/>
                             <field name="route_branch_domain" string="Route Number" invisible="1"/>
                             <field name="usage_type"/>
+                            <field name="route_branch_domain" invisible="1"/>
                             <field name="route_id" readonly="stage_type in ('opened','closed')" domain="route_branch_domain" options="{'no_open': True, 'no_create': True}"/>
                         </group>
                         <group string="Maintenance Info">
-                            <field name="maintenance_team_id" readonly="1"
+                            <field name="maintenance_team_id"
                                    options="{'no_create': True,'no_open': True}"/>
                             <field name="employee_id" string="Created By" readonly="True"
                                    options="{ 'no_open': True,'no_create': True}"/>
-                            <field name="request_creation_date" readonly="stage_type in ('closed', 'opened')"/>
+                            <field name="request_creation_date"/>
                             <field name="schedule_date" readonly="stage_type in ('closed', 'opened')"/>
                             <field name="open_date" readonly="1"/>
                             <field name="request_close_date" readonly="1"/>
@@ -186,7 +192,9 @@
         <field name="inherit_id" ref="maintenance.maintenance_team_view_tree"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='company_id']" position="after">
-                <field name="route_id"/>
+                <field name="route_id" options="{ 'no_open': True,'no_create': True}"/>
+                <field name="maintenance_shift_id" options="{ 'no_open': True,'no_create': True}"/>
+                <field name="allowed_branch_id" options="{ 'no_open': True,'no_create': True}"/>
             </xpath>
         </field>
     </record>

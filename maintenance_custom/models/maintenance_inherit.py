@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from email.policy import default
 
 from odoo.exceptions import ValidationError
 from odoo import api, fields, models, _
@@ -20,7 +21,7 @@ class MaintenanceRequestInherit(models.Model):
     name = fields.Char('Repair Description Number',readonly=True)
     company_id = fields.Many2one('res.company', string='Company', readonly=True,
         default=lambda self: self.env.company)
-    maintenance_type = fields.Selection([('preventive', 'Preventive'), ('damage', 'Damage'), ('accident', 'Accident')], string='Maintenance Type', default="preventive")
+    maintenance_type = fields.Selection([('preventive', 'Preventive'),('damage', 'Damage'),  ('accident', 'Accident')], string='Type', default="damage")
     damage_number = fields.Integer(string='Damage Number')
     accident_number = fields.Integer(string='Accident Number')
     stage_type = fields.Selection(related='stage_id.stage_type', string='Stage Type', readonly=True)
@@ -29,13 +30,13 @@ class MaintenanceRequestInherit(models.Model):
         domain="[('res_model', '=', 'maintenance.request'), '|', ('company_id', '=', False), ('company_id', '=', company_id)]",
         help="Create templates for each type of request you have and customize their content with your own custom fields.")
     request_description = fields.Text('Request Description')
-    vehicle_id=fields.Many2one('fleet.vehicle',string='Vehicle',required=True,domain=lambda self: [('company_id', '=', self.env.company.id),('branch_id.branch_type', '=', 'workshop'),('branch_id', 'in', self.env.user.branch_ids.ids)])
+    vehicle_id=fields.Many2one('fleet.vehicle',string='Vehicle',required=True)
     model_id = fields.Many2one(comodel_name='fleet.vehicle.model',
                                string="Model", related='vehicle_id.model_id', store=True)
     vin_sn = fields.Char(string="Chassis Number",related='vehicle_id.vin_sn', store=True)
     usage_type = fields.Selection(string="Usage Type",related='vehicle_id.usage_type', store=True)
     route_id = fields.Many2one('branch.route', string="Route")
-    request_creation_date = fields.Datetime(string='Request Creation Date', required=False)
+    request_creation_date = fields.Datetime(string='Request Creation Date', required=False,default=fields.Datetime.now(),readonly=True)
     open_date = fields.Datetime(string='Open Date', required=False,copy=False)
     request_close_date = fields.Datetime(string='Close Date', required=False,copy=False)
     request_duration = fields.Float(string="Duration", compute="_compute_duration")
@@ -43,15 +44,27 @@ class MaintenanceRequestInherit(models.Model):
     maintenance_job_order_count=fields.Integer(compute="_compute_maintenance_job_order_count")
     transfer_ids = fields.One2many(comodel_name='stock.picking', inverse_name='maintenance_request_id', string="Transfer")
     transfer_count = fields.Integer(compute="_compute_transfer_count")
-    route_branch_domain = fields.Binary(
-        string="Route Branch domain", help="Dynamic domain used for the Source branch",
-        compute="_compute_route_branch_domain")
+    route_branch_domain = fields.Binary(string="Route Branch domain", help="Dynamic domain used for Vehicle",compute="_compute_route_branch_domain")
+    vehicle_domain = fields.Binary(string="Route Branch domain", help="Dynamic domain used for Vehicle",compute="_compute_vehicle_domain")
 
+
+    @api.depends("maintenance_team_id")
+    def _compute_vehicle_domain(self):
+        for maintenance in self:
+            domain=[('id', 'not in', self.env['maintenance.request'].search([('stage_type', 'in', ('new', 'under_approval', 'opened'))]).mapped('vehicle_id').ids),('company_id', '=', self.env.company.id), ('branch_id.branch_type', '=', 'workshop')]
+            if maintenance.maintenance_team_id :
+                domain.append(('branch_id', '=', maintenance.maintenance_team_id.allowed_branch_id.id))
+            maintenance.vehicle_domain = domain
+
+    @api.depends("vehicle_id","maintenance_team_id")
     def _compute_route_branch_domain(self):
-        for rec in self:
-            rec.route_branch_domain = [
-                ('id', '=', 5),
-            ]
+        for maintenance in self:
+            domain=[('destination_type', '=', 'workshop')]
+            if maintenance.maintenance_team_id:
+                domain.append(('destination_branch_id', '=', maintenance.maintenance_team_id.allowed_branch_id.id))
+            if maintenance.vehicle_id:
+                domain.append(('vehicle_route_ids.fleet_vehicle_id', '=', maintenance.vehicle_id.id))
+            maintenance.route_branch_domain = domain
 
     @api.depends('maintenance_job_order_ids')
     def _compute_maintenance_job_order_count(self):
@@ -117,12 +130,8 @@ class MaintenanceRequestInherit(models.Model):
             open_time_float = self._time_to_float(open_date)
             if day_of_week is None:
                 return False
-            domain = [
-                ('dayofweek', '=', day_of_week),
-                ('hour_from', '<=', open_time_float),
-                ('hour_to', '>=', open_time_float),
-            ]
-            current_shift = self.env['maintenance.shift'].search(domain,limit=1)
+            shifts= rec.maintenance_team_id.maintenance_shift_id.maintenance_shift_line_ids
+            current_shift = shifts.filtered(lambda shift: shift.type != 'day_off' and shift.dayofweek == day_of_week and shift.hour_from <= open_time_float and shift.hour_to >= open_time_float )
             return current_shift
         return False
 
@@ -132,6 +141,10 @@ class MaintenanceRequestInherit(models.Model):
             rec.request_close_date = fields.Datetime.now()
             if rec.open_date > rec.request_close_date:
                 raise ValidationError(_('Close Date must be greater than Open Date'))
+            if rec.maintenance_job_order_ids:
+                for job in rec.maintenance_job_order_ids:
+                    if job.state not in ('cancelled','repaired'):
+                        raise ValidationError(_('You must repair or cancel job orders before you close maintenance request'))
             current_shift = self.get_current_shift(rec.request_close_date)
             if not current_shift:
                 raise ValidationError(_('No shift found at this time'))
@@ -139,8 +152,11 @@ class MaintenanceRequestInherit(models.Model):
 
             rec.stage_id = self.env.ref('maintenance.stage_4').id
     def action_cancel(self):
-        #no cancellation if job order
         for rec in self:
+            if rec.maintenance_job_order_ids:
+                for job in rec.maintenance_job_order_ids:
+                    if job.state != 'cancelled':
+                        raise ValidationError(_('You must cancel all job orders before you cancel maintenance request'))
             rec.stage_id = self.env.ref('maintenance_custom.stage_5').id
     def action_reject(self):
         for rec in self:
@@ -182,6 +198,8 @@ class MaintenanceTeamInherit(models.Model):
     _inherit = 'maintenance.team'
 
     route_id = fields.Many2one('stock.route')
+    maintenance_shift_id = fields.Many2one('maintenance.shift.name')
+    allowed_branch_id = fields.Many2one('res.branch' ,domain=[('branch_type','=' ,'workshop')])
 
 
 class BranchRoute(models.Model):

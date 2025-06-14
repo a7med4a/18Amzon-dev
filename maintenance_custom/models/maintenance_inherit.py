@@ -46,15 +46,7 @@ class MaintenanceRequestInherit(models.Model):
     transfer_count = fields.Integer(compute="_compute_transfer_count")
     route_branch_domain = fields.Binary(string="Route Branch domain", help="Dynamic domain used for Vehicle",compute="_compute_route_branch_domain")
     vehicle_domain = fields.Binary(string="Route Branch domain", help="Dynamic domain used for Vehicle",compute="_compute_vehicle_domain")
-    fields_readonly = fields.Boolean(
-        compute='_compute_fields_readonly'
-    )
 
-    @api.depends('stage_id')
-    def _compute_fields_readonly(self):
-        stage_0 = self.env.ref('maintenance.stage_0', raise_if_not_found=False)
-        for record in self:
-            record.fields_readonly = record.stage_id != stage_0 if stage_0 else True
 
     @api.depends("maintenance_team_id")
     def _compute_vehicle_domain(self):

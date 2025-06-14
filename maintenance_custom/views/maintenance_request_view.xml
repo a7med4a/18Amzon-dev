@@ -76,7 +76,6 @@
                 <attribute name="invisible">True</attribute>
             </xpath>
             <xpath expr="//field[@name='maintenance_type']" position="after">
-                <field name="fields_readonly" invisible="1"/>
                 <field name="request_description" readonly="stage_type in ('opened','closed')"/>
                 <field name="damage_number" invisible="maintenance_type != 'damage'" readonly="stage_type != 'new'"/>
                 <field name="accident_number" invisible="maintenance_type != 'accident'" readonly="stage_type != 'new'"/>

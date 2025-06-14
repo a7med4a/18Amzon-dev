@@ -76,7 +76,7 @@
                             </group>
                         </group>
                         <notebook>
-                            <page string="PO lines">
+                            <page string="Spart Parts lines">
                                 <field name="component_ids" readonly="state not in ('under_process','in_progress')">
                                     <list editable="bottom">
                                         <field name="product_category_domain" column_invisible="1"/>

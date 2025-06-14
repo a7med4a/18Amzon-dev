@@ -48,6 +48,7 @@
             </xpath>
             <xpath expr="//field[@name='maintenance_team_id']" position="attributes">
                 <attribute name="invisible">True</attribute>
+                <attribute name="readonly">stage_type != 'new'</attribute>
             </xpath>
             <xpath expr="//field[@name='email_cc']" position="attributes">
                 <attribute name="invisible">True</attribute>
@@ -75,15 +76,16 @@
                 <attribute name="invisible">True</attribute>
             </xpath>
             <xpath expr="//field[@name='maintenance_type']" position="after">
+                <field name="fields_readonly" invisible="1"/>
                 <field name="request_description" readonly="stage_type in ('opened','closed')"/>
-                <field name="damage_number" invisible="maintenance_type != 'damage'"/>
-                <field name="accident_number" invisible="maintenance_type != 'accident'"/>
+                <field name="damage_number" invisible="maintenance_type != 'damage'" readonly="stage_type != 'new'"/>
+                <field name="accident_number" invisible="maintenance_type != 'accident'" readonly="stage_type != 'new'"/>
             </xpath>
             <xpath expr="//sheet//div//label[@for='name']" position="replace">
                 <label for="name" string="Maintenance Request Number"/>
             </xpath>
             <xpath expr="//field[@name='maintenance_type']" position="replace">
-                <field name="maintenance_type" widget="radio"/>
+                <field name="maintenance_type" widget="radio" readonly="stage_type != 'new'"/>
             </xpath>
             <xpath expr="//field[@name='kanban_state']" position="replace"/>
             <xpath expr="//group//label[@for='duration']" position="replace"/>
@@ -105,7 +107,7 @@
                             <field name="route_id" readonly="stage_type in ('opened','closed')" domain="route_branch_domain" options="{'no_open': True, 'no_create': True}"/>
                         </group>
                         <group string="Maintenance Info">
-                            <field name="maintenance_team_id"
+                            <field name="maintenance_team_id" readonly="stage_type != 'new'"
                                    options="{'no_create': True,'no_open': True}"/>
                             <field name="employee_id" string="Created By" readonly="True"
                                    options="{ 'no_open': True,'no_create': True}"/>
@@ -205,7 +207,9 @@
         <field name="inherit_id" ref="maintenance.maintenance_team_view_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='company_id']" position="after">
-                <field name="route_id"/>
+                 <field name="route_id" options="{ 'no_open': True,'no_create': True}"/>
+                <field name="maintenance_shift_id" options="{ 'no_open': True,'no_create': True}"/>
+                <field name="allowed_branch_id" options="{ 'no_open': True,'no_create': True}"/>
             </xpath>
         </field>
     </record>

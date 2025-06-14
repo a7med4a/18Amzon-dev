@@ -8,8 +8,8 @@
       <form string="Rental Contract">
         <header>
           <!-- Draft Buttons -->
-          <button name="next_draft_state" type="object" class="oe_highlight" invisible="state != 'draft' or draft_state == 'financial_info'" icon="fa-arrow-circle-o-right" string="Next" />
           <button name="prev_draft_state" type="object" class="oe_highlight" invisible="state != 'draft' or draft_state == 'customer_info'" icon="fa-arrow-circle-o-left" string="Back" />
+          <button name="next_draft_state" type="object" class="oe_highlight" invisible="state != 'draft' or draft_state == 'financial_info'" icon="fa-arrow-circle-o-right" string="Next" />
           <button name="action_open" type="object" invisible="state != 'draft' or draft_state != 'financial_info'" string="Open" class="oe_highlight" confirm="Are you sure you want to open this contract?" />
           <!-- After draft -->
           <button name="action_pay" type="object" invisible="draft_state != 'financial_info'" string="Pay" class="oe_highlight" />
@@ -21,6 +21,7 @@
           <!-- Close Info Buttons -->
           <button name="action_close" type="object" invisible="state != 'close_info' or vehicle_in_state == 'none'" string="Close" class="oe_highlight"/>
           <button name="action_close" type="object" invisible="state != 'close_info' or vehicle_in_state != 'none'" string="Close" class="oe_highlight" confirm="You select none in has accident / damage?" />
+          <button name="action_back_to_opened" type="object" invisible="state != 'close_info'" string="Back To Open" confirm="You will open the contract again" />
           <!-- Delivery InDebit / Pending Button -->
           <button name="action_final_close" type="object" invisible="state not in ['delivered_pending', 'delivered_debit']" string="Close" class="oe_highlight" confirm="Are you sure you want to close this contract?"/>
           <!-- Cancel Button -->
@@ -146,6 +147,7 @@
               <field name="model_id" options="{'no_open': True, 'no_create': True}" />
               <field name="category_id" options="{'no_open': True, 'no_create': True}" />
               <field name="out_odometer" readonly="1" force_save="1"/>
+              <field name="vehicle_color" widget="color" readonly="1"/>
             </group>
           </group>
           <group invisible="(state == 'draft' and draft_state != 'vehicle_info') or state == 'close_info'" name="out_check_list" string="Out CheckList">
@@ -173,6 +175,9 @@
               <field name="out_oil_change_date" required="draft_state != 'customer_info'" readonly="state != 'draft'" />
               <field name="out_vehicle_status" required="draft_state != 'customer_info'" readonly="state != 'draft'" />
             </group>
+            <group>
+              <field name="out_image_attachment_ids" widget="many2many_binary" readonly="state != 'draft'" />
+            </group>
           </group>
           <!-- contract_info -->
           <group invisible="(state == 'draft' and draft_state != 'contract_info') or state == 'close_info'" string="Contract Info">
@@ -182,6 +187,7 @@
               <field name="duration" required="draft_state not in ['customer_info', 'vehicle_info']" readonly="state != 'draft'" />
               <field name="rental_plan" required="draft_state not in ['customer_info', 'vehicle_info']" readonly="state != 'draft'" />
               <field name="authorization_type" required="draft_state not in ['customer_info', 'vehicle_info']" readonly="state != 'draft'" />
+              <field name="authorization_expiry_date" required="draft_state not in ['customer_info', 'vehicle_info']"/>
               <field name="authorization_country_id" options="{'no_create': True, 'no_open': True}" required="draft_state not in ['customer_info', 'vehicle_info'] and authorization_type == 'external'" invisible="authorization_type != 'external'" readonly="state != 'draft'" />
               <field name="need_extra_driver" required="draft_state not in ['customer_info', 'vehicle_info']" readonly="state != 'draft'" />
               <field name="extra_driver_id" required="draft_state not in ['customer_info', 'vehicle_info'] and need_extra_driver == 'true'" invisible="need_extra_driver != 'true'" options="{'no_create': True, 'no_open': True}" context="{'form_view_ref': 'customer_info.view_partner_form_rental', 'search_by_mobile': True}" readonly="state != 'draft'" />
@@ -214,10 +220,11 @@
               <field name="duration" readonly="1" />
             </group>
             <group >
-              <field name="total_amount" />
-              <field name="discount_percentage" readonly="state != 'draft'" />
+              <field name="total_amount" string="Total Before Tax"/>
+              <field name="discount_percentage" readonly="state != 'draft'" invisible="1"/>
               <field name="tax_percentage" />
               <field name="tax_amount" />
+              <field name="total_amount_after_tax" />
               <field name="due_amount" />
               <field name="paid_amount" />
             </group>
@@ -330,6 +337,7 @@
             <group>
               <field name="in_branch_domain" invisible="1"/>
               <field name="in_branch_id" required="state == 'close_info'" readonly="state != 'close_info'" domain="in_branch_domain"/>
+              <field name="in_image_attachment_ids" widget="many2many_binary" readonly="state != 'close_info'" />
             </group>
           </group>
           <group invisible="state in ['draft', 'opened']" name="accident_damage">
@@ -507,11 +515,16 @@
       <list string="Rental Contracts">
         <field name="name" />
         <field name="partner_id" />
-        <field name="vehicle_id" />
+        <!-- <field name="vehicle_id" /> -->
+        <field name="license_plate" />
         <field name="pickup_date" />
         <field name="drop_off_date" />
         <field name="current_due_amount" />
         <field name="paid_amount" />
+        <field name="current_days" />
+        <field name="late_days" />
+        <field name="vehicle_branch_id" />
+        <field name="in_branch_id" />
         <field name="state" />
         <field name="source_contract" options="{'no_open': True, 'no_create': True}"/>
         <field name="vehicle_in_state" widget="badge"

@@ -11,7 +11,8 @@
                         <field name="lines">
                             <list editable="bottom">
                                 <field name="config_id" string="Item" domain="[('type', '=', parent.type), ('company_id', '=', parent.company_id)]" options="{'no_open': True, 'no_create': True}"/>
-                                <field name="price"/>
+                                <field name="edit_type" column_invisible="1"/>
+                                <field name="price" readonly="edit_type != 'allow'"/>
                                 <field name="name"/>
                                 <field name="tax_ids" widget="many2many_tags"/>
                             </list>

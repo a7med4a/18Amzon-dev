@@ -64,7 +64,7 @@
         <field name="model">rental.contract.late.log</field>
         <field name="priority">1000</field>
         <field name="arch" type="xml">
-            <form string="Create Late Log">
+            <form string="Create Extend Log">
                 <sheet>
                     <div class="oe_title">
                         <label for="rental_contract_id" class="oe_edit_only" />

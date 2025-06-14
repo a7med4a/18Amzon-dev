@@ -8,7 +8,12 @@
                     <field name="name"/>
                     <field name="type"/>
                     <field name="calculation"/>
-                    <field name="price"/>
+                    <field name="calculation_type" required="1"/>
+                    <field name="price" required="calculation_type == 'fixed'" invisible="calculation_type != 'fixed'"/>
+                    <field name="percentage" required="calculation_type == 'percentage'" invisible="calculation_type != 'percentage'"/>
+                    <field name="vehicle_model_ids" required="calculation_type == 'percentage'" invisible="calculation_type != 'percentage'" widget="many2many_tags"/>
+                    <field name="min_customer_age"/>
+                    <field name="max_customer_age"/>
                     <field name="contract_type"/>
                     <field name="company_id"/>
                 </list>

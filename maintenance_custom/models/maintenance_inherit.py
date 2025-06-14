@@ -22,15 +22,15 @@ class MaintenanceRequestInherit(models.Model):
     company_id = fields.Many2one('res.company', string='Company', readonly=True,
         default=lambda self: self.env.company)
     maintenance_type = fields.Selection([('preventive', 'Preventive'),('damage', 'Damage'),  ('accident', 'Accident')], string='Type', default="damage")
-    damage_number = fields.Integer(string='Damage Number')
-    accident_number = fields.Integer(string='Accident Number')
+    damage_number = fields.Float(string='Damage Number')
+    accident_number = fields.Float(string='Accident Number')
     stage_type = fields.Selection(related='stage_id.stage_type', string='Stage Type', readonly=True)
     worksheet_template_id = fields.Many2one(
         'worksheet.template', string="Worksheet Template",invisible=True,
         domain="[('res_model', '=', 'maintenance.request'), '|', ('company_id', '=', False), ('company_id', '=', company_id)]",
         help="Create templates for each type of request you have and customize their content with your own custom fields.")
     request_description = fields.Text('Request Description')
-    vehicle_id=fields.Many2one('fleet.vehicle',string='Vehicle',required=True)
+    vehicle_id=fields.Many2one('fleet.vehicle',string='Vehicle',required=False)
     model_id = fields.Many2one(comodel_name='fleet.vehicle.model',
                                string="Model", related='vehicle_id.model_id', store=True)
     vin_sn = fields.Char(string="Chassis Number",related='vehicle_id.vin_sn', store=True)
@@ -46,7 +46,15 @@ class MaintenanceRequestInherit(models.Model):
     transfer_count = fields.Integer(compute="_compute_transfer_count")
     route_branch_domain = fields.Binary(string="Route Branch domain", help="Dynamic domain used for Vehicle",compute="_compute_route_branch_domain")
     vehicle_domain = fields.Binary(string="Route Branch domain", help="Dynamic domain used for Vehicle",compute="_compute_vehicle_domain")
+    fields_readonly = fields.Boolean(
+        compute='_compute_fields_readonly'
+    )
 
+    @api.depends('stage_id')
+    def _compute_fields_readonly(self):
+        stage_0 = self.env.ref('maintenance.stage_0', raise_if_not_found=False)
+        for record in self:
+            record.fields_readonly = record.stage_id != stage_0 if stage_0 else True
 
     @api.depends("maintenance_team_id")
     def _compute_vehicle_domain(self):
@@ -64,6 +72,8 @@ class MaintenanceRequestInherit(models.Model):
                 domain.append(('destination_branch_id', '=', maintenance.maintenance_team_id.allowed_branch_id.id))
             if maintenance.vehicle_id:
                 domain.append(('vehicle_route_ids.fleet_vehicle_id', '=', maintenance.vehicle_id.id))
+            if not maintenance.vehicle_id:
+                domain = [('id', '=', 0)]
             maintenance.route_branch_domain = domain
 
     @api.depends('maintenance_job_order_ids')
@@ -99,10 +109,20 @@ class MaintenanceRequestInherit(models.Model):
         return super().create(vals_list)
     def action_repair_approval_request(self):
         for rec in self:
+            if not rec.vehicle_id:
+                raise ValidationError(_('Please select a vehicle'))
+            # if not rec.open_date:
+            #     raise ValidationError(_('Please Add a open Date for this request'))
+            rec.open_date = fields.Datetime.now()
+            current_shift = self.get_current_shift(rec.open_date)
+            if not current_shift:
+                raise ValidationError(_('No shift found at this time'))
             rec.stage_id = self.env.ref('maintenance.stage_1').id
     def action_confirm(self):
         for rec in self:
             #must be a vehicle to open
+            if not rec.vehicle_id:
+                raise ValidationError(_('Please select a vehicle'))
             if not rec.route_id:
                 raise ValidationError(_('Please select a route Branch for this vehicle'))
             if not rec.schedule_date:
@@ -148,7 +168,7 @@ class MaintenanceRequestInherit(models.Model):
             current_shift = self.get_current_shift(rec.request_close_date)
             if not current_shift:
                 raise ValidationError(_('No shift found at this time'))
-            rec.vehicle_id.state_id = self.env.ref('fleet_status.fleet_vehicle_state_ready_to_rent').id
+            rec.vehicle_id.state_id = self.env.ref('fleet_status.fleet_vehicle_state_under_maintenance').id
 
             rec.stage_id = self.env.ref('maintenance.stage_4').id
     def action_cancel(self):

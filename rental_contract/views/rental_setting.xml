@@ -30,6 +30,8 @@
                             <field name="tax_ids" widget="many2many_tags"/>
                             <field name="company_id" readonly="1"/>
                             <field name="type"/>
+                            <field name="in_attachment_image_required"/>
+                            <field name="out_attachment_image_required"/>
                         </group>
                     </group>
                 </sheet>

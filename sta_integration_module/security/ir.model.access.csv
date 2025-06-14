@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sta_contract,access_sta_contract,model_sta_contract,base.group_user,1,1,1,1
+access_sta_branch,access_sta_branch,model_sta_branch,base.group_user,1,1,1,0
+access_sta_rent_policy,access_sta_rent_policy,model_sta_rent_policy,base.group_user,1,1,1,0
+access_sta_send_otp_wizard,access_sta_send_otp_wizard,model_sta_send_otp_wizard,base.group_user,1,1,1,1
+access_sta_cancel_contract_wizard,access_sta_cancel_contract_wizard,model_sta_cancel_contract_wizard,base.group_user,1,1,1,1
+access_sta_suspend_contract_wizard,access_sta_suspend_contract_wizard,model_sta_suspend_contract_wizard,base.group_user,1,1,1,1
+access_sta_close_contract_wizard,access_sta_close_contract_wizard,model_sta_close_contract_wizard,base.group_user,1,1,1,1
+

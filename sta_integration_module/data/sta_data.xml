@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Default STA Configuration Data -->
+        <record id="sta_default_config" model="ir.config_parameter">
+            <field name="key">sta_integration.base_url</field>
+            <field name="value">https://tajeer-stg.api.elm.sa</field>
+        </record>
+
+        <record id="sta_default_production" model="ir.config_parameter">
+            <field name="key">sta_integration.is_production</field>
+            <field name="value">False</field>
+        </record>
+
+        <!-- Sample STA Branches (these will be replaced by actual sync) -->
+        <record id="sta_branch_sample_1" model="sta.branch">
+            <field name="name">Riyadh Main Branch</field>
+            <field name="sta_branch_id">10583</field>
+            <field name="city">Riyadh</field>
+            <field name="address">King Fahd Road, Riyadh, Saudi Arabia</field>
+            <field name="active">True</field>
+        </record>
+
+        <record id="sta_branch_sample_2" model="sta.branch">
+            <field name="name">Jeddah Branch</field>
+            <field name="sta_branch_id">10965</field>
+            <field name="city">Jeddah</field>
+            <field name="address">Prince Sultan Road, Jeddah, Saudi Arabia</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Sample STA Rent Policy -->
+        <record id="sta_rent_policy_sample_1" model="sta.rent.policy">
+            <field name="name">Standard Rental Policy</field>
+            <field name="sta_policy_id">77</field>
+            <field name="description">Standard rental policy for regular customers</field>
+            <field name="policy_type">Standard</field>
+            <field name="minimum_age">21</field>
+            <field name="maximum_rental_days">30</field>
+            <field name="deposit_amount">1000.0</field>
+            <field name="active">True</field>
+        </record>
+    </data>
+</odoo>
+

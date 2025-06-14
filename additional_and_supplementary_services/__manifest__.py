@@ -5,7 +5,7 @@
     'description': """""",
     'author': "Ahmed Amin",
     'version': '0.1',
-    'depends': ['base', 'rental_customization'],
+    'depends': ['fleet', 'rental_customization'],
     'data': [
         'security/ir.model.access.csv',
         'security/record_rule.xml',

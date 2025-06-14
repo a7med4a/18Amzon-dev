@@ -11,7 +11,8 @@ class RentalConfigSettings(models.Model):
     @api.model
     def default_get(self, fields_list):
         result = super().default_get(fields_list)
-        config = self.search([('type', '=', 'rental')], order="id desc", limit=1)
+        config = self.search([('type', '=', 'rental')],
+                             order="id desc", limit=1)
         if config:
             field_names = ['trip_days_account_id', 'trip_days_label',
                            'extra_km_account_id', 'extra_km_label']
@@ -30,19 +31,23 @@ class RentalConfigSettings(models.Model):
     extra_km_label = fields.Char(string="Extra KM Label", required=True)
     tax_ids = fields.Many2many('account.tax', string="Taxes", domain=[
                                ("type_tax_use", "=", "sale")])
+    in_attachment_image_required = fields.Integer('In Attachment Image Required',
+                                                  default=6, help="Number of images required for the rental contract to be considered valid.")
+    out_attachment_image_required = fields.Integer('Out Attachment Image Required',
+                                                   default=6, help="Number of images required for the rental contract to be considered valid.")
     company_id = fields.Many2one(
         'res.company', string='Company', default=lambda self: self.env.company)
     type = fields.Selection(
         string='Type',
         selection=[('rental', 'Rental'),
                    ('long_term', 'Long Term'), ],
-        default='rental',required=True)
-
+        default='rental', required=True)
 
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
-            config = self.search([('type', '=', vals['type'])], order="id desc", limit=1)
+            config = self.search(
+                [('type', '=', vals['type'])], order="id desc", limit=1)
             if config:
                 config.write(vals)
                 return config

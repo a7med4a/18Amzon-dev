@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- STA Rent Policy Tree View -->
+    <record id="view_sta_rent_policy_tree" model="ir.ui.view">
+        <field name="name">STA Rent Policy Tree</field>
+        <field name="model">sta.rent.policy</field>
+        <field name="arch" type="xml">
+            <list string="STA Rent Policies" decoration-muted="not active">
+                <field name="name"/>
+                <field name="sta_policy_id"/>
+                <field name="policy_type"/>
+                <field name="minimum_age"/>
+                <field name="maximum_rental_days"/>
+                <field name="deposit_amount" widget="monetary"/>
+                <field name="currency_id" invisible="1"/>
+                <field name="active" widget="boolean_toggle"/>
+                <field name="last_sync_date"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- STA Rent Policy Form View -->
+    <record id="view_sta_rent_policy_form" model="ir.ui.view">
+        <field name="name">STA Rent Policy Form</field>
+        <field name="model">sta.rent.policy</field>
+        <field name="arch" type="xml">
+            <form string="STA Rent Policy">
+                <header>
+                    <button name="action_sync_policies" string="Sync All Policies" type="object" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group name="policy_info">
+                            <field name="sta_policy_id"/>
+                            <field name="policy_type"/>
+                            <field name="active"/>
+                        </group>
+                        <group name="requirements">
+                            <field name="minimum_age"/>
+                            <field name="maximum_rental_days"/>
+                            <field name="deposit_amount"/>
+                            <field name="currency_id"/>
+                        </group>
+                    </group>
+                    <group name="description_info">
+                        <field name="description" placeholder="Policy description..."/>
+                    </group>
+                    <group name="sync_info">
+                        <field name="last_sync_date" readonly="1"/>
+                    </group>
+                    <notebook>
+                        <page string="Terms and Conditions" name="terms">
+                            <field name="terms_and_conditions" widget="html"/>
+                        </page>
+                        <page string="STA Response Log" name="response_log">
+                            <field name="sta_response_log" widget="ace" options="{'mode': 'json'}" readonly="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- STA Rent Policy Search View -->
+    <record id="view_sta_rent_policy_search" model="ir.ui.view">
+        <field name="name">STA Rent Policy Search</field>
+        <field name="model">sta.rent.policy</field>
+        <field name="arch" type="xml">
+            <search string="Search STA Rent Policies">
+                <field name="name"/>
+                <field name="sta_policy_id"/>
+                <field name="policy_type"/>
+                <separator/>
+                <filter string="Active" name="active" domain="[('active', '=', True)]"/>
+                <filter string="Inactive" name="inactive" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Policy Type" name="group_type" context="{'group_by': 'policy_type'}"/>
+                    <filter string="Minimum Age" name="group_age" context="{'group_by': 'minimum_age'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- STA Rent Policy Action -->
+    <record id="action_sta_rent_policy" model="ir.actions.act_window">
+        <field name="name">STA Rent Policies</field>
+        <field name="res_model">sta.rent.policy</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_sta_rent_policy_search"/>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No STA rent policies found!
+            </p>
+            <p>
+                Click "Sync All Policies" to synchronize rental policies from the Saudi Transport Authority system.
+            </p>
+        </field>
+    </record>
+</odoo>
+

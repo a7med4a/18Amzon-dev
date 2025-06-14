@@ -45,7 +45,7 @@ class ContractFinesDiscountWiz(models.TransientModel):
         }
 
         for line in self.lines:
-            price_unit = line.config_id.price
+            price_unit = line.price
             if self.rental_contract_id.tax_percentage:
                 price_unit = price_unit / \
                     (1 + (self.rental_contract_id.tax_percentage / 100))
@@ -62,7 +62,7 @@ class ContractFinesDiscountWiz(models.TransientModel):
             # Create a new line in the rental contract
             fines_discount_line_ids.append((0, 0, {
                 'name': line.name,
-                'price': line.config_id.price,
+                'price': line.price,
                 'fines_discount_id': line.config_id.id,
                 'type': self.type,
             }))
@@ -79,7 +79,7 @@ class ContractFinesDiscountWiz(models.TransientModel):
 
         account_move_id = self.env['account.move'].sudo().create(entry_vals)
         account_move_id.action_post()
-
+        self.rental_contract_id.reconcile_invoices_with_payments()
         self.rental_contract_id.write(
             {'fines_discount_line_ids': fines_discount_line_ids})
 
@@ -93,9 +93,18 @@ class ContractFinesDiscountWizLine(models.TransientModel):
     wizard_id = fields.Many2one(
         'rental.contract.fines.discount.wiz', string='Wizard Reference')
     config_id = fields.Many2one(
-        'contract.fines.discount.config', string='Configuration', required=True,domain="[('contract_type', '=', 'rental')]")
+        'contract.fines.discount.config', string='Configuration', required=True, domain="[('contract_type', '=', 'rental')]")
+    edit_type = fields.Selection(related='config_id.edit_type')
     price = fields.Float(
-        string='Price', related='config_id.price', readonly=True)
+        string='Price', readonly=False, compute='_compute_price', store=True)
     name = fields.Char(string='Description', required=True)
     tax_ids = fields.Many2many(
         'account.tax', string='taxes', related="config_id.tax_ids")
+
+    @api.depends('config_id')
+    def _compute_price(self):
+        """
+        Compute the price based on the configuration.
+        """
+        for line in self:
+            line.price = line.config_id.price if line.config_id else 0.0

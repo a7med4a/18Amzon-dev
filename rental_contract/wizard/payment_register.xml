@@ -5,6 +5,10 @@
             <field name="model">rental.contract.payment.register</field>
             <field name="arch" type="xml">
                 <form string="Pay">
+                    <header>
+                        <field name="rental_contract_id" invisible="1"/>
+                        <field name="contract_state" invisible="1"/>
+                    </header>
                     <sheet>
                         <group>
                             <group>
@@ -15,11 +19,11 @@
                                 <field name="payment_date" readonly="1"/>
                                 <label for="amount"/>
                                 <div name="amount_div" class="o_row">
-                                    <field name="amount" force_save="1"/>
+                                    <field name="amount" force_save="1" readonly="contract_state == 'draft'"/>
                                     <field name="currency_id" options="{'no_open': True, 'no_create': True}"/>
                                 </div>
                                 <field name="communication"/>
-                                <field name="payment_type_selection"/>
+                                <field name="payment_type_selection" readonly="contract_state in ['draft', 'opened']" force_save="1" />
                             </group>
                         </group>
                     </sheet>

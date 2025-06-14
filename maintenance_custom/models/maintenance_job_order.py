@@ -69,7 +69,10 @@ class MaintenanceJobOrder(models.Model):
     @api.depends('technicians_ids')
     def _compute_spare_parts_cost(self):
         for rec in self :
-            rec.spare_parts_cost = 0
+            picking_moves = rec.transfer_ids
+            print('picking_moves ===>',picking_moves)
+            stock_valuation_layer = picking_moves.move_ids.stock_valuation_layer_ids
+            rec.spare_parts_cost = sum((layer.value) for layer in stock_valuation_layer)
 
 
     def action_in_progress(self):
@@ -96,7 +99,11 @@ class MaintenanceJobOrder(models.Model):
 
     def action_set_to_under_process(self):
         for rec in self:
+            if rec.transfer_ids and any(rec.transfer_ids.filtered(lambda x: x.state != 'cancel')):
+                raise ValidationError(
+                    _('Transfer must be in cancelled before setting job order to under process'))
             rec.state='under_process'
+            rec.job_order_start_date =False
 
     def action_request_spare_parts(self):
         for rec in self:
@@ -173,9 +180,27 @@ class MaintenanceJobOrderComponent(models.Model):
     demand_qty=fields.Float(string="Demand")
     done_qty=fields.Float(string="Done Quantity")
     spart_part_request = fields.Selection(string='Spart part Request',selection=[('pending', 'Pending'),('done', 'Done'),],required=False,default="pending" )
-    picking_status = fields.Selection(string='Picking Status',selection=[('in_progress', 'In Progress'),('done', 'Done'),('cancelled', 'Cancelled'),],required=False,default="in_progress" )
+    picking_status = fields.Selection(string='Picking Status',selection=[('in_progress', 'In Progress'),('done', 'Done'),('cancelled', 'Cancelled'),],required=False,default="in_progress", compute="_compute_picking_status" )
     product_category_domain = fields.Binary(string="Product Category domain", help="Dynamic domain used for Product Category",compute="_compute_product_category_domain")
 
+    def _compute_picking_status(self):
+        print("_compute_picking_status ====*******")
+        for component in self:
+            picking_moves = component.maintenance_job_order_id.maintenance_request_id.transfer_ids
+            print("picking_moves ==> ",picking_moves)
+            print("picking_moves ==> ",component.maintenance_job_order_id.transfer_ids)
+            if picking_moves:
+                if all([move.state == 'done' for move in picking_moves]):
+                    component.picking_status = 'done'
+                    component.write({'done_qty':component.demand_qty})
+                elif all([move.state == 'cancel' for move in picking_moves]):
+                    component.picking_status = 'cancelled'
+                else:
+                    print("else 1")
+                    component.picking_status = 'in_progress'
+            else:
+                print("else 2")
+                component.picking_status = 'in_progress'
     @api.depends('maintenance_job_order_id','maintenance_job_order_id.maintenance_workshop_id','maintenance_job_order_id.maintenance_workshop_id.workshop_product_category_ids',)
     def _compute_product_category_domain(self):
         for component in self:

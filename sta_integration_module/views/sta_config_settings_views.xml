@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- STA Configuration Settings View -->
+    <record id="view_sta_config_settings" model="ir.ui.view">
+        <field name="name">STA Integration Settings</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <div class="app_settings_block" data-string="STA Integration" string="STA Integration" data-key="sta_integration">
+                    <h2>Saudi Transport Authority Integration</h2>
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="sta_app_id"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="sta_app_id"/>
+                                <div class="text-muted">
+                                    Application ID provided by Saudi Transport Authority
+                                </div>
+                                <field name="sta_app_id" placeholder="e.g., c49fda9f"/>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="sta_app_key"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="sta_app_key"/>
+                                <div class="text-muted">
+                                    Application Key provided by Saudi Transport Authority
+                                </div>
+                                <field name="sta_app_key" placeholder="e.g., 0a0ecdd133cbda8414c36b1d9f8f8f51"/>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="sta_authorization_token"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="sta_authorization_token"/>
+                                <div class="text-muted">
+                                    Authorization token for STA API (Basic Auth encoded)
+                                </div>
+                                <field name="sta_authorization_token" placeholder="e.g., Basic YXBpVXNlcjEzMTM4MjQ6QWFAMTIzNDU2"/>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="sta_base_url"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="sta_base_url"/>
+                                <div class="text-muted">
+                                    Base URL for STA API endpoints
+                                </div>
+                                <field name="sta_base_url"/>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="sta_is_production"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="sta_is_production"/>
+                                <div class="text-muted">
+                                    Check if using production environment, uncheck for staging
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 o_setting_box">
+                            <div class="o_setting_right_pane">
+                                <button name="test_sta_connection" string="Test Connection" type="object" class="btn-primary"/>
+                                <div class="text-muted">
+                                    Test connection to STA API with current settings
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>
+

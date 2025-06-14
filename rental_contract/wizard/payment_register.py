@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import re
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 
@@ -31,8 +32,12 @@ class PaymentRegister(models.TransientModel):
     payment_type_selection = fields.Selection(
         string='Payment Type Selection',
         selection=[('advance', 'مقدم'), ('extension', 'تمديد'), ('close', 'إغلاق'), ('debit', 'سداد مديونية'), ('extension_offline', 'تمديد بدون منصة'),
-                   ('suspended_payment', 'سداد عقد معلق'), ],
-        required=True, )
+                   ('suspended_payment', 'سداد عقد معلق'), ('fine', 'غرامة'), ('closing_batch', 'دفعة اغلاق')],
+        required=True, compute='_compute_payment_type_selection', store=True)
+    rental_contract_id = fields.Many2one(
+        'rental.contract', string='Rental Contract')
+    contract_state = fields.Selection(
+        related='rental_contract_id.state', string='State', readonly=True)
 
     @api.depends('journal_id')
     def _compute_payment_method_line_id(self):
@@ -42,10 +47,29 @@ class PaymentRegister(models.TransientModel):
             rec.payment_method_line_id = available_payment_method_line_ids[0]\
                 if available_payment_method_line_ids else False
 
+    @api.depends('rental_contract_id.state')
+    def _compute_payment_type_selection(self):
+        for rec in self:
+            if rec.rental_contract_id.state == 'draft':
+                rec.payment_type_selection = 'advance'
+            elif rec.rental_contract_id.state == 'opened':
+                rec.payment_type_selection = 'fine'
+            elif rec.rental_contract_id.state == 'close_info':
+                rec.payment_type_selection = 'closing_batch'
+            elif rec.rental_contract_id.state == 'delivered_debit':
+                rec.payment_type_selection = 'debit'
+            elif rec.rental_contract_id.state == 'delivered_pending':
+                rec.payment_type_selection = 'suspended_payment'
+            else:
+                rec.payment_type_selection = False
+
     def _get_due_amount(self):
         contract = self.env['rental.contract'].browse(
             self._context.get('active_id'))
-        return contract.current_due_amount
+        if contract.state == 'draft':
+            return contract.due_amount
+        else:
+            return contract.current_due_amount
 
     def action_register_payment(self):
         contract = self.env['rental.contract'].browse(
@@ -72,6 +96,7 @@ class PaymentRegister(models.TransientModel):
         payment.action_validate()
         if payment:
             payment.action_post()
+        contract.reconcile_invoices_with_payments()
         return {
             'name': _('Payment'),
             'view_mode': 'form',

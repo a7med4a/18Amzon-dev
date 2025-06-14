@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- STA Branch Tree View -->
+    <record id="view_sta_branch_tree" model="ir.ui.view">
+        <field name="name">STA Branch Tree</field>
+        <field name="model">sta.branch</field>
+        <field name="arch" type="xml">
+            <list string="STA Branches" decoration-muted="not active">
+                <field name="name"/>
+                <field name="sta_branch_id"/>
+                <field name="odoo_branch_id"/>
+                <field name="city"/>
+                <field name="phone"/>
+                <field name="active" widget="boolean_toggle"/>
+                <field name="last_sync_date"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- STA Branch Form View -->
+    <record id="view_sta_branch_form" model="ir.ui.view">
+        <field name="name">STA Branch Form</field>
+        <field name="model">sta.branch</field>
+        <field name="arch" type="xml">
+            <form string="STA Branch">
+                <header>
+                    <button name="action_sync_branches" string="Sync All Branches" type="object" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group name="branch_info">
+                            <field name="sta_branch_id"/>
+                            <field name="odoo_branch_id"/>
+                            <field name="active"/>
+                        </group>
+                        <group name="contact_info">
+                            <field name="city"/>
+                            <field name="phone"/>
+                            <field name="email"/>
+                        </group>
+                    </group>
+                    <group name="address_info">
+                        <field name="address" placeholder="Branch address..."/>
+                    </group>
+                    <group name="sync_info">
+                        <field name="last_sync_date" readonly="1"/>
+                    </group>
+                    <notebook>
+                        <page string="STA Response Log" name="response_log">
+                            <field name="sta_response_log" widget="ace" options="{'mode': 'json'}" readonly="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- STA Branch Search View -->
+    <record id="view_sta_branch_search" model="ir.ui.view">
+        <field name="name">STA Branch Search</field>
+        <field name="model">sta.branch</field>
+        <field name="arch" type="xml">
+            <search string="Search STA Branches">
+                <field name="name"/>
+                <field name="sta_branch_id"/>
+                <field name="city"/>
+                <field name="odoo_branch_id"/>
+                <separator/>
+                <filter string="Active" name="active" domain="[('active', '=', True)]"/>
+                <filter string="Inactive" name="inactive" domain="[('active', '=', False)]"/>
+                <separator/>
+                <filter string="Mapped to Odoo" name="mapped" domain="[('odoo_branch_id', '!=', False)]"/>
+                <filter string="Not Mapped" name="not_mapped" domain="[('odoo_branch_id', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="City" name="group_city" context="{'group_by': 'city'}"/>
+                    <filter string="Odoo Branch" name="group_odoo_branch" context="{'group_by': 'odoo_branch_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- STA Branch Action -->
+    <record id="action_sta_branch" model="ir.actions.act_window">
+        <field name="name">STA Branches</field>
+        <field name="res_model">sta.branch</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_sta_branch_search"/>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No STA branches found!
+            </p>
+            <p>
+                Click "Sync All Branches" to synchronize branches from the Saudi Transport Authority system.
+            </p>
+        </field>
+    </record>
+</odoo>
+

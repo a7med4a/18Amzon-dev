@@ -24,3 +24,7 @@ class ContractFinesDiscountConfiguration(models.Model):
         selection=[('rental', 'Rental'),
                    ('long_term', 'Long Term'), ],
         default='rental')
+    edit_type = fields.Selection([
+        ('allow', 'Allow'),
+        ('disallow', 'Disallow')
+    ], string='Edit Type', default='disallow')

@@ -17,6 +17,14 @@ class AdditionalSupplementaryServices(models.Model):
     @api.constrains('type')
     def _check_internal_authorization_type_duplicate(self):
         for rec in self.filtered(lambda service: service._name == 'additional.supplementary.services'):
-            if self.search([('type', '=', 'internal_authorization'), ('id', '!=', rec.id)]):
+            if rec.type == 'internal_authorization' and self.search([('type', '=', 'internal_authorization'), ('id', '!=', rec.id), ('company_id', '=', rec.company_id.id)]):
                 raise ValidationError(
                     _("Only One Record allowed to be Internal Authorization"))
+            if rec.type == 'external_authorization' and self.search([('type', '=', 'external_authorization'), ('id', '!=', rec.id), ('company_id', '=', rec.company_id.id)]):
+                raise ValidationError(
+                    _("Only One Record allowed to be External Authorization"))
+
+    @api.onchange('type')
+    def _onchange_type(self):
+        if self.type == 'external_authorization':
+            self.calculation = 'once'

@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_police_alert_group_police_alert_request,police.alert,model_police_alert,legal_department.group_police_alert_request,1,0,1,0
+access_police_alert_group_tamem_process,police.alert,model_police_alert,legal_department.group_tamem_process,1,1,1,1
+access_police_alert_decision_group_police_alert_request,police.alert.decision,model_police_alert_decision,legal_department.group_police_alert_request,1,0,0,0
+access_police_alert_decision_group_tamem_process,police.alert.decision,model_police_alert_decision,legal_department.group_tamem_process,1,1,1,1
+

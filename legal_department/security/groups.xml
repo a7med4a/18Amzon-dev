@@ -1,0 +1,22 @@
+<odoo>
+    
+    <record model="ir.module.category" id="module_category_legal_department">
+        <field name="name">Legal Department</field>
+        <field name="parent_id" ref="legal_department.module_legal_department"/>
+        <field name="sequence">50</field>
+    </record>
+
+    <record id="group_police_alert_request" model="res.groups">
+        <field name="name">Police Alert Request</field>
+        <field name="category_id" ref="legal_department.module_category_legal_department"/>
+        <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+    </record>
+
+    <record id="group_tamem_process" model="res.groups">
+        <field name="name">Tamem Process</field>
+        <field name="category_id" ref="legal_department.module_category_legal_department"/>
+        <field name="implied_ids" eval="[(4, ref('legal_department.group_police_alert_request'))]"/>
+        <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+    </record>
+
+</odoo>

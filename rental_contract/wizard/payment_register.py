@@ -32,7 +32,7 @@ class PaymentRegister(models.TransientModel):
     payment_type_selection = fields.Selection(
         string='Payment Type Selection',
         selection=[('advance', 'مقدم'), ('extension', 'تمديد'), ('close', 'إغلاق'), ('debit', 'سداد مديونية'), ('extension_offline', 'تمديد بدون منصة'),
-                   ('suspended_payment', 'سداد عقد معلق'), ('fine', 'غرامة'), ('closing_batch', 'دفعة اغلاق')],
+                   ('suspended_payment', 'سداد عقد معلق'), ('fine', 'غرامة'), ('closing_batch', 'دفعة اغلاق'), ('refund', 'مردودات')],
         required=True, compute='_compute_payment_type_selection', store=True)
     rental_contract_id = fields.Many2one(
         'rental.contract', string='Rental Contract')
@@ -51,7 +51,7 @@ class PaymentRegister(models.TransientModel):
     def _compute_payment_type_selection(self):
         for rec in self:
             if rec.rental_contract_id.state == 'draft':
-                rec.payment_type_selection = 'advance'
+                rec.payment_type_selection = 'advance' if rec.rental_contract_id.due_amount > 0 else 'refund'
             elif rec.rental_contract_id.state == 'opened':
                 rec.payment_type_selection = 'fine'
             elif rec.rental_contract_id.state == 'close_info':
@@ -77,12 +77,14 @@ class PaymentRegister(models.TransientModel):
         if not self.payment_method_line_id:
             raise ValidationError(
                 _("Please Configure Incoming Payments in Selected Journal"))
+        if self.amount == 0:
+            raise UserError(_("The amount must be greater than zero."))
         payment = self.env['account.payment'].create({
-            'payment_type': 'inbound',
+            'payment_type': 'inbound' if self.amount > 0 else 'outbound',
             'partner_type': 'customer',
             'partner_id': contract.partner_id.id,
             'journal_id': self.journal_id.id,
-            'amount': self.amount,
+            'amount': self.amount if self.amount > 0 else -self.amount,
             'currency_id': self.currency_id.id,
             'memo': self.communication,
             'rental_contract_id': contract.id,

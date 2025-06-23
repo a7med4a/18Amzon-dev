@@ -62,6 +62,7 @@
                                 <field name="vin_sn" readonly="1"/>
                                 <field name="maintenance_workshop_id" readonly="1" options="{'no_open': True, 'no_create': True}"/>
                                 <field name="workshop_type" readonly="1"/>
+                                <field name="procurement_group_id" readonly="0"/>
                                 <field name="note"/>
                             </group>
                             <group>

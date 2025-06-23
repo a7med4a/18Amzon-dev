@@ -25,17 +25,19 @@ function formatBranchIds(bids, separator) {
 }
 
 function computeActiveBranchIds(bids) {
-    const { user_branches } = session;
-    let activeBranchIds = bids || [];
-    const availableBranchesFromSession = user_branches.allowed_branches;
-    const notReallyAllowedBranches = activeBranchIds.filter(
-        (id) => !(id in availableBranchesFromSession)
-    );
-    if (!activeBranchIds.length || (activeBranchIds.length && (activeBranchIds[0] === NaN || activeBranchIds[0] === 0)) ) {
+        const { user_branches } = session;
+        let activeBranchIds = bids || [];
+        const availableBranchesFromSession =
+        user_branches.allowed_branches;
+
+        activeBranchIds = activeBranchIds.filter(
+        (id) => id in availableBranchesFromSession
+        );
+        if (!activeBranchIds.length) {
         activeBranchIds = [user_branches.current_branch];
-    }
-    return activeBranchIds;
-}
+        }
+        return activeBranchIds;
+        }
 
 function getBranchIds() {
     let bids;
@@ -112,17 +114,22 @@ export const BranchService = {
         if (!Array.isArray(activeBranchIds)) activeBranchIds = [];
         if (!Array.isArray(activeCompanyIds)) activeCompanyIds = [];
         const selectValidBranch = () => {
-            const currentBranchId = activeBranchIds[0];
-            const currentBranch = currentBranchId && allowedBranches[currentBranchId] ? allowedBranches[currentBranchId] : null;
-            if (!currentBranch || !activeCompanyIds.includes(currentBranch.company)) {
-                const validBranch = allowedBranchesesWithAncestors.find(branch =>
-                    activeCompanyIds.includes(branch.company)
-                );
-                return validBranch ? [validBranch.id] : [];
-            }
-            return [currentBranchId];
-        };
-        activeBranchIds = selectValidBranch();
+    // احتفظ بجميع الفروع النشطة إذا كانت صالحة
+    const validBranches = activeBranchIds.filter(branchId => {
+        const branch = allowedBranches[branchId];
+        return branch && activeCompanyIds.includes(branch.company);
+    });
+
+    if (validBranches.length === 0) {
+        // إذا لم يكن هناك فروع صالحة، ارجع إلى الفرع الحالي للمستخدم أو أول فرع متاح
+        const defaultBranch = allowedBranchesesWithAncestors.find(branch =>
+            activeCompanyIds.includes(branch.company)
+        );
+        return defaultBranch ? [defaultBranch.id] : [];
+    }
+    return validBranches;
+};
+activeBranchIds = selectValidBranch();
         const updateBrowserData = () => {
             const bidsHash = formatBranchIds(activeBranchIds, BIDS_HASH_SEPARATOR);
             const cidsHash = formatBranchIds(activeCompanyIds, CIDS_HASH_SEPARATOR);

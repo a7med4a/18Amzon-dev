@@ -18,6 +18,20 @@ class Users(models.Model):
         branches_count = self._branches_count()
         for user in self:
             user.branches_count = branches_count
+    # @api.depends("company_ids")
+    # def _compute_allowed_branch_ids(self):
+    #     print("*************",self.env.context)
+    #     print("*************",self.env.branches)
+    #     for user in self:
+    #         user.allowed_branch_ids = [
+    #             b.id for b in self.env["res.branch"].search([]) if b.id in self.env.context.get("allowed_branch_ids", [])
+    #         ]
+    #
+    # allowed_branch_ids = fields.Many2many(
+    #     "res.branch",
+    #     string="Allowed Branches (from context)",
+    #     compute="_compute_allowed_branch_ids",
+    # )
 
     branch_id = fields.Many2one('res.branch', string='Branch', required=True, ondelete='restrict', default=lambda self: self.env.branch.id, help='The default branch for this user.', domain="[('company_id','in',company_ids)]")
     branch_ids = fields.Many2many('res.branch', 'res_branches_users_rel', 'user_b_id', 'ubid', string='Branches', ondelete='restrict', default=lambda self: self.env.branches.ids, domain="[('company_id','in',company_ids)]")

@@ -45,9 +45,8 @@ class MaintenanceShift(models.Model):
     @api.constrains('hour_from', 'hour_to')
     def _check_hours(self):
         for shift in self:
-            if  shift.dayofweek != '4' :
-                if shift.hour_from >= shift.hour_to :
-                    raise ValidationError(_("Start time must be before end time."))
-                if shift.hour_from < 0 or shift.hour_from > 24 or shift.hour_to < 0 or shift.hour_to > 24:
-                    raise ValidationError(_("Hours must be between 0 and 24."))
+            if shift.hour_from >= shift.hour_to :
+                raise ValidationError(_("Start time must be before end time."))
+            if shift.hour_from < 0 or shift.hour_from > 24 or shift.hour_to < 0 or shift.hour_to > 24:
+                raise ValidationError(_("Hours must be between 0 and 24."))
 

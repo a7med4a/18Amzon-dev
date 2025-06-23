@@ -1,0 +1,17 @@
+<odoo>
+
+
+    <menuitem id="legal_department_root_menu"
+        name="Legal Department"
+        web_icon="legal_department,static/description/icon.png"
+        sequence="15" />
+    
+    <menuitem
+        id="police_alert_request_menu"
+        name="Police Alert Request"
+        action="police_alert_action"
+        groups="group_tamem_process"
+        parent="legal_department_root_menu"
+        sequence="10"/>
+
+</odoo>

@@ -1,0 +1,42 @@
+<odoo>
+    <record id="fleet_vehicle_view_kanban" model="ir.ui.view">
+        <field name="name">fleet.vehicle.police.alert.view.kanban</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_kanban"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='vehicle_properties']" position="before">
+                <field name="police_alert_state" widget="badge"
+                       decoration-warning="police_alert_state == 'alert'"
+                       decoration-danger="police_alert_state == 'blacklisted'"/> 
+            </xpath>
+        </field>
+    </record>
+
+    <record id="inherit_view_id_inherit_module_name" model="ir.ui.view">
+        <field name="name">fleet.vehicle.police.alert.view.tree</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='tag_ids']" position="after">
+                <field name="police_alert_state" widget="badge"
+                       decoration-warning="police_alert_state == 'alert'"
+                       decoration-danger="police_alert_state == 'blacklisted'"/> 
+            </xpath>
+        </field>
+    </record>
+
+
+    <record id="alerted_blacklisted_vehicles_action" model="ir.actions.act_window">
+        <field name="name">Alerted And Blacklisted Vehicles</field>
+        <field name="res_model">fleet.vehicle</field>
+        <field name="view_mode">kanban,list,form,pivot,activity</field>
+        <field name="domain">[('police_alert_state', '!=', False)]</field>
+    </record>
+
+    <menuitem
+        id="alerted_blacklisted_vehicles_menu"
+        name="Alerted And Blacklisted Vehicles"
+        action="alerted_blacklisted_vehicles_action"
+        parent="fleet.menu_root"
+        sequence="20"/>
+</odoo>

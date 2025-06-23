@@ -8,7 +8,7 @@
                 <field name="account_id"/>
             </xpath>
             <xpath expr="//field[@name='calculation']" position="attributes">
-                <attribute name="readonly">type == 'external_authorization'</attribute>
+                <attribute name="readonly">type in ['external_authorization', 'internal_authorization']</attribute>
                 <attribute name="force_save">1</attribute>
             </xpath>
         </field>

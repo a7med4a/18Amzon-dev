@@ -80,7 +80,8 @@ class ResPartner(models.Model):
         recordes = super(ResPartner, self).create(values)
         for rec in recordes:
             rec.mobile = rec.mobile2
-        recordes._check_version_no()
+        if 'version_no' in values:
+            recordes._check_version_no()
         return recordes
 
     def write(self, values):
@@ -88,7 +89,8 @@ class ResPartner(models.Model):
         if 'mobile2' in values:
             values['mobile'] = values['mobile2']
         res = super(ResPartner, self).write(values)
-        self._check_version_no()
+        if 'version_no' in values:
+            self._check_version_no()
         return res
 
     @api.onchange('mobile2')
@@ -126,7 +128,6 @@ class ResPartner(models.Model):
             else:
                 rec.age = 0
 
-    @api.constrains('version_no')
     def _check_version_no(self):
         for record in self:
             if record.version_no < 1:

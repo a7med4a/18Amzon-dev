@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="res_partner_branch_rule_id" model="ir.rule">
+            <field name="name">Partners Single Branch (Active Branch)</field>
+            <field name="model_id" ref="fleet.model_fleet_vehicle"/>
+            <field name="domain_force">[("branch_id", "in", user.branches.ids)]</field>
+            <field name="global" eval="True"/>
+        </record>
+
+
+
+    </data>
+</odoo>

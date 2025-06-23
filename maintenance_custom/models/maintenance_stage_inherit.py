@@ -18,7 +18,7 @@ class MaintenanceStageInherit(models.Model):
                    ('cancelled', 'Cancelled'), ('rejected', 'Rejected'), ],
         required=True, default='new')
 
-    @api.constrains('stage_type')
+    # @api.constrains('stage_type')
     def _check_hours(self):
         for stage in self:
             if len(self.search([('stage_type','=',stage.stage_type)]))>1 :

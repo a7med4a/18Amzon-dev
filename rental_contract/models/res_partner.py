@@ -27,6 +27,6 @@ class Partner(models.Model):
             'type': 'ir.actions.act_window',
             'res_model': 'rental.contract',
             'domain': [('partner_id', '=', self.id)],
-            'view_mode': 'list,form',
+            'view_mode': 'list',
             'context': {'create': 0, 'edit': 0}
         }

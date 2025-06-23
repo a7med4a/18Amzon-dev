@@ -1,0 +1,49 @@
+<odoo>
+
+    <record id="view_rental_contract_form" model="ir.ui.view">
+        <field name="name">rental.contract.view.form.inherit</field>
+        <field name="model">rental.contract</field>
+        <field name="inherit_id" ref="rental_contract.view_rental_contract_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="view_create_police_alert_popup" type="object" invisible="state != 'opened'" string="Create Police Alert" class="oe_highlight" groups="legal_department.group_police_alert_request"/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button class="oe_stat_button" name="view_related_police_alert_requests" type="object" icon="fa-exclamation-triangle" invisible="police_alert_request_count == 0">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value">
+                        <field name="police_alert_request_count" />
+                        </span>
+                        <span class="o_stat_text">Police Alert Requests</span>
+                    </div>
+                </button>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_rental_contract_tree" model="ir.ui.view">
+        <field name="name">rental.contract.police.alert.tree</field>
+        <field name="model">rental.contract</field>
+        <field name="inherit_id" ref="rental_contract.view_rental_contract_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='vehicle_in_state']" position="after">
+                <field name="police_alert_state" widget="badge"
+                       decoration-warning="police_alert_state == 'alert'"
+                       decoration-danger="police_alert_state == 'blacklisted'"/> 
+            </xpath>
+        </field>
+    </record>
+
+    <record id='rental_contract_view_kanban' model='ir.ui.view'>
+        <field name="name">rental.contract.kanban</field>
+        <field name="model">rental.contract</field>
+        <field name="inherit_id" ref="rental_contract.rental_contract_view_kanban"/>
+        <field name="arch" type="xml">
+            <xpath expr="//main" position="inside">
+                <field name="police_alert_state" widget="badge"
+                       decoration-warning="police_alert_state == 'alert'"
+                       decoration-danger="police_alert_state == 'blacklisted'"/> 
+            </xpath>
+        </field>
+    </record>
+</odoo>

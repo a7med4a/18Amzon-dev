@@ -388,6 +388,9 @@ class RentalContract(models.Model):
 
     # Configuration Fields
 
+    # ----------> Refund Fields
+    hide_refund_button = fields.Boolean(
+        string='Hide Refund Button', compute="_compute_hide_refund_button")
     #   ----------> Model Pricing Fields
     model_pricing_vehicle_brand_id = fields.Many2one(
         comodel_name='fleet.vehicle.model.brand', string='Vehicle Model Brand')
@@ -563,12 +566,11 @@ class RentalContract(models.Model):
             else:
                 record.daily_authorization_country_rate = 0.0
 
-    @api.depends('daily_rate', 'daily_additional_services_rate', 'daily_supplementary_services_rate', 'daily_authorization_country_rate')
+    @api.depends('daily_rate', 'daily_additional_services_rate', 'daily_supplementary_services_rate')
     def _compute_total_per_day(self):
         for record in self:
             record.total_per_day = record.daily_rate + record.daily_additional_services_rate + \
-                record.daily_supplementary_services_rate + \
-                record.daily_authorization_country_rate
+                record.daily_supplementary_services_rate
 
     @api.depends('additional_service_ids', 'supplementary_service_ids')
     def _compute_one_time_services(self):
@@ -605,8 +607,7 @@ class RentalContract(models.Model):
     @api.depends('total_amount', 'tax_percentage')
     def _compute_tax_amount(self):
         for record in self.filtered(lambda l: l.tax_percentage):
-            record.tax_amount = record.total_amount - (
-                record.total_amount / (1 + (record.tax_percentage / 100)))
+            record.tax_amount = record.total_amount * record.tax_percentage / 100
 
     @api.depends('total_amount', 'paid_amount')
     def _compute_due_amount(self):
@@ -617,7 +618,8 @@ class RentalContract(models.Model):
     def _compute_payment_amount(self):
         for record in self:
             record.paid_amount = sum(record.account_payment_ids.filtered(
-                lambda p: p.state == 'paid').mapped('amount'))
+                lambda p: p.state == 'paid' and p.payment_type == 'inbound').mapped('amount')) - sum(record.account_payment_ids.filtered(
+                    lambda p: p.state == 'paid' and p.payment_type == 'outbound').mapped('amount'))
 
     @api.depends('account_payment_ids')
     def _compute_payment_count(self):
@@ -806,6 +808,16 @@ class RentalContract(models.Model):
         for rec in self:
             rec.late_log_count = len(rec.late_log_ids)
 
+    @api.depends('draft_state', 'state', 'due_amount', 'current_due_amount')
+    def _compute_hide_refund_button(self):
+        for rec in self:
+            if rec.state == 'draft' and rec.draft_state == 'financial_info' and rec.due_amount < 0.0:
+                rec.hide_refund_button = False
+            elif rec.state != 'draft' and rec.current_due_amount < 0.0:
+                rec.hide_refund_button = False
+            else:
+                rec.hide_refund_button = True
+
     def _compute_in_branch_domain(self):
         for rec in self:
             domain = [
@@ -910,7 +922,7 @@ class RentalContract(models.Model):
             while (rec.account_payment_ids.move_id.line_ids.filtered(lambda l: not l.reconciled and l.account_type == 'asset_receivable') and rec.account_move_ids.line_ids.filtered(lambda l: l.move_id.move_type == 'out_invoice' and not l.reconciled and l.account_type == 'asset_receivable')):
                 oldest_unreconciled_invoice_line = rec.account_move_ids.line_ids.filtered(
                     lambda l: l.move_id.move_type == 'out_invoice' and not l.reconciled and l.account_type == 'asset_receivable').sorted(key=lambda l: l.date)[0]
-                oldest_unreconciled_payment_line = rec.account_payment_ids.move_id.line_ids.filtered(
+                oldest_unreconciled_payment_line = rec.account_payment_ids.filtered(lambda payment: payment.payment_type == 'inbound').move_id.line_ids.filtered(
                     lambda l: not l.reconciled and l.account_type == 'asset_receivable').sorted(key=lambda l: l.date)[0]
                 try:
                     (oldest_unreconciled_invoice_line +
@@ -1193,7 +1205,7 @@ class RentalContract(models.Model):
 
         invoices = self.env['account.move'].create(invoice_vals_list)
         invoices.action_post()
-        self.reconcile_invoices_with_payments()
+        invoices.rental_contract_id.reconcile_invoices_with_payments()
 
     def create_closing_invoice(self, drop_off_date):
         invoice_vals_list = []
@@ -1376,6 +1388,7 @@ class RentalContract(models.Model):
         elif self.draft_state == 'vehicle_info':
             self.check_model_pricing()
             self.check_customer_age()
+            self._check_out_image_attachment_ids()
             self.assign_model_pricing_fields()
             self.set_additional_supplementary_lines()
             self.draft_state = 'contract_info'
@@ -1436,6 +1449,7 @@ class RentalContract(models.Model):
         self.write({'drop_off_date': drop_off_date})
 
     def action_close(self):
+        self._check_in_image_attachment_ids()
         self._create_closing_actions()
         accident_obj = self.env['fleet.accident'].sudo()
         damage_obj = self.env['fleet.damage'].sudo()

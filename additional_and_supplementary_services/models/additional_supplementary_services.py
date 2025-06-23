@@ -31,9 +31,12 @@ class AdditionalSupplementaryServices(models.Model):
         'res.company', string='Company', default=lambda self: self.env.company,
         domain=lambda self: [('id', 'in', self.env.companies.ids)])
 
-    @api.constrains('price')
-    def _check_price(self):
+    @api.constrains('price', 'calculation_type', 'percentage')
+    def _check_price_percentage(self):
         for rec in self:
-            if rec.price <= 0:
+            if rec.calculation_type == 'fixed' and rec.price <= 0:
                 raise ValidationError(
                     _('The Price of Service must be more than 0 '))
+            elif rec.calculation_type == 'percentage' and (rec.percentage <= 0 or rec.percentage > 100):
+                raise ValidationError(
+                    _('The Percentage of Service must be more than 0 and less than or equal to 100'))

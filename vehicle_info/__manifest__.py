@@ -10,6 +10,7 @@
     'depends': ['hr_fleet', 'fleet_master_configuration'],
     'data': [
         'data/analytic_plan.xml',
+        'security/record_rule.xml',
         # 'security/ir.model.access.csv',
         'views/res_config_settings.xml',
         'views/analytic_plan.xml',

@@ -23,8 +23,8 @@
                                 <list editable="bottom">
                                     <field name="name"/>
                                     <field name="dayofweek"/>
-                                    <field name="hour_from" widget="float_time" readonly="dayofweek =='4'" required="dayofweek !='4'"/>
-                                    <field name="hour_to" widget="float_time" required="dayofweek !='4'"/>
+                                    <field name="hour_from" widget="float_time" readonly="type =='day_off'" required="type !='day_off'"/>
+                                    <field name="hour_to" widget="float_time" readonly="type =='day_off'" required="type !='day_off'"/>
                                     <field name="duration_hours" widget="float_time"/>
                                     <field name="type"/>
                                 </list>

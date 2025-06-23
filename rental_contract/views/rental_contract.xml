@@ -12,7 +12,8 @@
           <button name="next_draft_state" type="object" class="oe_highlight" invisible="state != 'draft' or draft_state == 'financial_info'" icon="fa-arrow-circle-o-right" string="Next" />
           <button name="action_open" type="object" invisible="state != 'draft' or draft_state != 'financial_info'" string="Open" class="oe_highlight" confirm="Are you sure you want to open this contract?" />
           <!-- After draft -->
-          <button name="action_pay" type="object" invisible="draft_state != 'financial_info'" string="Pay" class="oe_highlight" />
+          <button name="action_pay" type="object" invisible="draft_state != 'financial_info' or (draft_state == 'financial_info' and state == 'draft' and due_amount &lt; 0)" string="Pay" class="oe_highlight" />
+          <button name="action_pay" type="object" invisible="hide_refund_button" string="Refund" class="oe_highlight" />
           <!-- Open Buttons -->
           <button name="%(rental_contract.rental_contract_fines_wiz_action)d" type="action" invisible="state in ['draft']" string="Add Fines" class="oe_highlight" />
           <button name="%(rental_contract.rental_contract_discount_wiz_action)d" type="action" invisible="state in ['draft']" string="Add Discount Voucher" class="oe_highlight" />
@@ -29,6 +30,7 @@
           <!-- State Fields -->
           <field name="draft_state" widget="statusbar" readonly="0" invisible="state != 'draft'" />
           <field name="state" widget="statusbar" statusbar_visible="opened,close_info,closed" invisible="state == 'draft'" />
+          <field name="hide_refund_button" invisible="1" />
         </header>
         <sheet>
           <!-- button box -->
@@ -431,63 +433,63 @@
                 <span> KM </span>
               </div>
 
-              <label for="display_current_days" string="Current Duration" invisible="state != 'opened'"/>
-              <div invisible="state != 'opened'">
+              <label for="display_current_days" string="Current Duration" invisible="state not in ['opened', 'close_info']"/>
+              <div invisible="state not in ['opened', 'close_info']">
                 <field name="display_current_days" class="oe_inline" />
                 <span> Days </span>
               </div>
 
-              <label for="current_days" string="Current Duration" invisible="state in ['draft', 'opened']"/>
-              <div invisible="state in ['draft', 'opened']">
+              <label for="current_days" string="Current Duration" invisible="state in ['draft', 'opened', 'close_info']"/>
+              <div invisible="state in ['draft', 'opened', 'close_info']">
                 <field name="current_days" class="oe_inline" readonly="1" />
                 <span> Days </span>
               </div>
 
-              <label for="display_total_free_km" string="Total Free KM" invisible="state != 'opened'" />
-              <div invisible="state != 'opened'">
+              <label for="display_total_free_km" string="Total Free KM" invisible="state not in ['opened', 'close_info']" />
+              <div invisible="state not in ['opened', 'close_info']">
                 <field name="display_total_free_km" class="oe_inline" />
                 <span> KM </span>
               </div>
 
-              <label for="total_free_km" string="Total Free KM"  invisible="state in ['draft', 'opened']"/>
-              <div invisible="state in ['draft', 'opened']">
+              <label for="total_free_km" string="Total Free KM"  invisible="state in ['draft', 'opened', 'close_info']"/>
+              <div invisible="state in ['draft', 'opened', 'close_info']">
                 <field name="total_free_km" class="oe_inline" readonly="1"/>
                 <span> KM </span>
               </div>
 
-              <label for="display_consumed_km" string="Consumed KM" invisible="state != 'opened'"/>
-              <div  invisible="state != 'opened'">
+              <label for="display_consumed_km" string="Consumed KM" invisible="state not in ['opened', 'close_info']"/>
+              <div  invisible="state not in ['opened', 'close_info']">
                 <field name="display_consumed_km" class="oe_inline" />
                 <span> KM </span>
               </div>
 
 
-              <label for="consumed_km" string="Consumed KM" invisible="state in ['draft', 'opened']"/>
-              <div invisible="state in ['draft', 'opened']">
+              <label for="consumed_km" string="Consumed KM" invisible="state in ['draft', 'opened', 'close_info']"/>
+              <div invisible="state in ['draft', 'opened', 'close_info']">
                 <field name="consumed_km" class="oe_inline" readonly="1" />
                 <span> KM </span>
               </div>
 
-              <label for="display_total_extra_km" string="Total Extra KM" invisible="state != 'opened'" />
-              <div  invisible="state != 'opened'">
+              <label for="display_total_extra_km" string="Total Extra KM" invisible="state not in ['opened', 'close_info']" />
+              <div  invisible="state not in ['opened', 'close_info']">
                 <field name="display_total_extra_km" class="oe_inline" />
                 <span> KM </span>
               </div>
 
-              <label for="total_extra_km" string="Total Extra KM" invisible="state in ['draft', 'opened']" />
-              <div invisible="state in ['draft', 'opened']">
+              <label for="total_extra_km" string="Total Extra KM" invisible="state in ['draft', 'opened', 'close_info']" />
+              <div invisible="state in ['draft', 'opened', 'close_info']">
                 <field name="total_extra_km" class="oe_inline" readonly="1"/>
                 <span> KM </span>
               </div>
 
-              <field name="display_current_km_extra_amount" invisible="state != 'opened'"/>
-              <field name="current_km_extra_amount" invisible="state in ['draft', 'opened']" readonly="1"/>
+              <field name="display_current_km_extra_amount" invisible="state not in ['opened', 'close_info']"/>
+              <field name="current_km_extra_amount" invisible="state in ['draft', 'opened', 'close_info']" readonly="1"/>
 
             </group>
           </group>
         </sheet>
         <footer>
-          <button name="set_current_km_extra_amount" string="Calculate" type="object" class="btn-primary" invisible="state != 'opened'" />
+          <button name="set_current_km_extra_amount" string="Calculate" type="object" class="btn-primary" invisible="state not in ['opened', 'close_info']" />
           <button string="Cancel" class="btn-secondary" special="cancel" />
         </footer>
       </form>

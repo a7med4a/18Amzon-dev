@@ -22,8 +22,8 @@ class MaintenanceRequestInherit(models.Model):
     company_id = fields.Many2one('res.company', string='Company', readonly=True,
         default=lambda self: self.env.company)
     maintenance_type = fields.Selection([('preventive', 'Preventive'),('damage', 'Damage'),  ('accident', 'Accident')], string='Type', default="damage")
-    damage_number = fields.Float(string='Damage Number')
-    accident_number = fields.Float(string='Accident Number')
+    damage_number = fields.Integer(string='Damage Number')
+    accident_number = fields.Integer(string='Accident Number')
     stage_type = fields.Selection(related='stage_id.stage_type', string='Stage Type', readonly=True)
     worksheet_template_id = fields.Many2one(
         'worksheet.template', string="Worksheet Template",invisible=True,

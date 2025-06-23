@@ -26,5 +26,5 @@ class AdditionalSupplementaryServices(models.Model):
 
     @api.onchange('type')
     def _onchange_type(self):
-        if self.type == 'external_authorization':
+        if self.type in ['external_authorization', 'internal_authorization']:
             self.calculation = 'once'

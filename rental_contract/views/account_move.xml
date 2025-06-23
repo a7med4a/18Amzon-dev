@@ -8,7 +8,7 @@
             <xpath expr="//sheet" position="inside">
                 <field name="rental_contract_id" invisible="1"/>
             </xpath>
-            <xpath expr="//field[@name='partner_id']" position="after">
+            <xpath expr="//field[@name='partner_id']/.." position="after">
                 <field name="is_individual_contract" readonly="1" widget="boolean_toggle"/> 
             </xpath>
             <xpath expr="//field[@name='invoice_line_ids']//list//field[@name='name']" position="after">

@@ -1,0 +1,20 @@
+<odoo>
+
+    <record id="view_res_branch_form_inherit" model="ir.ui.view">
+        <field name="name">res.branch.form.inherit</field>
+        <field name="model">res.branch</field>
+        <field name="inherit_id" ref="fleet_master_configuration.fleet_branch_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='accounting_tab']" position="after">
+                <page string="Inventory">
+                    <group>
+                        <group>
+                            <field name="route_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+</odoo>

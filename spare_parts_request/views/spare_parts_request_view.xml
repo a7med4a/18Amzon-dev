@@ -1,0 +1,104 @@
+<odoo>
+    <record id="view_spare_parts_request_list" model="ir.ui.view">
+        <field name="name">spare.parts.request.list</field>
+        <field name="model">spare.parts.request</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="company_id"/>
+                <field name="request_date"/>
+                <field name="create_uid" string="Requested By"/>
+                <field name="state" widget="badge" decoration-success="state == 'done'" decoration-danger="state == 'cancelled'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_spare_parts_request_form" model="ir.ui.view">
+        <field name="name">spare.parts.request.form</field>
+        <field name="model">spare.parts.request</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_reset_draft" string="Reset To Draft" type="object"
+                            confirm="Are you sure you want to reset back to draft state ?"
+                            class="btn-primary" invisible="state not in  ('cancelled')"/>
+                    <button name="action_in_progress" string="Request Spare Parts" type="object"
+                            confirm="Are you sure you want to transfer to in progress state ?"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_done" string="Close" type="object"
+                            class="btn-success" invisible="state != 'in_progress'"
+                            confirm="Are you sure you want to Close Spare parts Request ?"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            confirm="Are you sure you want to Cancel Spare Parts Request ?"
+                            class="btn-secondary" invisible="state not in ('draft')"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box" invisible="not transfer_ids">
+                        <button name="action_view_transfers" icon="fa-bars" type="object"
+                                help="Show Transfers">
+                            <div class="o_stat_widget">
+                                <span class="o_stat_text"> Transfers</span>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="SPR Info">
+                            <field name="create_uid" options="{'no_open': True, 'no_create': True}"/>
+                            <field name="route_id" readonly="state != 'draft'" options="{'no_open': True, 'no_create': True}"/>
+                            <field name="location_src_id" options="{'no_open': True, 'no_create': True}"/>
+                            <field name="location_dest_id" options="{'no_open': True, 'no_create': True}"/>
+                            <field name="request_notes" readonly="state != 'draft'"/>
+                            <field name="procurement_group_id" invisible="1"/>
+                            <field name="transfer_ids" widget="many2many_tags" invisible="1"/>
+                        </group>
+                        <group string="Request Info">
+                            <field name="company_id" options="{'no_open': True, 'no_create': True}"/>
+                            <field name="request_date"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="SPR lines">
+                            <field name="spare_parts_line_ids" readonly="state != 'draft'">
+                                <list editable="bottom">
+                                    <field name="product_category_domain" column_invisible="1"/>
+                                    <field name="product_category_id" optional='show'
+                                           options="{'no_open': True, 'no_create': True}"/>
+                                    <field name="product_id" domain="[('categ_id', '=',product_category_id)]"
+                                           optional='show' options="{'no_open': True, 'no_create': True}"
+                                           readonly="not product_category_id"/>
+                                    <field name="uom_id" optional='show'
+                                           options="{'no_open': True, 'no_create': True}"/>
+                                    <field name="demand_qty" optional='show'/>
+                                    <field name="done_qty" optional='show' readonly="1"/>
+                                    <field name="spart_part_request" optional='show' widget="badge"
+                                           decoration-success="spart_part_request == 'done'"/>
+                                    <field name="picking_status" optional='show'/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_spare_parts_request" model="ir.actions.act_window">
+        <field name="name">Spare Parts Request Action</field>
+        <field name="res_model">spare.parts.request</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_spare_parts_request_root" name="Spare Parts"/>
+
+    <menuitem id="menu_spare_parts_request_data" name="SP Request"
+              parent="menu_spare_parts_request_root" action="action_spare_parts_request" sequence="1"/>
+
+</odoo>

@@ -1,0 +1,9 @@
+<odoo>
+    <data>
+        <record id="spare_parts_request_rule" model="ir.rule">
+            <field name="name">Spare Parts Request Active Company</field>
+            <field name="model_id" ref="model_spare_parts_request"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+    </data>
+</odoo>

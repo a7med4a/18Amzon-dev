@@ -41,7 +41,9 @@ class MaintenanceRequestInherit(models.Model):
     request_close_date = fields.Datetime(string='Close Date', required=False,copy=False)
     request_duration = fields.Float(string="Duration", compute="_compute_duration")
     maintenance_job_order_ids= fields.One2many(comodel_name='maintenance.job.order',inverse_name='maintenance_request_id',)
+    maintenance_external_job_order_ids= fields.One2many(comodel_name='maintenance.external.job.order',inverse_name='maintenance_request_id')
     maintenance_job_order_count=fields.Integer(compute="_compute_maintenance_job_order_count")
+    maintenance_external_job_order_count=fields.Integer(compute="_compute_maintenance_external_job_order_count")
     transfer_ids = fields.One2many(comodel_name='stock.picking', inverse_name='maintenance_request_id', string="Transfer")
     transfer_count = fields.Integer(compute="_compute_transfer_count")
     route_branch_domain = fields.Binary(string="Route Branch domain", help="Dynamic domain used for Vehicle",compute="_compute_route_branch_domain")
@@ -72,6 +74,11 @@ class MaintenanceRequestInherit(models.Model):
     def _compute_maintenance_job_order_count(self):
         for maintenance in self:
             maintenance.maintenance_job_order_count=len(maintenance.maintenance_job_order_ids.ids)
+
+    @api.depends('maintenance_external_job_order_ids')
+    def _compute_maintenance_external_job_order_count(self):
+        for maintenance in self:
+            maintenance.maintenance_external_job_order_count=len(maintenance.maintenance_external_job_order_ids.ids)
 
     @api.depends('transfer_ids')
     def _compute_transfer_count(self):
@@ -182,7 +189,16 @@ class MaintenanceRequestInherit(models.Model):
             'name': _('Job Order'),
             'res_model': 'maintenance.job.order.wizard',
             'view_mode': 'form',
-            'context': {'default_maintenance_request_id': self.id},
+            'context': {'default_maintenance_request_id': self.id,'default_job_order_type': 'internal'},
+            'target': 'new',
+        }
+    def action_create_external_job_order(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('External Job Order'),
+            'res_model': 'maintenance.job.order.wizard',
+            'view_mode': 'form',
+            'context': {'default_maintenance_request_id': self.id,'default_job_order_type': 'external'},
             'target': 'new',
         }
 
@@ -194,6 +210,16 @@ class MaintenanceRequestInherit(models.Model):
             'view_mode': 'list,form',
             'domain':[('id','in',self.maintenance_job_order_ids.ids)]
         }
+
+    def view_maintenance_external_job_order(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('External Job Order'),
+            'res_model': 'maintenance.external.job.order',
+            'view_mode': 'list,form',
+            'domain':[('id','in',self.maintenance_external_job_order_ids.ids)]
+        }
+
     def view_maintenance_transfer(self):
         return {
             'type': 'ir.actions.act_window',
@@ -209,10 +235,13 @@ class MaintenanceRequestInherit(models.Model):
 class MaintenanceTeamInherit(models.Model):
     _inherit = 'maintenance.team'
 
-    route_id = fields.Many2one('stock.route')
+    route_id = fields.Many2one('stock.route',string='Internal Route')
+    external_route_id = fields.Many2one('stock.route',string='External Route')
     maintenance_shift_id = fields.Many2one('maintenance.shift.name')
+    delivery_operation_id = fields.Many2one('stock.picking.type')
     allowed_branch_id = fields.Many2one('res.branch' ,domain=[('branch_type','=' ,'workshop')])
-
+    allowed_branch_ids = fields.Many2many('res.branch' ,domain=[('branch_type','=' ,'rental')])
+    is_quick_maintenance = fields.Boolean(string='Quick Maintenance',required=False,default=False)
 
 class BranchRoute(models.Model):
     _inherit = 'branch.route'

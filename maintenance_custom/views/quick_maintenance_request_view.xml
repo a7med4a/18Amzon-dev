@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="quick_maintenance_request_view_form" model="ir.ui.view">
+        <field name="name">quick_maintenance_request_view_form</field>
+        <field name="model">quick.maintenance.request</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_request_maintenance" string="Request Maintenance" type="object"
+                            confirm="Are you sure you want to request Maintenance ?"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_approve" string="Approve" type="object"
+                            class="btn-success" invisible="state != 'waiting_approve'"
+                            groups="maintenance_custom.group_quick_maintenance_request"
+                            confirm="Are you sure you want to approve Request ?"/>
+                    <button name="create_stock_transfer" string="Deliver Spare Parts" type="object"
+                            class="btn-primary" invisible="state != 'opened'"
+                            confirm="Are you sure you want to close Request ?"/>
+                    <button name="action_close" string="Close" type="object"
+                            class="btn-success" invisible="state != 'opened'"
+                            confirm="Are you sure you want to close Request ?"/>
+                    <button name="action_reset_draft" string="Reset To Draft" type="object"
+                            confirm="Are you sure you want to reset back to draft state ?"
+                            class="btn-primary" invisible="state not in  ('opened')"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            confirm="Are you sure you want to Cancel Spare Parts Request ?"
+                            class="btn-secondary" invisible="state not in ('draft','waiting_approve')"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box" invisible="not transfer_ids">
+                        <button name="action_view_transfers" icon="fa-bars" type="object"
+                                help="Show Transfers">
+                            <div class="o_stat_widget">
+                                <span class="o_stat_text"> Transfers</span>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="company_id" options="{'no_open': True, 'no_create': True}" invisible="state != 'draft'"/>
+                            <field name="branch_id" options="{'no_open': True, 'no_create': True}" invisible="state != 'draft'"/>
+                            <field name="maintenance_team_id" options="{'no_open': True, 'no_create': True}" invisible="state != 'draft'" domain="maintenance_team_branch_domain"/>
+                            <field name="member_ids" widget="many2many_tags" invisible="state != 'draft'"/>
+                            <field name="request_description" readonly="state != 'draft'" invisible="state != 'draft'"/>
+                            <field name="technicians_ids" widget="many2many_tags" invisible="state != 'waiting_approve'"/>
+                            <field name="open_date" invisible="state != 'opened'"/>
+                            <field name="close_date" invisible="state != 'repaired'"/>
+                            <field name="duration" invisible="state != 'repaired'"/>
+                        </group>
+                        <group>
+                            <field name="vehicle_branch_domain" invisible="1"/>
+                            <field name="vehicle_id" options="{'no_open': True, 'no_create': True}"
+                                   invisible="state != 'draft'" domain="vehicle_branch_domain"/>
+                            <field name="create_uid" string="Request Date" invisible="state != 'draft'"/>
+                            <field name="maintenance_team_branch_domain" invisible="1"/>
+                            <field name="schedule_date" invisible="state != 'waiting_approve'"/>
+                            <field name="technicians_cost" invisible="state != 'repaired'"/>
+                            <field name="spare_parts_cost" invisible="state != 'repaired'"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Spart Parts lines">
+                            <field name="component_ids" readonly="state not in ('draft','waiting_approve')">
+                                <list editable="bottom">
+                                    <field name="product_category_id" optional='show'
+                                           options="{'no_open': True, 'no_create': True}"/>
+                                    <field name="product_id" domain="[('categ_id', '=',product_category_id)]"
+                                           optional='show' options="{'no_open': True, 'no_create': True}"
+                                           readonly="not product_category_id"/>
+                                    <field name="uom_id" optional='show'
+                                           options="{'no_open': True, 'no_create': True}"/>
+                                    <field name="demand_qty" optional='show'/>
+                                    <field name="done_qty" optional='show' readonly="1"/>
+                                    <field name="spart_part_request" optional='show' widget="badge"
+                                           decoration-success="spart_part_request == 'done'"/>
+                                    <field name="picking_status" optional='show'/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    
+    <record id="quick_maintenance_request_view_list" model="ir.ui.view">
+        <field name="name">quick_maintenance_request_view_form</field>
+        <field name="model">quick.maintenance.request</field>
+        <field name="arch" type="xml">
+            <list string="Quick Maintenance Request">
+                <field name="name"/>
+                <field name="company_id"/>
+                <field name="branch_id"/>
+                <field name="maintenance_team_id"/>
+                <field name="technicians_ids" widget="many2many_tags"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+    
+    <record id="quick_maintenance_request_action" model="ir.actions.act_window">
+        <field name="name">Quick Maintenance Request</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">quick.maintenance.request</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- This Menu Item must have a parent and an action -->
+    <menuitem id="quick_maintenance_request_menu" name="Quick Maintenance Request" parent="maintenance.menu_m_request" action="quick_maintenance_request_action"/>
+
+    <record id="quick_maintenance_request" model="ir.sequence">
+        <field name="name">Quick Maintenance Request Sequence</field>
+        <field name="code">quick.maintenance.request.seq</field>
+        <field name="prefix">QMR/</field>
+        <field name="padding">5</field>
+    </record>
+</odoo>

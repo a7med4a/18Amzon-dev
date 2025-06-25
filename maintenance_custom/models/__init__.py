@@ -7,3 +7,6 @@ from . import maintenance_workshop
 from . import maintenance_job_order
 from . import fleet_vehicle_inherit
 from . import preventive_maintenance
+from . import quick_maintenance_request
+from . import maintenance_external_job_order
+from . import vehicle_route_inherit

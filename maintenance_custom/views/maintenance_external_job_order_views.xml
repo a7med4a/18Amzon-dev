@@ -1,11 +1,11 @@
 <odoo>
     <data>
 
-        <record id="maintenance_job_order_view_list" model="ir.ui.view">
-            <field name="name">maintenance_job_order_view_list</field>
-            <field name="model">maintenance.job.order</field>
+        <record id="maintenance_external_job_order_view_list" model="ir.ui.view">
+            <field name="name">maintenance_external_job_order_view_list</field>
+            <field name="model">maintenance.external.job.order</field>
             <field name="arch" type="xml">
-                <list string="maintenance_job_order_list" create="0">
+                <list string="maintenance_external_job_order_list" create="0">
                     <field name="name"/>
                     <field name="maintenance_request_id"/>
                     <field name="repair_task_ids" widget="many2many_tags"/>
@@ -21,29 +21,54 @@
             </field>
         </record>
 
-        <record id="view_maintenance_job_order_form" model="ir.ui.view">
-            <field name="name">maintenance.job.order.form</field>
-            <field name="model">maintenance.job.order</field>
+        <record id="view_maintenance_external_job_order_form" model="ir.ui.view">
+            <field name="name">maintenance.external.job.order.form</field>
+            <field name="model">maintenance.external.job.order</field>
             <field name="arch" type="xml">
                 <form create="0">
                     <header>
-                        <button name="action_in_progress" string="Start" type="object"
-                                confirm="Are you sure you want to transfer to start job order ?"
-                                class="btn-primary" invisible="state != 'under_process'"/>
-                        <button name="action_repaired" string="Done" type="object"
-                                class="btn-success" invisible="state != 'in_progress'"
+                        <button name="action_approve" string="Approve" type="object"
+                                groups="maintenance_custom.group_approve_external_job_order"
+                                confirm="Are you sure you want to approve external job order ?"
+                                class="btn-primary" invisible="state != 'waiting_approve'"/>
+                        <button name="action_repaired" string="Close" type="object"
+                                class="btn-success" invisible="state != 'waiting_check_in'"
                                 confirm="Are you sure you finished all repairs?"/>
+                        <button name="action_return" string="Return" type="object"
+                                class="btn-primary" invisible="state != 'transfer_to_workShop'"/>
                         <button name="action_request_spare_parts" string="Request Spare Parts" type="object"
-                                class="btn-primary" invisible="state != 'in_progress'"/>
+                                class="btn-primary" invisible="state != 'waiting_transfer_to_workshop'"/>
+                        <button name="action_transfer_to_workShop" string="Transfer To WorkShop" type="object"
+                                class="btn-primary" invisible="state != 'waiting_transfer_to_workshop'"/>
+                        <button name="action_waiting_transfer_to_workshop" string="Start" type="object"
+                                class="btn-primary" invisible="state != 'approved'"/>
+                        <button name="action_reject" string="Reject" type="object"
+                                groups="maintenance_custom.group_approve_external_job_order"
+                                confirm="Are you sure you want to reject external Job order ?"
+                                class="btn-secondary" invisible="state not in ('waiting_approve')"/>
                         <button name="action_cancelled" string="Cancel" type="object"
-                                confirm="Are you sure you want to Cancel this Job order ?"
-                                class="btn-secondary" invisible="state not in ('cancelled','under_process')"/>
-                        <button name="action_set_to_under_process" string="Reset To Under Process" type="object"
-                                confirm="Are you sure you want to reset back to under Process state ?"
-                                class="btn-secondary" invisible="state not in  ('in_progress','cancelled')"/>
+                                confirm="Are you sure you want to Cancel external Job order ?"
+                                class="btn-secondary" invisible="state not in ('approved','waiting_transfer_to_workshop')"/>
+                        <button name="action_set_to_under_process" string="Reset To Draft" type="object"
+                                confirm="Are you sure you want to reset back to waiting approve state ?"
+                                class="btn-secondary" invisible="state not in  ('reject','cancelled')"/>
                         <field name="state" widget="statusbar"/>
                     </header>
                     <sheet>
+                        <div name="button_box" class="oe_button_box">
+                            <button class="oe_stat_button" type="object" name="view_exit_permits" icon="fa-book"
+                                invisible="not vehicle_route_ids">
+                                <div class="o_stat_info">
+                                    <span class="o_stat_text">Exit Permits</span>
+                                </div>
+                            </button>
+                            <button class="oe_stat_button" type="object" name="view_entry_permits" icon="fa-book"
+                                    invisible="not vehicle_route_ids or state in ('waiting_approve','approved','waiting_transfer_to_workshop')">
+                                <div class="o_stat_info">
+                                    <span class="o_stat_text">Entry Permits</span>
+                                </div>
+                            </button>
+                        </div>
                         <div class="oe_title">
                             <label for="name" class="oe_edit_only"/>
                             <h1>
@@ -78,7 +103,7 @@
                         </group>
                         <notebook>
                             <page string="Spart Parts lines">
-                                <field name="component_ids" readonly="state not in ('under_process','in_progress')">
+                                <field name="component_ids" readonly="state not in ('waiting_approve')">
                                     <list editable="bottom">
                                         <field name="product_category_domain" column_invisible="1"/>
                                         <field name="product_category_id" domain="product_category_domain" optional='show' options="{'no_open': True, 'no_create': True}"/>
@@ -98,22 +123,21 @@
             </field>
         </record>
 
-        <record id="action_maintenance_job_order" model="ir.actions.act_window">
-            <field name="name">Maintenance Job Order Sequence</field>
-            <field name="res_model">maintenance.job.order</field>
+        <record id="action_maintenance_external_job_order" model="ir.actions.act_window">
+            <field name="name">Maintenance External Job Order Sequence</field>
+            <field name="res_model">maintenance.external.job.order</field>
             <field name="view_mode">list,form</field>
         </record>
 
         <!-- This Menu Item must have a parent and an action -->
-        <menuitem id="menu_maintenance_job_order" name="Job Orders" parent="hr.menu_hr_root" action="action_maintenance_job_order" sequence="94"/>
-        <menuitem id="menu_maintenance_job_order" name="Internal Job Orders" parent="maintenance.menu_m_request" action="action_maintenance_job_order" sequence="94"/>
+        <menuitem id="menu_maintenance_external_job_order" name="External Job Orders" parent="maintenance.menu_m_request" action="action_maintenance_external_job_order" sequence="94"/>
 
 
 
-        <record id="seq_maintenance_job_order" model="ir.sequence">
-            <field name="name">Maintenance Job Order Sequence</field>
-            <field name="code">maintenance.job.order.seq</field>
-            <field name="prefix">MJO/</field>
+        <record id="seq_maintenance_external_job_order" model="ir.sequence">
+            <field name="name">Maintenance External Job Order Sequence</field>
+            <field name="code">maintenance.external.job.order.seq</field>
+            <field name="prefix">MEJO/</field>
             <field name="padding">5</field>
         </record>
 

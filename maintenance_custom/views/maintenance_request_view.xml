@@ -132,7 +132,9 @@
                 <button string="Repair Approval Request" name="action_repair_approval_request" class="btn-primary"
                         type="object"
                         invisible="stage_type != 'new' or maintenance_type not in ('damage', 'accident')"/>
-                <button string="Create Job Order" name="action_create_job_order" class="btn-primary" type="object"
+                <button string="Create Internal Job Order" name="action_create_job_order" class="btn-primary" type="object"
+                        invisible="stage_type != 'opened'"/>
+                <button string="Create External Job Order" name="action_create_external_job_order" class="btn-primary" type="object"
                         invisible="stage_type != 'opened'"/>
                 <button string="Validate" name="action_confirm" class="btn-success" type="object"
                         invisible="stage_type != 'under_approval'"/>
@@ -156,7 +158,16 @@
                             <span class="o_stat_value">
                                 <field name="maintenance_job_order_count"/>
                             </span>
-                            <span class="o_stat_text">Job Orders</span>
+                            <span class="o_stat_text">Internal Job Orders</span>
+                        </div>
+                    </button>
+                    <button class="oe_stat_button" name="view_maintenance_external_job_order" type="object"
+                            icon="fa-bars" invisible="maintenance_external_job_order_count == 0">
+                        <div class="o_stat_info">
+                            <span class="o_stat_value">
+                                <field name="maintenance_external_job_order_count"/>
+                            </span>
+                            <span class="o_stat_text">External Job Orders</span>
                         </div>
                     </button>
                     <button class="oe_stat_button" name="view_maintenance_transfer" type="object"
@@ -193,9 +204,12 @@
         <field name="inherit_id" ref="maintenance.maintenance_team_view_tree"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='company_id']" position="after">
-                <field name="route_id" options="{ 'no_open': True,'no_create': True}"/>
+                <field name="is_quick_maintenance"/>
+                <field name="allowed_branch_ids" widget="many2many_tags" invisible="not is_quick_maintenance"/>
+                <field name="delivery_operation_id" options="{ 'no_open': True,'no_create': True}" invisible="not is_quick_maintenance"/>
+                <field name="route_id" options="{ 'no_open': True,'no_create': True}" invisible="is_quick_maintenance"/>
                 <field name="maintenance_shift_id" options="{ 'no_open': True,'no_create': True}"/>
-                <field name="allowed_branch_id" options="{ 'no_open': True,'no_create': True}"/>
+                <field name="allowed_branch_id" options="{ 'no_open': True,'no_create': True}" invisible="is_quick_maintenance"/>
             </xpath>
         </field>
     </record>
@@ -206,9 +220,13 @@
         <field name="inherit_id" ref="maintenance.maintenance_team_view_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='company_id']" position="after">
-                 <field name="route_id" options="{ 'no_open': True,'no_create': True}"/>
+                <field name="is_quick_maintenance"/>
+                <field name="allowed_branch_ids" widget="many2many_tags" invisible="not is_quick_maintenance"/>
+                <field name="delivery_operation_id" options="{ 'no_open': True,'no_create': True}" invisible="not is_quick_maintenance"/>
+                 <field name="route_id" options="{ 'no_open': True,'no_create': True}" invisible="is_quick_maintenance"/>
+                 <field name="external_route_id" options="{ 'no_open': True,'no_create': True}" invisible="not is_quick_maintenance"/>
                 <field name="maintenance_shift_id" options="{ 'no_open': True,'no_create': True}"/>
-                <field name="allowed_branch_id" options="{ 'no_open': True,'no_create': True}"/>
+                <field name="allowed_branch_id" options="{ 'no_open': True,'no_create': True}" invisible="is_quick_maintenance"/>
             </xpath>
         </field>
     </record>

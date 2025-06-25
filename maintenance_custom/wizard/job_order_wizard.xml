@@ -8,8 +8,9 @@
                     <sheet>
                         <group>
                             <group>
+                                <field name="job_order_type" invisible="1"/>
                                 <field name="maintenance_request_id" readonly="1"/>
-                                <field name="maintenance_workshop_id" options="{'no_open': True, 'no_create': True}"/>
+                                <field name="maintenance_workshop_id" options="{'no_open': True, 'no_create': True}" domain="[('type','=',job_order_type)]"/>
                                 <field name="repair_task_ids" domain="[('maintenance_workshop_id', '=', maintenance_workshop_id)]" widget="many2many_tags" options="{'no_open': True, 'no_create': True}"/>
                                 <field name="technicians_ids" domain="[('is_technical', '=',True)]" widget="many2many_tags" options="{'no_open': True, 'no_create': True}"/>
                             </group>

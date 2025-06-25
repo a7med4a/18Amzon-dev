@@ -16,6 +16,7 @@ class VehicleRouts(models.Model):
         'fleet.vehicle', string='Vehicle', required=True)
     branch_route_id = fields.Many2one(
         'branch.route', string='Branch Route', ondelete="cascade")
+    maintenance_external_job_order_id = fields.Many2one('maintenance.external.job.order', string='External Job order')
     destination_type = fields.Selection(
         related='branch_route_id.destination_type', store=True)
     source_branch_id = fields.Many2one(
@@ -151,6 +152,12 @@ class VehicleRouts(models.Model):
     entry_vehicle_status = fields.Selection(
         selection=VEHICLE_STATUS,
         string='Entry Vehicle Status', tracking=True)
+    side_1 = fields.Binary(string="Side 1", readonly=False)
+    side_2 = fields.Binary(string="Side 2", readonly=False)
+    side_3 = fields.Binary(string="Side 3", readonly=False)
+    side_4 = fields.Binary(string="Side 4", readonly=False)
+    side_5 = fields.Binary(string="Side 5", readonly=False)
+    side_6 = fields.Binary(string="Side 6", readonly=False)
 
     @api.depends('is_new_vehicle')
     def _compute_fleet_domain(self):
@@ -178,7 +185,7 @@ class VehicleRouts(models.Model):
         for rec in self:
             exist_running_vehicle_route = self.sudo().search([('branch_route_id.state', 'not in', [
                 'entry_done', 'cancel']), ('id', '!=', rec.id), ('fleet_vehicle_id', '=', rec.fleet_vehicle_id.id)], limit=1)
-            if exist_running_vehicle_route:
+            if exist_running_vehicle_route and not rec.is_external_job_order:
                 raise ValidationError(
                     _(f"Vehicle {rec.fleet_vehicle_id.display_name} exist in branch route {exist_running_vehicle_route.branch_route_id.name} which is in {exist_running_vehicle_route.branch_route_id.state} state"))
 
@@ -237,6 +244,7 @@ class VehicleRouts(models.Model):
                     'entry_in_transfer_date': fields.Datetime.now()
                 })
 
+
     def action_exit_done(self):
         self.write({
             'state': 'exit_done',
@@ -244,6 +252,7 @@ class VehicleRouts(models.Model):
             'exist_in_transfer_date': fields.Datetime.now()
         })
         self.branch_route_id.action_exit_done()
+
 
     def action_branch_exit_done(self):
         in_transfer_fleet_status = self.env['fleet.vehicle.state'].search(
@@ -294,6 +303,7 @@ class VehicleRouts(models.Model):
                 'state_id': in_transfer_fleet_status.id
             })
     # Entry Functions
+
 
     def action_entry_done(self):
         self._check_odometer_validity()

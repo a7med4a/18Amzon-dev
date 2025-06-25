@@ -13,12 +13,12 @@ DAYS_reverse = {'Monday': '0',
                 'Sunday': '6'}
 
 
-class MaintenanceJobOrder(models.Model):
-    _name = 'maintenance.job.order'
-    _description = "Maintenance Job Order"
+class MaintenanceExternalJobOrder(models.Model):
+    _name = 'maintenance.external.job.order'
+    _description = "Maintenance External Job Order"
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
-    name = fields.Char('Job Order Number', readonly=True, tracking=True)
+    name = fields.Char('External Job Order Number', readonly=True, tracking=True)
     maintenance_request_id = fields.Many2one(comodel_name='maintenance.request', string='Maintenance Request Number',
                                              required=True, tracking=True)
     repair_task_ids = fields.Many2many('workshop.repair.task', string="Repair Tasks")
@@ -36,20 +36,37 @@ class MaintenanceJobOrder(models.Model):
     technicians_ids = fields.Many2many('hr.employee', tracking=True)
     technicians_cost = fields.Float(string="Technicians Cost", compute="_compute_technicians_cost")
     spare_parts_cost = fields.Float(string="Spare Parts Cost", compute="_compute_spare_parts_cost")
-    component_ids = fields.One2many(comodel_name='maintenance.job.order.component',
-                                    inverse_name='maintenance_job_order_id', string='Components', required=False)
-    transfer_ids = fields.One2many(comodel_name='stock.picking', inverse_name='maintenance_job_order_id',
+    component_ids = fields.One2many(comodel_name='maintenance.external.job.order.component',
+                                    inverse_name='maintenance_external_job_order_id', string='Components', required=False)
+    transfer_ids = fields.One2many(comodel_name='stock.picking', inverse_name='maintenance_external_job_order_id',
                                    string="Transfer")
+    vehicle_route_ids = fields.One2many('vehicle.route','maintenance_external_job_order_id', string='Vehicle Route')
+    exist_permit_count = fields.Integer(
+        string='Exist_permit_count',
+        required=False)
     note = fields.Text(string="Job Order Notes", required=False)
-    state = fields.Selection([('under_process', "Under Process"), ('in_progress', "In Progress"), (
-        'repaired', "Repaired"), ('cancelled', "Cancelled")], string="State", default='under_process', tracking=True)
+    state = fields.Selection([('waiting_approve', "Waiting Approve"), ('approved', "Approved"),  ('waiting_transfer_to_workshop', "Waiting Transfer to workshop"),
+        ('transfer_to_workShop', "Under External Maintenance"), ('waiting_check_in', "Waiting Check In"), ('repaired', "Repaired"), ('rejected', "Rejected"), ('cancelled', "Cancelled")], string="State", default='waiting_approve', tracking=True)
     procurement_group_id = fields.Many2one('procurement.group', 'Procurement Group', copy=False)
 
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
-            vals['name'] = self.env['ir.sequence'].next_by_code('maintenance.job.order.seq')
-        return super().create(vals_list)
+            vals['name'] = self.env['ir.sequence'].next_by_code('maintenance.external.job.order.seq')
+        res = super().create(vals_list)
+        users = self.env.ref('maintenance_custom.group_approve_external_job_order').users
+        activity_vals = []
+        for user_id in users:
+            activity_vals.append({
+                'activity_type_id': self.env.ref('mail.mail_activity_data_todo').id,
+                'automated': True,
+                'note': f"Please Approve external job order number {res.name}",
+                'user_id': user_id.id,
+                'res_id': res.id,
+                'res_model_id': self.env['ir.model'].search([('model', '=', 'maintenance.external.job.order')]).id,
+            })
+        self.env['mail.activity'].create(activity_vals)
+        return res
 
     @api.depends('job_order_start_date', 'job_order_close_date')
     def _compute_duration(self):
@@ -78,13 +95,41 @@ class MaintenanceJobOrder(models.Model):
             stock_valuation_layer = picking_moves.move_ids.stock_valuation_layer_ids
             rec.spare_parts_cost = sum((layer.value) for layer in stock_valuation_layer)
 
-    def action_in_progress(self):
+
+    def action_approve(self):
         for rec in self:
             rec.job_order_start_date = fields.Datetime.now()
             open_shift = self.get_current_shift(rec.job_order_start_date)
             if not open_shift:
                 raise ValidationError(_('No shift is working right now'))
-            rec.state = 'in_progress'
+            rec.state = 'approved'
+
+    def action_reject(self):
+        for rec in self:
+            rec.state = 'rejected'
+
+    def action_waiting_transfer_to_workshop(self):
+        for rec in self:
+            vehicle_route = self.env['vehicle.route'].create(
+                {'maintenance_external_job_order_id': rec.id,'exit_checklist_status': 'under_check','is_new_vehicle': False,
+                 'fleet_vehicle_id': rec.vehicle_id.id,'is_external_job_order': True, 'branch_route_id': rec.maintenance_request_id.route_id.id})
+            rec.vehicle_route_ids.action_external_job_order_approve()
+            rec.state = 'waiting_transfer_to_workshop'
+
+    def action_return(self):
+        for rec in self:
+            rec.state = 'waiting_check_in'
+
+    def action_transfer_to_workShop(self):
+        for rec in self :
+            if rec.vehicle_route_ids and rec.vehicle_route_ids.filtered(lambda x:x.exit_checklist_status != 'in_transfer'):
+                raise ValidationError(_('Check exit permits before Transfer to workshop'))
+            if rec.component_ids and not rec.transfer_ids:
+                raise ValidationError(_('you must deliver spare parts before transfer to workshop'))
+            if rec.component_ids and  any(rec.component_ids.filtered(lambda component: component.picking_status == 'in_progress')) or any(
+                    rec.spare_parts_line_ids.filtered(lambda component: component.spart_part_request == 'pending')):
+                raise ValidationError(_('Picking Status must be Done or Cancelled before closing job order'))
+            rec.state = 'transfer_to_workShop'
 
     def action_repaired(self):
         for rec in self:
@@ -92,9 +137,12 @@ class MaintenanceJobOrder(models.Model):
             close_shift = self.get_current_shift(rec.job_order_close_date)
             if not close_shift:
                 raise ValidationError(_('No shift is working right now'))
-            if any(rec.component_ids.filtered(lambda component: component.picking_status == 'in_progress')) or any(
+            if rec.component_ids and any(rec.component_ids.filtered(lambda component: component.picking_status == 'in_progress')) or any(
                     rec.spare_parts_line_ids.filtered(lambda component: component.spart_part_request == 'pending')):
                 raise ValidationError(_('Picking Status must be Done or Cancelled before closing job order'))
+            if rec.vehicle_route_ids and rec.vehicle_route_ids.filtered(
+                    lambda x: x.entry_checklist_status != 'done'):
+                raise ValidationError(_('Check Entry permits before Transfer to workshop'))
             rec.state = 'repaired'
 
     def action_cancelled(self):
@@ -106,7 +154,8 @@ class MaintenanceJobOrder(models.Model):
             if rec.transfer_ids and any(rec.transfer_ids.filtered(lambda x: x.state != 'cancel')):
                 raise ValidationError(
                     _('Transfer must be in cancelled before setting job order to under process'))
-            rec.state = 'under_process'
+            rec.state = 'waiting_approve'
+            rec.vehicle_route_ids.unlink()
             rec.job_order_start_date = False
 
     def action_request_spare_parts(self):
@@ -123,7 +172,7 @@ class MaintenanceJobOrder(models.Model):
                 raise ValidationError(_('You have already requested Spare Parts'))
 
             # Get the route from maintenance team
-            route = rec.maintenance_request_id.maintenance_team_id.route_id
+            route = rec.maintenance_request_id.maintenance_team_id.external_route_id
             if not route:
                 raise ValidationError(_('No route defined for the maintenance team'))
 
@@ -159,9 +208,9 @@ class MaintenanceJobOrder(models.Model):
                 # Create procurement values - corrected format for Odoo 18
                 values = {
                     'group_id': procurement_group,
-                    'maintenance_job_order_id': rec.id,
+                    'maintenance_external_job_order_id': rec.id,
                     'maintenance_request_id': rec.maintenance_request_id.id,
-                    'job_order_component_id': component.id,
+                    'external_external_job_order_component_id': component.id,
                     'date_planned': fields.Datetime.now(),
                     'product_id': product_variant,
                     'product_qty': component.demand_qty,
@@ -221,12 +270,21 @@ class MaintenanceJobOrder(models.Model):
             return current_shift
         return False
 
+    def view_exit_permits(self):
+        action = self.env['ir.actions.actions']._for_xml_id('maintenance_custom.vehicle_maintenance_external_job_order_exit_permits_action')
+        action['domain'] = [('id', 'in',self.vehicle_route_ids.ids),('exit_checklist_status', 'in', ['under_check', 'in_transfer'])]
+        return action
 
-class MaintenanceJobOrderComponent(models.Model):
-    _name = 'maintenance.job.order.component'
-    _description = "Maintenance Job Order Component"
+    def view_entry_permits(self):
+        action = self.env['ir.actions.actions']._for_xml_id('maintenance_custom.vehicle_maintenance_external_job_order_entry_permits_action')
+        action['domain'] = [('id', 'in',self.vehicle_route_ids.ids),('entry_checklist_status', 'in', ['done', 'in_transfer'])]
+        return action
 
-    maintenance_job_order_id = fields.Many2one(comodel_name='maintenance.job.order')
+class MaintenanceExternalJobOrderComponent(models.Model):
+    _name = 'maintenance.external.job.order.component'
+    _description = "Maintenance External Job Order Component"
+
+    maintenance_external_job_order_id = fields.Many2one(comodel_name='maintenance.external.job.order')
     product_category_id = fields.Many2one(comodel_name='product.category', string='Product Category', required=True)
     product_id = fields.Many2one(comodel_name='product.template', string='Product', required=True)
     uom_id = fields.Many2one("uom.uom", related='product_id.uom_id', string="Unit Of Measure",
@@ -246,7 +304,7 @@ class MaintenanceJobOrderComponent(models.Model):
 
     def _compute_picking_status(self):
         for component in self:
-            picking_moves = component.maintenance_job_order_id.maintenance_request_id.transfer_ids
+            picking_moves = component.maintenance_external_job_order_id.maintenance_request_id.transfer_ids
             print("picking_moves ===> ",picking_moves)
             if picking_moves:
                 move_lines= picking_moves[-1].move_line_ids
@@ -266,14 +324,14 @@ class MaintenanceJobOrderComponent(models.Model):
                 component.picking_status = 'in_progress'
                 component.done_qty = 0
 
-    @api.depends('maintenance_job_order_id', 'maintenance_job_order_id.maintenance_workshop_id',
-                 'maintenance_job_order_id.maintenance_workshop_id.workshop_product_category_ids', )
+    @api.depends('maintenance_external_job_order_id', 'maintenance_external_job_order_id.maintenance_workshop_id',
+                 'maintenance_external_job_order_id.maintenance_workshop_id.workshop_product_category_ids', )
     def _compute_product_category_domain(self):
         for component in self:
             domain = []
-            if component.maintenance_job_order_id:
+            if component.maintenance_external_job_order_id:
                 domain.append(('id', 'in',
-                               component.maintenance_job_order_id.maintenance_workshop_id.workshop_product_category_ids.mapped(
+                               component.maintenance_external_job_order_id.maintenance_workshop_id.workshop_product_category_ids.mapped(
                                    'product_category').ids))
             component.product_category_domain = domain
 
@@ -288,16 +346,14 @@ class StockPicking(models.Model):
     _inherit = 'stock.picking'
 
     maintenance_request_id = fields.Many2one(comodel_name='maintenance.request')
-    maintenance_job_order_id = fields.Many2one(comodel_name='maintenance.job.order')
-    number = fields.Integer(
-        string='Number',
-        required=False)
+    maintenance_external_job_order_id = fields.Many2one(comodel_name='maintenance.external.job.order')
+    number = fields.Integer(string='Number',required=False)
 
 
 class StockMove(models.Model):
     _inherit = 'stock.move'
 
-    job_order_component_id = fields.Many2one(comodel_name='maintenance.job.order.component')
+    external_external_job_order_component_id = fields.Many2one(comodel_name='maintenance.external.job.order.component')
 
     def _get_new_picking_values(self):
         """Override to add maintenance fields to new pickings"""
@@ -306,13 +362,13 @@ class StockMove(models.Model):
         # Check if this move is related to a maintenance job order
         if self.group_id and self.group_id.name:
             # Try to find the maintenance job order
-            job_order = self.env['maintenance.job.order'].search([
+            job_order = self.env['maintenance.external.job.order'].search([
                 ('procurement_group_id', '=', self.group_id.id)
             ], limit=1)
 
             if job_order:
                 vals.update({
-                    'maintenance_job_order_id': job_order.id,
+                    'maintenance_external_job_order_id': job_order.id,
                     'maintenance_request_id': job_order.maintenance_request_id.id,
                     'origin': job_order.maintenance_request_id.name,
                 })
@@ -341,7 +397,7 @@ class ProcurementGroup(models.Model):
             product_id, product_qty, product_uom, location_id, name, origin, company_id, values)
 
         # Add job order component if present in values
-        if values.get('job_order_component_id'):
-            move_values['job_order_component_id'] = values['job_order_component_id']
+        if values.get('external_job_order_component_id'):
+            move_values['external_job_order_component_id'] = values['external_job_order_component_id']
 
         return move_values

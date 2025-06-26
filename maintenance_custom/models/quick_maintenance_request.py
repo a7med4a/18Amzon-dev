@@ -76,7 +76,7 @@ class QuickMaintenanceRequest(models.Model):
             if not close_shift:
                 raise ValidationError(_('No shift is working right now'))
             if rec.component_ids and any(rec.component_ids.filtered(lambda component: component.picking_status == 'in_progress')) or any(
-                    rec.spare_parts_line_ids.filtered(lambda component: component.spart_part_request == 'pending')):
+                    rec.component_ids.filtered(lambda component: component.spart_part_request == 'pending')):
                 raise ValidationError(_('Picking Status must be Done or Cancelled before closing Quick maintenance Request'))
             rec.state='repaired'
 

@@ -127,7 +127,7 @@ class MaintenanceExternalJobOrder(models.Model):
             if rec.component_ids and not rec.transfer_ids:
                 raise ValidationError(_('you must deliver spare parts before transfer to workshop'))
             if rec.component_ids and  any(rec.component_ids.filtered(lambda component: component.picking_status == 'in_progress')) or any(
-                    rec.spare_parts_line_ids.filtered(lambda component: component.spart_part_request == 'pending')):
+                    rec.component_ids.filtered(lambda component: component.spart_part_request == 'pending')):
                 raise ValidationError(_('Picking Status must be Done or Cancelled before closing job order'))
             rec.state = 'transfer_to_workShop'
 
@@ -138,7 +138,7 @@ class MaintenanceExternalJobOrder(models.Model):
             if not close_shift:
                 raise ValidationError(_('No shift is working right now'))
             if rec.component_ids and any(rec.component_ids.filtered(lambda component: component.picking_status == 'in_progress')) or any(
-                    rec.spare_parts_line_ids.filtered(lambda component: component.spart_part_request == 'pending')):
+                    rec.component_ids.filtered(lambda component: component.spart_part_request == 'pending')):
                 raise ValidationError(_('Picking Status must be Done or Cancelled before closing job order'))
             if rec.vehicle_route_ids and rec.vehicle_route_ids.filtered(
                     lambda x: x.entry_checklist_status != 'done'):
@@ -304,8 +304,7 @@ class MaintenanceExternalJobOrderComponent(models.Model):
 
     def _compute_picking_status(self):
         for component in self:
-            picking_moves = component.maintenance_external_job_order_id.maintenance_request_id.transfer_ids
-            print("picking_moves ===> ",picking_moves)
+            picking_moves = component.maintenance_external_job_order_id.transfer_ids
             if picking_moves:
                 move_lines= picking_moves[-1].move_line_ids
                 done_qty = sum(move_lines.mapped('qty_done'))

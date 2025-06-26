@@ -45,30 +45,31 @@
                     </div>
                     <group>
                         <group>
-                            <field name="company_id" options="{'no_open': True, 'no_create': True}" invisible="state != 'draft'"/>
-                            <field name="branch_id" options="{'no_open': True, 'no_create': True}" invisible="state != 'draft'"/>
-                            <field name="maintenance_team_id" options="{'no_open': True, 'no_create': True}" invisible="state != 'draft'" domain="maintenance_team_branch_domain"/>
-                            <field name="member_ids" widget="many2many_tags" invisible="state != 'draft'"/>
-                            <field name="request_description" readonly="state != 'draft'" invisible="state != 'draft'"/>
-                            <field name="technicians_ids" widget="many2many_tags" invisible="state != 'waiting_approve'"/>
-                            <field name="open_date" invisible="state != 'opened'"/>
-                            <field name="close_date" invisible="state != 'repaired'"/>
-                            <field name="duration" invisible="state != 'repaired'"/>
+                            <field name="company_id" options="{'no_open': True, 'no_create': True}"/>
+                            <field name="branch_id" options="{'no_open': True, 'no_create': True}"/>
+                            <field name="maintenance_team_id" options="{'no_open': True, 'no_create': True}" domain="maintenance_team_branch_domain"/>
+                            <field name="member_ids" widget="many2many_tags"/>
+                            <field name="request_description" readonly="state != 'draft'"/>
+                            <field name="technicians_ids" widget="many2many_tags" invisible="state == 'draft'" readonly="state != 'waiting_approve'"/>
+                            <field name="open_date" invisible="state in ('draft','waiting_approve')"/>
+                            <field name="close_date" invisible="state not in ('repaired','cancelled')"/>
+                            <field name="duration" invisible="state not in ('repaired','cancelled')"/>
                         </group>
                         <group>
                             <field name="vehicle_branch_domain" invisible="1"/>
                             <field name="vehicle_id" options="{'no_open': True, 'no_create': True}"
-                                   invisible="state != 'draft'" domain="vehicle_branch_domain"/>
-                            <field name="create_uid" string="Request Date" invisible="state != 'draft'"/>
+                                   domain="vehicle_branch_domain" readonly="state != 'waiting_approve'"/>
+                            <field name="create_uid" string="Requested By" options="{'no_open': True, 'no_create': True}"/>
+                            <field name="create_date" string="Request Date"/>
                             <field name="maintenance_team_branch_domain" invisible="1"/>
-                            <field name="schedule_date" invisible="state != 'waiting_approve'"/>
-                            <field name="technicians_cost" invisible="state != 'repaired'"/>
-                            <field name="spare_parts_cost" invisible="state != 'repaired'"/>
+                            <field name="schedule_date" invisible="state == 'draft'" readonly="state != 'waiting_approve'"/>
+                            <field name="technicians_cost" invisible="state not in ('repaired','cancelled')"/>
+                            <field name="spare_parts_cost" invisible="state not in ('repaired','cancelled')"/>
                         </group>
                     </group>
-                    <notebook>
+                    <notebook invisible="state in ('draft','waiting_approve')">
                         <page string="Spart Parts lines">
-                            <field name="component_ids" readonly="state not in ('draft','waiting_approve')">
+                            <field name="component_ids" readonly="state not in ('draft','waiting_approve','opened')">
                                 <list editable="bottom">
                                     <field name="product_category_id" optional='show'
                                            options="{'no_open': True, 'no_create': True}"/>

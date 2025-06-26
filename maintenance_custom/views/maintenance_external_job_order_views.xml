@@ -103,7 +103,7 @@
                         </group>
                         <notebook>
                             <page string="Spart Parts lines">
-                                <field name="component_ids" readonly="state not in ('waiting_approve')">
+                                <field name="component_ids" readonly="state not in ('waiting_approve','approved','waiting_transfer_to_workshop')">
                                     <list editable="bottom">
                                         <field name="product_category_domain" column_invisible="1"/>
                                         <field name="product_category_id" domain="product_category_domain" optional='show' options="{'no_open': True, 'no_create': True}"/>

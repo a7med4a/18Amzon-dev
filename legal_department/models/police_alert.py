@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError
 
 
 class PoliceAlert(models.Model):
@@ -64,15 +65,20 @@ class PoliceAlert(models.Model):
         self.write({'state': 'cancelled'})
 
     def action_set_under_process(self):
-        self.write({'state': 'under_process'})
+        self.write({
+            'state': 'under_process',
+            'police_alert_decision_ids': [(5, 0, 0)]  # Clear decisions
+        })
 
     def decision_68_action(self):
+        self.police_alert_decision_ids._check_decision_date_description()
         for request in self:
             request.state = 'decision_68'
             request.police_alert_decision_ids = [
                 (0, 0, {'decision_number': 68})]
 
     def action_black_listed(self):
+        self.police_alert_decision_ids._check_decision_date_description()
         self.write({'state': 'blacklisted'})
         self.rental_contract_id.write({'police_alert_state': 'blacklisted'})
         self.fleet_vehicle_id.write({'police_alert_state': 'blacklisted'})
@@ -118,3 +124,9 @@ class PoliceAlertDecision(models.Model):
     decision_number = fields.Char('Decision Number', required=True)
     decision_date = fields.Date('Decision Date')
     description = fields.Char('Decision Description')
+
+    def _check_decision_date_description(self):
+        for record in self:
+            if not record.decision_date or not record.description:
+                raise ValidationError(
+                    _(f'Decision Date and Description must be provided for decision {record.decision_number}.'))

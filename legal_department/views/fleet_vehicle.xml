@@ -1,4 +1,18 @@
 <odoo>
+    <record id="fleet_vehicle_view_form" model="ir.ui.view">
+        <field name="name">fleet.vehicle.police.alert.form.inherit</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('oe_title')]" position="after">
+                <div class="d-flex">
+                    <label for="police_alert_state" class="me-3"/>
+                    <field name="police_alert_state" widget="badge" decoration-warning="police_alert_state == 'alert'" decoration-danger="police_alert_state == 'blacklisted'"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
     <record id="fleet_vehicle_view_kanban" model="ir.ui.view">
         <field name="name">fleet.vehicle.police.alert.view.kanban</field>
         <field name="model">fleet.vehicle</field>

@@ -9,14 +9,14 @@
           <button name="decision_34_action" type="object" invisible="state != 'under_process'" string="Decision 34" class="oe_highlight" confirm="You will change state to be decision 34"  groups="legal_department.group_tamem_process"/>
           <button name="view_reject_reason_popup" type="object" invisible="state != 'under_process'" string="Reject" class="oe_highlight" groups="legal_department.group_tamem_process"/>
           <button name="action_cancel" type="object" invisible="state != 'under_process'" string="Cancel" confirm="You will change state to be cancel" groups="legal_department.group_tamem_process"/>
-          <!-- Reject Buttons -->
-          <button name="action_set_under_process" type="object" invisible="state not in ['rejected', 'decision_34']" string="Set To Under Process" class="oe_highlight" confirm="You will change state to be Under Process" groups="legal_department.group_tamem_process" />
           <!-- Decision 34 Buttons -->
           <button name="decision_68_action" type="object" invisible="state != 'decision_34'" string="Decision 68" class="oe_highlight" confirm="You will change state to be Decision 68" groups="legal_department.group_tamem_process" />
+          <!-- Reject Buttons -->
+          <button name="action_set_under_process" type="object" invisible="state not in ['rejected', 'decision_34']" string="Set To Under Process" class="oe_highlight" confirm="You will change state to be Under Process" groups="legal_department.group_tamem_process" />
           <!-- Decision 68 Buttons -->
           <button name="action_black_listed" type="object" invisible="state != 'decision_68'" string="Blacklisted" class="oe_highlight" confirm="You will change state to be Blacklisted" groups="legal_department.group_tamem_process" />
           <!-- Blacklisted Buttons -->
-          <button name="action_black_listed" type="object" invisible="state != 'blacklisted'" string="Investigation Hold" class="oe_highlight" confirm="You will change state to be Investigation Hold" groups="legal_department.group_tamem_process" />
+          <button name="action_investigation_hold" type="object" invisible="state != 'blacklisted'" string="Investigation Hold" class="oe_highlight" confirm="You will change state to be Investigation Hold" groups="legal_department.group_tamem_process" />
 
           <!-- State Field -->
           <field name="state" widget="statusbar" statusbar_visible="under_process,decision_34,decision_68,blacklisted,investigation_hold"/>
@@ -30,7 +30,7 @@
           </div>
           <group>
             <group string="Contract Details">
-              <field name="rental_contract_id" options="{'no_create': True}"/>
+              <field name="rental_contract_id" options="{'no_create': True}" readonly="1" force_save="1"/>
               <field name="fleet_vehicle_id" options="{'no_open': True, 'no_create': True}"/>
               <field name="partner_id" options="{'no_open': True, 'no_create': True}"/>
               <field name="create_date" string="Police Alert Request Date"/>
@@ -38,9 +38,9 @@
               <field name="description" readonly="1"/>
             </group>
             <group string="Request Details">
-              <field name="request_no"/>
-              <field name="dispatch_no"/>
-              <field name="request_date"/>
+              <field name="request_no" required="state == 'under_process'"/>
+              <field name="dispatch_no" required="state == 'under_process'"/>
+              <field name="request_date" required="state == 'under_process'"/>
             </group>
           </group>
           <notebook invisible="state == 'under_process'">

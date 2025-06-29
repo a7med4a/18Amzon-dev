@@ -124,7 +124,7 @@ class RentalContract(models.Model):
 
     # Contract Info Fields
     vehicle_branch_id = fields.Many2one(
-        'res.branch', string='Pickup Branch', related='vehicle_id.branch_id', readonly=True, store=True)
+        'res.branch', string='Pickup Branch', compute='_compute_vehicle_branch_id', readonly=True, store=True)
     pickup_date = fields.Datetime(
         string='Pickup Date', default=fields.Datetime.now)
     duration = fields.Integer(
@@ -156,6 +156,8 @@ class RentalContract(models.Model):
         'additional.supplementary.services.line', relation="rental_contract_additional_services_line_rel", string='Additional Services')
     supplementary_service_ids = fields.Many2many(
         'additional.supplementary.services.line', relation="rental_contract_supplementary_services_line_rel", string='Supplementary Services')
+    is_open_km = fields.Boolean(
+        'Open KM', compute="_compute_is_open_km", store=True, readonly=False)
 
     # Financial Info Fields
     daily_rate = fields.Float(
@@ -474,6 +476,14 @@ class RentalContract(models.Model):
                 record.out_vehicle_status = record.vehicle_id.vehicle_status
                 record.out_odometer = record.vehicle_id.odometer
 
+    @api.depends('vehicle_id')
+    def _compute_vehicle_branch_id(self):
+        for record in self:
+            if record.vehicle_id:
+                record.vehicle_branch_id = record.vehicle_id.branch_id
+            else:
+                record.vehicle_branch_id = False
+
     @api.depends('pickup_date', 'duration')
     def _compute_expected_return_date(self):
         for record in self:
@@ -505,6 +515,15 @@ class RentalContract(models.Model):
                 authorization_expiry_date = min(
                     record.partner_id.license_expiry_date, authorization_expiry_date)
             record.authorization_expiry_date = authorization_expiry_date
+
+    @api.depends('additional_service_ids', 'supplementary_service_ids')
+    def _compute_is_open_km(self):
+        for record in self:
+            if record.additional_service_ids or record.supplementary_service_ids:
+                record.is_open_km = any(
+                    service.is_open_km for service in record.additional_service_ids + record.supplementary_service_ids)
+            else:
+                record.is_open_km = False
 
     @api.depends('rental_plan', 'draft_state')
     def _compute_daily_rate(self):
@@ -821,6 +840,7 @@ class RentalContract(models.Model):
     def _compute_in_branch_domain(self):
         for rec in self:
             domain = [
+                ('branch_type', '=', 'rental'),
                 ('id', 'in', self.env.user.branch_ids.ids),
                 ('company_id', '=', rec.company_id.id)
             ]
@@ -892,20 +912,18 @@ class RentalContract(models.Model):
                 raise ValidationError(
                     "Accident Date must be less than Announcement Date")
 
-    @api.constrains('in_image_attachment_ids', 'state')
     def _check_in_image_attachment_ids(self):
         # Check if state in closed and in_image_attachment_ids is empty or less than Number Exist in Rental Config
         for rec in self:
-            if rec.state in ['closed', 'delivered_debit', 'delivered_pending'] and rec.rental_configuration_id.in_attachment_image_required and (
+            if rec.rental_configuration_id.in_attachment_image_required and (
                     not rec.in_image_attachment_ids or len(rec.in_image_attachment_ids) < rec.rental_configuration_id.in_attachment_image_required):
                 raise ValidationError(
                     _(f"You must attach at least {rec.rental_configuration_id.in_attachment_image_required} images for the vehicle in closing info state."))
 
-    @api.constrains('out_image_attachment_ids', 'draft_state')
     def _check_out_image_attachment_ids(self):
         # Check if draft_state in contract info and out_image_attachment_ids is empty or less than Number Exist in Rental Config
         for rec in self:
-            if rec.draft_state == 'contract_info' and rec.rental_configuration_id.out_attachment_image_required and (
+            if rec.rental_configuration_id.out_attachment_image_required and (
                     not rec.out_image_attachment_ids or len(rec.out_image_attachment_ids) < rec.rental_configuration_id.out_attachment_image_required):
                 raise ValidationError(
                     _(f"You must attach at least {rec.rental_configuration_id.out_attachment_image_required} images for the vehicle in contract info state."))
@@ -919,7 +937,8 @@ class RentalContract(models.Model):
     @api.constrains('account_payment_ids', 'account_move_ids')
     def reconcile_invoices_with_payments(self):
         for rec in self:
-            while (rec.account_payment_ids.move_id.line_ids.filtered(lambda l: not l.reconciled and l.account_type == 'asset_receivable') and rec.account_move_ids.line_ids.filtered(lambda l: l.move_id.move_type == 'out_invoice' and not l.reconciled and l.account_type == 'asset_receivable')):
+            while (rec.account_payment_ids.filtered(lambda payment: payment.payment_type == 'inbound').move_id.line_ids.filtered(lambda l: not l.reconciled and l.account_type == 'asset_receivable')
+                   and rec.account_move_ids.line_ids.filtered(lambda l: l.move_id.move_type == 'out_invoice' and not l.reconciled and l.account_type == 'asset_receivable')):
                 oldest_unreconciled_invoice_line = rec.account_move_ids.line_ids.filtered(
                     lambda l: l.move_id.move_type == 'out_invoice' and not l.reconciled and l.account_type == 'asset_receivable').sorted(key=lambda l: l.date)[0]
                 oldest_unreconciled_payment_line = rec.account_payment_ids.filtered(lambda payment: payment.payment_type == 'inbound').move_id.line_ids.filtered(
@@ -1069,7 +1088,7 @@ class RentalContract(models.Model):
     def _create_missing_schedular_invoice(self, drop_off_date):
         local_timezone = pytz.timezone(self.company_id.tz or 'UTC')
 
-        drop_off_date_before_month = drop_off_date - relativedelta(month=1)
+        drop_off_date_before_month = drop_off_date + relativedelta(months=-1)
         last_day_of_last_month = calendar.monthrange(
             drop_off_date_before_month.year, drop_off_date_before_month.month)[1]
 
@@ -1285,6 +1304,7 @@ class RentalContract(models.Model):
                     'additional_supplementary_conf_id': line.id,
                     'min_customer_age': line.min_customer_age,
                     'max_customer_age': line.max_customer_age,
+                    'is_open_km': line.is_open_km,
                     'vehicle_model_ids': [(6, 0, line.vehicle_model_ids.ids)],
                 }))
             rec.additional_supplement_service_line_ids = additional_supplement_service_line_ids
@@ -1792,8 +1812,9 @@ class RentalContractLateLog(models.Model):
         'Current Payment', compute="_compute_current_payment", store=True)
     total_payment = fields.Float(
         'Total Payment', compute="_compute_total_payment", store=True)
+    actual_extended_days = fields.Integer('Actual Extended Days', default=0)
     extended_days = fields.Integer(
-        'Extended Days', compute="_compute_extended_days", store=True)
+        'Allowed Extended Days', compute="_compute_extended_days", store=True)
 
     # Payment Fields
     journal_id = fields.Many2one(
@@ -1853,6 +1874,11 @@ class RentalContractLateLog(models.Model):
                 rec.extended_days = (rec.total_payment //
                                      rec.total_per_day) - rec.old_duration
 
+    @api.onchange('actual_extended_days')
+    def _onchange_actual_extended_days(self):
+        if self.actual_extended_days > 0:
+            self.create_payment = True
+
     def action_register_payment(self):
         self.ensure_one()
         payment = self.env['account.payment'].create({
@@ -1881,6 +1907,12 @@ class RentalContractLateLog(models.Model):
         logs = super().create(vals_list)
 
         for log in logs:
+            if log.actual_extended_days <= 0:
+                raise ValidationError(
+                    _("Actual Extended Days cannot be negative or zero."))
+            if log.actual_extended_days > log.extended_days:
+                raise ValidationError(
+                    _("Actual Extended Days cannot be greater than Allowed Extended Days."))
             payment = self.env['account.payment']
             state = 'failed'
             new_duration = log.old_duration
@@ -1890,9 +1922,9 @@ class RentalContractLateLog(models.Model):
             new_due_amount = log.old_due_amount
             if log.create_payment:
                 payment = log.action_register_payment()
-            if log.extended_days > 0:
+            if log.actual_extended_days > 0:
                 state = 'success'
-                new_duration = log.old_duration + log.extended_days
+                new_duration = log.old_duration + log.actual_extended_days
                 new_paid_amount = log.old_paid_amount + log.extended_payment
                 new_total_amount = (
                     log.total_per_day * new_duration) + log.rental_contract_id.one_time_services

@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- STA Configuration Settings View -->
+    <!-- Naql Configuration Settings View -->
     <record id="view_sta_config_settings" model="ir.ui.view">
-        <field name="name">STA Integration Settings</field>
+        <field name="name">Naql Integration Settings</field>
         <field name="model">res.config.settings</field>
         <field name="inherit_id" ref="base.res_config_settings_view_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form" position="inside">
-                <app data-string="STA Integration" string="STA Integration" name="sta_integration">
-                    <div class="app_settings_block" data-string="STA Integration" string="STA Integration" data-key="sta_integration">
+                <div class="app_settings_block" data-string="Naql Integration" string="Naql Integration" data-key="sta_integration">
                     <h2>Saudi Transport Authority Integration</h2>
                     <div class="row mt16 o_settings_container">
                         <div class="col-12 col-lg-6 o_setting_box">
@@ -42,7 +41,7 @@
                             <div class="o_setting_right_pane">
                                 <label for="sta_authorization_token"/>
                                 <div class="text-muted">
-                                    Authorization token for STA API (Basic Auth encoded)
+                                    Authorization token for Naql API (Basic Auth encoded)
                                 </div>
                                 <field name="sta_authorization_token" placeholder="e.g., Basic YXBpVXNlcjEzMTM4MjQ6QWFAMTIzNDU2"/>
                             </div>
@@ -54,7 +53,7 @@
                             <div class="o_setting_right_pane">
                                 <label for="sta_base_url"/>
                                 <div class="text-muted">
-                                    Base URL for STA API endpoints
+                                    Base URL for Naql API endpoints
                                 </div>
                                 <field name="sta_base_url"/>
                             </div>
@@ -74,14 +73,12 @@
                             <div class="o_setting_right_pane">
                                 <button name="test_sta_connection" string="Test Connection" type="object" class="btn-primary"/>
                                 <div class="text-muted">
-                                    Test connection to STA API with current settings
+                                    Test connection to Naql API with current settings
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                </app>
             </xpath>
         </field>
     </record>

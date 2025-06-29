@@ -10,6 +10,7 @@
                     <field name="company_id"/>
                     <field name="description"/>
                     <field name="create_uid"/>
+                    <field name="state"/>
                 </list>
             </field>
         </record>
@@ -28,17 +29,18 @@
                                 class="btn-primary" invisible="state != 'draft'"/>
                         <button name="action_confirm" string="Approve" type="object"
                                 class="btn-success" invisible="state != 'under_review'"
-                                confirm="Are you sure you want to Confirm PR Request ?"/>
+                                confirm="Are you sure you want to Confirm Pricing Request ?"/>
                         <button name="action_refuse" string="Reject" type="object"
                                 class="btn-danger" invisible="state != 'under_review'"
-                                confirm="Are you sure you want to Refuse PR Request ?"/>
+                                confirm="Are you sure you want to Refuse Pricing Request ?"/>
                         <button name="action_cancel" string="Cancel" type="object"
-                                confirm="Are you sure you want to Cancel PR Request ?"
+                                confirm="Are you sure you want to Cancel Pricing Request ?"
                                 class="btn-secondary" invisible="state not in ('draft')"/>
                         <button name="action_expired" string="Expire" type="object"
-                                confirm="Are you sure you want to Expire PR Request ?"
-                                class="btn-danger" invisible="state not in ('confirmed')"/>
+                                confirm="Are you sure you want to Expire Pricing Request ?"
+                                class="btn-danger" invisible="state not in ('confirmed') or not is_all_pricing_lines_expired"/>
                         <field name="state" widget="statusbar"/>
+                        <field name="is_all_pricing_lines_expired" invisible="1"/>
                     </header>
                     <sheet>
                         <div class="oe_title">
@@ -63,20 +65,23 @@
                             </group>
                         </group>
                         <notebook>
-                            <page string="PO lines">
+                            <page string="Pricing lines">
                                 <field name="long_term_pricing_request_line_ids" readonly="state != 'draft'">
                                     <list editable="bottom">
-                                        <field name="vehicle_id" optional='show'
+                                        <field name="vehicle_domain" column_invisible="1"/>
+                                        <field name="vehicle_id" optional='show' domain="vehicle_domain"
                                                options="{'no_open': True, 'no_create': True}"/>
                                         <field name="model_id" optional='show'
                                                options="{'no_open': True, 'no_create': True}"/>
                                         <field name="rental_pricing_monthly" optional='show'/>
+                                        <field name="installment_no" optional='show'/>
+                                        <field name="down_payment" optional='show'/>
+                                        <field name="vehicle_cost" optional='show'/>
+                                        <field name="monthly_day_price" optional='show'/>
                                         <field name="vehicle_status" optional='show'/>
                                         <field name="pricing_status" optional='show'/>
-                                        <button name="action_running" type="object" string="Running" class="btn-success"
-                                                invisible="pricing_status == 'running'" title="Running"/>
                                         <button name="action_expired" type="object" string="Expired" class="btn-danger"
-                                                invisible="pricing_status == 'expired'" title="Expired"/>
+                                                invisible="pricing_status != 'confirmed'" title="Expired"/>
                                     </list>
                                 </field>
                             </page>

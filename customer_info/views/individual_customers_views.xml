@@ -77,13 +77,10 @@
             <field name="arch" type="xml">
                 <list string="Individual Customers" sample="1" multi_edit="1">
                     <field name="complete_name" string="Name"/>
-                    <field name="user_id" optional="show" widget="many2one_avatar_user"
-                           domain="[('share', '=', False)]"/>
-                    <field name="street" optional="hide"/>
-                    <field name="city" optional="show"/>
-                     <field name="create_from_rental" invisible="1"/>
-                    <field name="state_id" optional="hide" readonly="1"/>
-                    <field name="country_id" optional="show" readonly="1"/>
+                    <field name="id_no" />
+                    <field name="mobile2" />
+                    <field name="nationality" />
+                    <field name="id_type" />
                     <field name="category_id" optional="hide" widget="many2many_tags"
                            options="{'color_field': 'color'}"/>
                     <field name="company_id" groups="base.group_multi_company" readonly="1"/>

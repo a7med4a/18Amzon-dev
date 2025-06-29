@@ -8,6 +8,9 @@
             <xpath expr="//header" position="inside">
                 <button name="view_create_police_alert_popup" type="object" invisible="state != 'opened'" string="Create Police Alert" class="oe_highlight" groups="legal_department.group_police_alert_request"/>
             </xpath>
+            <xpath expr="//field[@name='contract_late_status']" position="after">
+                 <field name="police_alert_state" widget="badge" decoration-warning="police_alert_state == 'alert'" decoration-danger="police_alert_state == 'blacklisted'"/>
+            </xpath>
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button class="oe_stat_button" name="view_related_police_alert_requests" type="object" icon="fa-exclamation-triangle" invisible="police_alert_request_count == 0">
                     <div class="o_stat_info">

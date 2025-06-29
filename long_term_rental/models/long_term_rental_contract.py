@@ -354,8 +354,8 @@ class LongTermRentalContract(models.Model):
     model_pricing_max_normal_day_price = fields.Float()
     model_pricing_max_weekly_day_price = fields.Float()
     model_pricing_max_monthly_day_price = fields.Float()
-    model_pricing_min_customer_age = fields.Float()
-    model_pricing_max_customer_age = fields.Float()
+    # model_pricing_min_customer_age = fields.Float()
+    # model_pricing_max_customer_age = fields.Float()
     model_pricing_full_tank_cost = fields.Float()
     model_pricing_start_date = fields.Date()
     model_pricing_end_date = fields.Date()
@@ -737,6 +737,13 @@ class LongTermRentalContract(models.Model):
                 raise ValidationError(
                     _("Advanced Payment must be less than Total Amount"))
 
+    def unlink(self):
+        for rec in self:
+            if rec.state not in ['draft']:
+                raise ValidationError(
+                    _("You cannot delete a Long Term Contract that is not in draft state."))
+        return super().unlink()
+
     def get_day_hour(self, date_from, date_to):
         self.ensure_one()
         actual_days = date_from and\
@@ -951,8 +958,8 @@ class LongTermRentalContract(models.Model):
             rec.model_pricing_max_normal_day_price = rec.vehicle_model_datail_id.max_normal_day_price
             rec.model_pricing_max_weekly_day_price = rec.vehicle_model_datail_id.max_weekly_day_price
             rec.model_pricing_max_monthly_day_price = rec.vehicle_model_datail_id.max_monthly_day_price
-            rec.model_pricing_min_customer_age = rec.vehicle_model_datail_id.min_customer_age
-            rec.model_pricing_max_customer_age = rec.vehicle_model_datail_id.max_customer_age
+            # rec.model_pricing_min_customer_age = rec.vehicle_model_datail_id.min_customer_age
+            # rec.model_pricing_max_customer_age = rec.vehicle_model_datail_id.max_customer_age
             rec.model_pricing_full_tank_cost = rec.vehicle_model_datail_id.full_tank_cost
             rec.model_pricing_start_date = rec.vehicle_model_datail_id.start_date
             rec.model_pricing_end_date = rec.vehicle_model_datail_id.end_date

@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Naql Contract Tree View -->
+    <record id="view_sta_contract_tree" model="ir.ui.view">
+        <field name="name">Naql Contract Tree</field>
+        <field name="model">sta.contract</field>
+        <field name="arch" type="xml">
+            <list string="Naql Contracts" decoration-success="sta_status=='saved'" decoration-info="sta_status=='created'" decoration-warning="sta_status=='suspended'" decoration-danger="sta_status=='error'" decoration-muted="sta_status=='cancelled'">
+                <field name="name"/>
+                <field name="rental_contract_id"/>
+                <field name="sta_contract_number"/>
+                <field name="sta_status" widget="badge"/>
+                <field name="working_branch_id"/>
+                <field name="last_sync_date"/>
+                <field name="otp_sent" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Naql Contract Form View -->
+    <record id="view_sta_contract_form" model="ir.ui.view">
+        <field name="name">Naql Contract Form</field>
+        <field name="model">sta.contract</field>
+        <field name="arch" type="xml">
+            <form string="Naql Contract">
+                <header>
+                    <button name="action_create_sta_contract" string="Create in Naql" type="object" class="btn-primary" invisible="sta_status != 'draft'" />
+                    <button name="action_send_otp" string="Send OTP" type="object" class="btn-secondary" invisible="sta_status not in ['created', 'saved'] or otp_sent == True" />
+                    <button name="action_save_sta_contract" string="Save Contract" type="object" class="btn-primary" invisible="sta_status not in ['created', 'draft']" />
+                    <button name="action_cancel_contract" string="Cancel" type="object" class="btn-secondary" invisible="sta_status not in ['draft', 'cancelled', 'closed', 'error']" />
+                    <button name="action_suspend_contract" string="Suspend" type="object" class="btn-warning" invisible="sta_status in ['draft', 'cancelled', 'closed', 'suspended', 'error']"/>
+                    <button name="action_close_contract" string="Close" type="object" class="btn-success" invisible="sta_status in ['draft', 'cancelled', 'closed', 'error']" />
+                    <field name="sta_status" widget="statusbar" statusbar_visible="draft,created,saved,suspended,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_send_otp" type="object" class="oe_stat_button" icon="fa-mobile" invisible="sta_contract_number == False" >
+                            <field name="otp_sent" widget="boolean"/>
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">OTP</span>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group name="contract_info">
+                            <field name="rental_contract_id" required="1"/>
+                            <field name="sta_contract_number" readonly="1"/>
+                            <field name="operator_id"/>
+                            <field name="vehicle_owner_id_version"/>
+                        </group>
+                        <group name="branch_info">
+                            <field name="working_branch_id"/>
+                            <field name="receive_branch_id"/>
+                            <field name="return_branch_id"/>
+                            <field name="rent_policy_id"/>
+                        </group>
+                    </group>
+                    <group name="sync_info">
+                        <group>
+                            <field name="last_sync_date" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="error_message" readonly="1" invisible="error_message == False" />
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Naql Response Log" name="response_log">
+                            <field name="sta_response_log" widget="ace" options="{'mode': 'json'}" readonly="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+<!--                <div class="oe_chatter">-->
+<!--                    <field name="message_follower_ids"/>-->
+<!--                    <field name="activity_ids"/>-->
+<!--                    <field name="message_ids"/>-->
+<!--                </div>-->
+            </form>
+        </field>
+    </record>
+
+    <!-- Naql Contract Search View -->
+    <record id="view_sta_contract_search" model="ir.ui.view">
+        <field name="name">Naql Contract Search</field>
+        <field name="model">sta.contract</field>
+        <field name="arch" type="xml">
+            <search string="Search Naql Contracts">
+                <field name="name"/>
+                <field name="rental_contract_id"/>
+                <field name="sta_contract_number"/>
+                <field name="working_branch_id"/>
+                <separator/>
+                <filter string="Draft" name="draft" domain="[('sta_status', '=', 'draft')]"/>
+                <filter string="Created" name="created" domain="[('sta_status', '=', 'created')]"/>
+                <filter string="Saved" name="saved" domain="[('sta_status', '=', 'saved')]"/>
+                <filter string="Suspended" name="suspended" domain="[('sta_status', '=', 'suspended')]"/>
+                <filter string="Closed" name="closed" domain="[('sta_status', '=', 'closed')]"/>
+                <filter string="Cancelled" name="cancelled" domain="[('sta_status', '=', 'cancelled')]"/>
+                <filter string="Error" name="error" domain="[('sta_status', '=', 'error')]"/>
+                <separator/>
+                <filter string="OTP Sent" name="otp_sent" domain="[('otp_sent', '=', True)]"/>
+                <filter string="OTP Not Sent" name="otp_not_sent" domain="[('otp_sent', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_status" context="{'group_by': 'sta_status'}"/>
+                    <filter string="Working Branch" name="group_branch" context="{'group_by': 'working_branch_id'}"/>
+                    <filter string="Rental Contract" name="group_rental_contract" context="{'group_by': 'rental_contract_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Naql Contract Action -->
+    <record id="action_sta_contract" model="ir.actions.act_window">
+        <field name="name">Naql Contracts</field>
+        <field name="res_model">sta.contract</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_sta_contract_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first Naql Contract!
+            </p>
+            <p>
+                Naql Contracts allow you to synchronize your rental contracts with the Saudi Transport Authority system.
+            </p>
+        </field>
+    </record>
+
+    <!-- Inherit Rental Contract Form to add Naql integration -->
+    <record id="view_rental_contract_form_inherit_sta" model="ir.ui.view">
+        <field name="name">rental.contract.form.inherit.sta</field>
+        <field name="model">rental.contract</field>
+        <field name="inherit_id" ref="rental_contract.view_rental_contract_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_sta_contracts" type="object" class="oe_stat_button" icon="fa-exchange">
+                    <field name="sta_contract_count" widget="statinfo" string="Naql Contracts"/>
+                </button>
+                <button name="action_create_sta_contract" type="object" class="oe_stat_button" icon="fa-plus" string="Create Naql Contract" invisible="sta_contract_count > 0" />
+            </xpath>
+        </field>
+    </record>
+</odoo>
+

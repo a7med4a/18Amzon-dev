@@ -489,7 +489,9 @@
           </group>
         </sheet>
         <footer>
-          <button name="set_current_km_extra_amount" string="Calculate" type="object" class="btn-primary" invisible="state not in ['opened', 'close_info']" />
+          <field name="is_open_km" invisible="1" />
+          <button name="set_current_km_extra_amount" string="Calculate" type="object" class="btn-primary" invisible="state not in ['opened', 'close_info'] or is_open_km" />
+          <button string="Save" special="save" class="btn-primary"  invisible="state not in ['opened', 'close_info'] or not is_open_km" />
           <button string="Cancel" class="btn-secondary" special="cancel" />
         </footer>
       </form>

@@ -38,9 +38,9 @@ CAR_SEATS_STATUS = [('clean', 'Clean'), ('dirty', 'Dirty')]
 class vehicle_info(models.Model):
     _inherit = 'fleet.vehicle'
 
-
     def _get_default_state(self):
-        state = self.env.ref('fleet_status.fleet_vehicle_state_under_preparation', raise_if_not_found=False)
+        state = self.env.ref(
+            'fleet_status.fleet_vehicle_state_under_preparation', raise_if_not_found=False)
         return state if state and state.id else False
 
     state_id = fields.Many2one('fleet.vehicle.state', 'State',
@@ -65,6 +65,8 @@ class vehicle_info(models.Model):
                    ],
         string='License Type')
     branch_id = fields.Many2one('res.branch', string='Location')
+    branch_domain = fields.Binary(
+        string="Branch domain", help="Dynamic domain used for the branch", compute="_compute_branch_domain")
     # Chick List Information
     # Group 1
     ac = fields.Selection(
@@ -122,6 +124,15 @@ class vehicle_info(models.Model):
     #  Analytic account
     analytic_account_id = fields.Many2one(
         'account.analytic.account', string='Analytic Account', ondelete='cascade', copy=False, readonly=True)
+
+    @api.depends('company_id')
+    def _compute_branch_domain(self):
+        for fleet in self:
+            domain = [
+                ('id', 'in', self.env.user.branch_ids.ids),
+                ('company_id', '=', fleet.company_id.id)
+            ]
+            fleet.branch_domain = domain
 
     # Check Chassis Number and License Plate Lengt
     @api.constrains('vin_sn', 'license_plate')

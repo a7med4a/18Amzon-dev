@@ -13,6 +13,7 @@ class AdditionalSupplementaryServices(models.Model):
         ondelete={'internal_authorization': 'set additional', 'external_authorization': 'set additional'})
     account_id = fields.Many2one('account.account', string='account', required=True,
                                  domain="[('account_type', 'in', ['income', 'income_other'])]")
+    is_open_km = fields.Boolean('Open KM', copy=False, default=False)
 
     @api.constrains('type')
     def _check_internal_authorization_type_duplicate(self):

@@ -42,12 +42,15 @@ class MaintenanceRequestInherit(models.Model):
     request_duration = fields.Float(string="Duration", compute="_compute_duration")
     maintenance_job_order_ids= fields.One2many(comodel_name='maintenance.job.order',inverse_name='maintenance_request_id',)
     maintenance_external_job_order_ids= fields.One2many(comodel_name='maintenance.external.job.order',inverse_name='maintenance_request_id')
+    move_ids= fields.One2many(comodel_name='account.move',inverse_name='maintenance_request_id')
+    moves_count=fields.Integer("Moves",compute="_compute_moves_count")
     maintenance_job_order_count=fields.Integer(compute="_compute_maintenance_job_order_count")
     maintenance_external_job_order_count=fields.Integer(compute="_compute_maintenance_external_job_order_count")
     transfer_ids = fields.One2many(comodel_name='stock.picking', inverse_name='maintenance_request_id', string="Transfer")
     transfer_count = fields.Integer(compute="_compute_transfer_count")
     route_branch_domain = fields.Binary(string="Route Branch domain", help="Dynamic domain used for Vehicle",compute="_compute_route_branch_domain")
     vehicle_domain = fields.Binary(string="Route Branch domain", help="Dynamic domain used for Vehicle",compute="_compute_vehicle_domain")
+    allow_maintenance_expense_billing = fields.Boolean(related='maintenance_team_id.allow_maintenance_expense_billing',required=False,default=False)
 
 
     @api.depends("maintenance_team_id")
@@ -57,6 +60,11 @@ class MaintenanceRequestInherit(models.Model):
             if maintenance.maintenance_team_id :
                 domain.append(('branch_id', '=', maintenance.maintenance_team_id.allowed_branch_id.id))
             maintenance.vehicle_domain = domain
+
+    @api.depends("move_ids")
+    def _compute_moves_count(self):
+        for maintenance in self:
+            maintenance.moves_count=len(maintenance.move_ids)
 
     @api.depends("vehicle_id","maintenance_team_id")
     def _compute_route_branch_domain(self):
@@ -229,6 +237,22 @@ class MaintenanceRequestInherit(models.Model):
             'domain':[('id','in',self.transfer_ids.ids)]
         }
 
+    def action_create_bill(self):
+        action = self.env['ir.actions.act_window']._for_xml_id(
+            'maintenance_custom.action_maintenance_create_bill'
+        )
+        action['context'] = {
+            'default_move_type': 'in_invoice',
+            'default_maintenance_request_id': self.id,
+            'default_journal_id': self.maintenance_team_id.journal_id.id if self.maintenance_team_id and self.maintenance_team_id.journal_id else False,
+        }
+        return action
+
+
+    def view_expense_bills(self):
+        action = self.env['ir.actions.actions']._for_xml_id('account.action_move_in_invoice')
+        action['domain'] =[('move_type', 'in', ['in_invoice', 'in_refund']),('maintenance_request_id', '=',self.id)]
+        return action
 
 
 
@@ -242,6 +266,10 @@ class MaintenanceTeamInherit(models.Model):
     allowed_branch_id = fields.Many2one('res.branch' ,domain=[('branch_type','=' ,'workshop')])
     allowed_branch_ids = fields.Many2many('res.branch' ,domain=[('branch_type','=' ,'rental')])
     is_quick_maintenance = fields.Boolean(string='Quick Maintenance',required=False,default=False)
+    allow_maintenance_expense_billing = fields.Boolean(required=False,default=False)
+    journal_id = fields.Many2one('account.journal', string='Bill Journal', required=True,domain=[("type", "=", "purchase")])
+    account_id = fields.Many2one('account.account', string='Expense Account', required=True)
+    notified_accountant_ids = fields.Many2many(comodel_name='res.users',string='Notified Accountants')
 
 class BranchRoute(models.Model):
     _inherit = 'branch.route'

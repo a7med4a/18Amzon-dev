@@ -140,6 +140,8 @@
                         invisible="stage_type != 'under_approval'"/>
                 <button string="Confirm" name="action_confirm" class="btn-success" type="object"
                         invisible="stage_type != 'new' or maintenance_type in ('damage', 'accident')"/>
+                <button string="Create Expense Bill" name="action_create_bill" class="btn-info" type="object"
+                        invisible="stage_type not in ('opened','closed') or not allow_maintenance_expense_billing"/>
                 <button string="Close" name="action_close" class="btn-success" type="object"
                         invisible="stage_type != 'opened'"/>
                 <button string="Cancel" name="action_cancel" class="btn-danger" type="object"
@@ -177,6 +179,15 @@
                                 <field name="transfer_count"/>
                             </span>
                             <span class="o_stat_text">Transfers</span>
+                        </div>
+                    </button>
+                    <button class="oe_stat_button" name="view_expense_bills" type="object"
+                            icon="fa-bars" invisible="moves_count == 0">
+                        <div class="o_stat_info">
+                            <span class="o_stat_value">
+                                <field name="moves_count"/>
+                            </span>
+                            <span class="o_stat_text">Expense Bills</span>
                         </div>
                     </button>
                 </div>
@@ -219,6 +230,12 @@
         <field name="model">maintenance.team</field>
         <field name="inherit_id" ref="maintenance.maintenance_team_view_form"/>
         <field name="arch" type="xml">
+            <xpath expr="//field[@name='member_ids']" position="after">
+                <field name="allow_maintenance_expense_billing"/>
+                <field name="journal_id" invisible="not allow_maintenance_expense_billing" required="allow_maintenance_expense_billing"/>
+                <field name="account_id" invisible="not allow_maintenance_expense_billing" required="allow_maintenance_expense_billing"/>
+                <field name="notified_accountant_ids" widget="many2many_tags" invisible="not allow_maintenance_expense_billing" required="allow_maintenance_expense_billing"/>
+            </xpath>
             <xpath expr="//field[@name='company_id']" position="after">
                 <field name="is_quick_maintenance"/>
                 <field name="allowed_branch_ids" widget="many2many_tags" invisible="not is_quick_maintenance"/>

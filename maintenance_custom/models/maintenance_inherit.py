@@ -22,9 +22,9 @@ class MaintenanceRequestInherit(models.Model):
     company_id = fields.Many2one('res.company', string='Company', readonly=True,
         default=lambda self: self.env.company)
     maintenance_type = fields.Selection([('preventive', 'Preventive'),('damage', 'Damage'),  ('accident', 'Accident')], string='Type', default="damage")
-    damage_number = fields.Integer(string='Damage Number')
-    accident_number = fields.Integer(string='Accident Number')
-    stage_type = fields.Selection(related='stage_id.stage_type', string='Stage Type', readonly=True)
+    damage_id = fields.Many2one('fleet.damage',string='Damage Number')
+    accident_id = fields.Many2one('fleet.accident',string='Accident Number')
+    stage_type = fields.Selection(related='stage_id.stage_type', string='Stage Type', readonly=True,tracking=True)
     worksheet_template_id = fields.Many2one(
         'worksheet.template', string="Worksheet Template",invisible=True,
         domain="[('res_model', '=', 'maintenance.request'), '|', ('company_id', '=', False), ('company_id', '=', company_id)]",
@@ -113,7 +113,17 @@ class MaintenanceRequestInherit(models.Model):
     def create(self, vals_list):
         for vals in vals_list:
             vals['name'] = self.env['ir.sequence'].next_by_code('maintenance.request.seq')
+            if vals['vehicle_id']:
+                self.env['fleet.vehicle'].browse(vals['vehicle_id']).write({'state_id': self.env.ref('fleet_status.fleet_vehicle_state_waiting_maintenance').id})
         return super().create(vals_list)
+
+    def write(self, vals):
+        vehicle_id = vals.get('vehicle_id', False)
+        if vehicle_id and self.stage_type == 'new':
+            self.env['fleet.vehicle'].browse(vehicle_id).write(
+                {'state_id': self.env.ref('fleet_status.fleet_vehicle_state_waiting_maintenance').id})
+        return super().write(vals)
+
     def action_repair_approval_request(self):
         for rec in self:
             if not rec.vehicle_id:
@@ -125,13 +135,26 @@ class MaintenanceRequestInherit(models.Model):
             if not current_shift:
                 raise ValidationError(_('No shift found at this time'))
             rec.stage_id = self.env.ref('maintenance.stage_1').id
+            users = self.env.ref('maintenance_custom.group_approve_for_accident_repair').users
+            activity_vals = []
+            for user_id in users:
+                activity_vals.append({
+                    'activity_type_id': self.env.ref('mail.mail_activity_data_todo').id,
+                    'automated': True,
+                    'note': f"Maintenance Request number {rec.name} is in state Opened",
+                    'user_id': user_id.id,
+                    'res_id': rec.id,
+                    'res_model_id': self.env['ir.model'].search([('model', '=', 'maintenance.request')]).id,
+                })
+            self.env['mail.activity'].create(activity_vals)
+
     def action_confirm(self):
         for rec in self:
             #must be a vehicle to open
             if not rec.vehicle_id:
                 raise ValidationError(_('Please select a vehicle'))
-            if not rec.route_id:
-                raise ValidationError(_('Please select a route Branch for this vehicle'))
+            # if not rec.route_id:
+            #     raise ValidationError(_('Please select a route Branch for this vehicle'))
             if not rec.schedule_date:
                 raise ValidationError(_('Please Add a Schedule Date for this request'))
             rec.open_date = fields.Datetime.now()
@@ -140,6 +163,10 @@ class MaintenanceRequestInherit(models.Model):
                 raise ValidationError(_('No shift found at this time'))
             rec.stage_id = self.env.ref('maintenance.stage_3').id
             rec.vehicle_id.state_id = self.env.ref('fleet_status.fleet_vehicle_state_under_maintenance').id
+            if rec.maintenance_type == 'damage' and not rec.damage_id:
+                raise ValidationError(_('Please add damage number before opening request'))
+            if rec.maintenance_type == 'accident' and not rec.accident_id:
+                raise ValidationError(_('Please add Accident number before opening request'))
 
     def _time_to_float(self, dt):
         """Convert a datetime object to a float representing hours (e.g., 14:30 -> 14.5)."""
@@ -175,7 +202,7 @@ class MaintenanceRequestInherit(models.Model):
             current_shift = self.get_current_shift(rec.request_close_date)
             if not current_shift:
                 raise ValidationError(_('No shift found at this time'))
-            rec.vehicle_id.state_id = self.env.ref('fleet_status.fleet_vehicle_state_under_maintenance').id
+            rec.vehicle_id.state_id = self.env.ref('fleet_status.fleet_vehicle_state_ready_to_transfer_from_workshop').id
 
             rec.stage_id = self.env.ref('maintenance.stage_4').id
     def action_cancel(self):
@@ -184,10 +211,16 @@ class MaintenanceRequestInherit(models.Model):
                 for job in rec.maintenance_job_order_ids:
                     if job.state != 'cancelled':
                         raise ValidationError(_('You must cancel all job orders before you cancel maintenance request'))
+            if rec.stage_type=='opened':
+                rec.vehicle_id.state_id = self.env.ref('fleet_status.fleet_vehicle_state_ready_to_transfer_from_workshop').id
+            else:
+                rec.vehicle_id.state_id = self.env.ref('fleet_status.fleet_vehicle_state_waiting_maintenance').id
             rec.stage_id = self.env.ref('maintenance_custom.stage_5').id
     def action_reject(self):
         for rec in self:
             rec.stage_id = self.env.ref('maintenance_custom.stage_6').id
+            rec.vehicle_id.state_id = self.env.ref('fleet_status.fleet_vehicle_state_waiting_maintenance').id
+
     def action_reset_draft(self):
         for rec in self:
             rec.stage_id = self.env.ref('maintenance.stage_0').id
@@ -253,7 +286,6 @@ class MaintenanceRequestInherit(models.Model):
         action = self.env['ir.actions.actions']._for_xml_id('account.action_move_in_invoice')
         action['domain'] =[('move_type', 'in', ['in_invoice', 'in_refund']),('maintenance_request_id', '=',self.id)]
         return action
-
 
 
 class MaintenanceTeamInherit(models.Model):

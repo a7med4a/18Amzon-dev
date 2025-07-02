@@ -114,11 +114,14 @@ class MaintenanceExternalJobOrder(models.Model):
                 {'maintenance_external_job_order_id': rec.id,'exit_checklist_status': 'under_check','is_new_vehicle': False,
                  'fleet_vehicle_id': rec.vehicle_id.id,'is_external_job_order': True, 'branch_route_id': rec.maintenance_request_id.route_id.id})
             rec.vehicle_route_ids.action_external_job_order_approve()
+            if rec.maintenance_request_id.stage_type != 'opened':
+                raise ValidationError(_('Maintenance Request must be in opened state to start job order'))
             rec.state = 'waiting_transfer_to_workshop'
 
     def action_return(self):
         for rec in self:
             rec.state = 'waiting_check_in'
+            rec.vehicle_id.state_id = self.env.ref('fleet_status.fleet_vehicle_state_under_maintenance').id
 
     def action_transfer_to_workShop(self):
         for rec in self :
@@ -130,6 +133,8 @@ class MaintenanceExternalJobOrder(models.Model):
                     rec.component_ids.filtered(lambda component: component.spart_part_request == 'pending')):
                 raise ValidationError(_('Picking Status must be Done or Cancelled before closing job order'))
             rec.state = 'transfer_to_workShop'
+            rec.vehicle_id.state_id = self.env.ref('fleet_status.fleet_vehicle_state_under_external_maintenance').id
+
 
     def action_repaired(self):
         for rec in self:
@@ -143,6 +148,8 @@ class MaintenanceExternalJobOrder(models.Model):
             if rec.vehicle_route_ids and rec.vehicle_route_ids.filtered(
                     lambda x: x.entry_checklist_status != 'done'):
                 raise ValidationError(_('Check Entry permits before Transfer to workshop'))
+            if not rec.technicians_ids:
+                raise ValidationError(_('Please add technicians before closing job order'))
             rec.state = 'repaired'
 
     def action_cancelled(self):

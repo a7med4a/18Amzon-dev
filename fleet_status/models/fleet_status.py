@@ -10,7 +10,10 @@ class VehicleStatus(models.Model):
     type = fields.Selection([
         ('rented', 'Rented'),
         ('ready_to_rent', 'Ready To Rent'),
-        ('under_maintenance', 'Under Maintenance'),
+        ('under_maintenance', 'Under Internal Maintenance'),
+        ('under_external_maintenance', 'Under External Maintenance'),
+        ('waiting_maintenance', 'Waiting Maintenance'),
+        ('ready_to_transfer_from_workshop', 'Ready To Transfer From Workshop'),
         ('accident_or_damage', 'Accident'),
         ('in_transfer', 'In Transfer'),
         ('stopped', 'Stopped'),

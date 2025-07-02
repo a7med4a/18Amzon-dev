@@ -318,8 +318,10 @@ class VehicleRouts(models.Model):
 
         ready_to_rent_fleet_status = self.env['fleet.vehicle.state'].search(
             [('type', '=', 'ready_to_rent')])
-        under_maintenance_fleet_status = self.env['fleet.vehicle.state'].search(
-            [('type', '=', 'under_maintenance')])
+        # under_maintenance_fleet_status = self.env['fleet.vehicle.state'].search(
+        #     [('type', '=', 'under_maintenance')])
+        waiting_maintenance_fleet_status = self.env['fleet.vehicle.state'].search(
+            [('type', '=', 'waiting_maintenance')])
         in_service_fleet_status = self.env['fleet.vehicle.state'].search(
             [('type', '=', 'in_service')])
         for rec in self:
@@ -327,7 +329,8 @@ class VehicleRouts(models.Model):
             if rec.branch_route_id.destination_type == 'branch' or (rec.branch_route_id.is_new_vehicle and rec.destination_branch_id.branch_type in ['rental', 'limousine']):
                 fleet_status = ready_to_rent_fleet_status
             elif rec.branch_route_id.destination_type == 'workshop' or (rec.branch_route_id.is_new_vehicle and rec.destination_branch_id.branch_type == 'workshop'):
-                fleet_status = under_maintenance_fleet_status
+                # fleet_status = under_maintenance_fleet_status
+                fleet_status = waiting_maintenance_fleet_status
             elif rec.branch_route_id.is_new_vehicle and rec.destination_branch_id.branch_type == 'administration':
                 fleet_status = in_service_fleet_status
 

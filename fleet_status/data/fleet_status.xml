@@ -21,9 +21,24 @@
             <field name="type">ready_to_rent</field>
         </record>
         <record id="fleet_vehicle_state_under_maintenance" model="fleet.vehicle.state">
-            <field name="name">Under Maintenance</field>
+            <field name="name">Under Internal Maintenance</field>
             <field name="sequence">30</field>
             <field name="type">under_maintenance</field>
+        </record>
+        <record id="fleet_vehicle_state_under_external_maintenance" model="fleet.vehicle.state">
+            <field name="name">Under External Maintenance</field>
+            <field name="sequence">130</field>
+            <field name="type">under_external_maintenance</field>
+        </record>
+        <record id="fleet_vehicle_state_waiting_maintenance" model="fleet.vehicle.state">
+            <field name="name">Waiting Maintenance</field>
+            <field name="sequence">140</field>
+            <field name="type">waiting_maintenance</field>
+        </record>
+        <record id="fleet_vehicle_state_ready_to_transfer_from_workshop" model="fleet.vehicle.state">
+            <field name="name">Ready To Transfer From Workshop</field>
+            <field name="sequence">150</field>
+            <field name="type">ready_to_transfer_from_workshop</field>
         </record>
         <record id="fleet_vehicle_state_accident_or_damage" model="fleet.vehicle.state">
             <field name="name">Accident</field>

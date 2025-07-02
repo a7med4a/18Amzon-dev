@@ -84,6 +84,8 @@ class MaintenanceJobOrder(models.Model):
             open_shift = self.get_current_shift(rec.job_order_start_date)
             if not open_shift:
                 raise ValidationError(_('No shift is working right now'))
+            if rec.maintenance_request_id.stage_type != 'opened':
+                raise ValidationError(_('Maintenance Request must be in opened state to start job order'))
             rec.state = 'in_progress'
 
     def action_repaired(self):
@@ -95,6 +97,8 @@ class MaintenanceJobOrder(models.Model):
             if any(rec.component_ids.filtered(lambda component: component.picking_status == 'in_progress')) or any(
                     rec.component_ids.filtered(lambda component: component.spart_part_request == 'pending')):
                 raise ValidationError(_('Picking Status must be Done or Cancelled before closing job order'))
+            if not rec.technicians_ids:
+                raise ValidationError(_('Please add technicians before closing job order'))
             rec.state = 'repaired'
 
     def action_cancelled(self):

@@ -11,7 +11,7 @@ class MaintenanceJobOrderWizard(models.TransientModel):
     maintenance_request_id = fields.Many2one(comodel_name='maintenance.request',string='Maintenance Request Number',required=True)
     maintenance_workshop_id = fields.Many2one(comodel_name='maintenance.workshop',string='Maintenance Workshop',required=True)
     repair_task_ids = fields.Many2many('workshop.repair.task',string="Repair Tasks")
-    technicians_ids = fields.Many2many('hr.employee',required=True)
+    technicians_ids = fields.Many2many('hr.employee')
     job_order_type = fields.Selection(
         string='Job_order_type',
         selection=[('internal', 'Internal'),

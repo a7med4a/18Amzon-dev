@@ -81,3 +81,21 @@ class VehicleRoute(models.Model):
             'entry_done_date': fields.Datetime.now()
         })
         self.action_branch_entry_done()
+
+    @api.constrains('fleet_vehicle_id')
+    def _check_fleet_vehicle_id(self):
+        for record in self:
+            if record.fleet_vehicle_id and not record.maintenance_external_job_order_id:
+                maintenance_request_list = self.env['maintenance.request'].search([
+                    ('vehicle_id', '=', record.fleet_vehicle_id.id),
+                    ('id', '!=', record.id),  # Exclude the current record
+                    ('stage_type', 'in', ('new', 'under_approval', 'opened'))
+                ])
+                if maintenance_request_list:
+                    conflicting_requests = [
+                        f"Request {rec.name} (Stage: {rec.stage_id.name})"
+                        for rec in maintenance_request_list
+                    ]
+                    raise ValidationError(_(
+                        f"The vehicle {record.fleet_vehicle_id.name} is already associated with the following maintenance requests: {', '.join(conflicting_requests)}. Please resolve or close these requests before proceeding."
+                    ))

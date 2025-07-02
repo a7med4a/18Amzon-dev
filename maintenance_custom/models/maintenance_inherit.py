@@ -153,8 +153,8 @@ class MaintenanceRequestInherit(models.Model):
             #must be a vehicle to open
             if not rec.vehicle_id:
                 raise ValidationError(_('Please select a vehicle'))
-            # if not rec.route_id:
-            #     raise ValidationError(_('Please select a route Branch for this vehicle'))
+            if not rec.route_id:
+                raise ValidationError(_('Please select a route Branch for this vehicle'))
             if not rec.schedule_date:
                 raise ValidationError(_('Please Add a Schedule Date for this request'))
             rec.open_date = fields.Datetime.now()

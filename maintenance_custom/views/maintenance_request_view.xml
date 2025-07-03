@@ -156,6 +156,15 @@
 
             <xpath expr="//sheet//div" position="before">
                 <div class="oe_button_box" name="button_box">
+                    <button class="oe_stat_button" name="view_maintenance_old_spare_parts_transfer" type="object"
+                            icon="fa-bars" invisible="transfer_old_spare_parts_count == 0">
+                        <div class="o_stat_info">
+                            <span class="o_stat_value">
+                                <field name="transfer_old_spare_parts_count"/>
+                            </span>
+                            <span class="o_stat_text">Receive Old Parts</span>
+                        </div>
+                    </button>
                     <button class="oe_stat_button" name="view_maintenance_job_order" type="object"
                             icon="fa-bars" invisible="maintenance_job_order_count == 0">
                         <div class="o_stat_info">
@@ -246,6 +255,7 @@
                  <field name="external_route_id" options="{ 'no_open': True,'no_create': True}" invisible="not is_quick_maintenance"/>
                 <field name="maintenance_shift_id" options="{ 'no_open': True,'no_create': True}"/>
                 <field name="allowed_branch_id" options="{ 'no_open': True,'no_create': True}" invisible="is_quick_maintenance"/>
+                <field name="old_spare_parts_operation_type_id" options="{ 'no_open': True,'no_create': True}"/>
             </xpath>
         </field>
     </record>

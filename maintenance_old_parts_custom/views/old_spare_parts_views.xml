@@ -1,0 +1,26 @@
+<odoo>
+    <data>
+
+        <record id="maintenance_old_spare_parts_view_list" model="ir.ui.view">
+            <field name="name">old.spare.parts.view.list</field>
+            <field name="model">old.spare.parts</field>
+            <field name="arch" type="xml">
+                <list string="maintenance_old_spare_parts_list" class="header_custom" editable="bottom">
+                    <header>
+                        <button name="action_apply_all" string="Apply For All" type="object" class="oe_primary" display="always"/>
+                </header>
+                    <field name="product_id"/>
+                    <field name="maintenance_request_id" column_invisible="1"/>
+                    <field name="maintenance_job_order_id" column_invisible="1"/>
+                    <field name="maintenance_external_job_order_id" column_invisible="1"/>
+                    <field name="spare_part_type"/>
+                    <field name="count"/>
+                    <field name="name"/>
+                    <field name="create_uid"/>
+                    <field name="create_date"/>
+                </list>
+            </field>
+        </record>
+
+    </data>
+</odoo>

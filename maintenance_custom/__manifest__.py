@@ -7,7 +7,7 @@
     'author': 'Ahmed Amen',
     'category': 'Manufacturing/Maintenance',
     'description': """Track equipment and maintenance requests""",
-    'depends': ['base','mail','hr','account','stock','maintenance','maintenance_worksheet','hr_maintenance','fleet_status','branch_routs'],
+    'depends': ['base','mail','hr','account','stock','maintenance','maintenance_worksheet','hr_maintenance','fleet_status','branch_routs','branch_routs'],
     'summary': 'Track equipment and manage maintenance requests',
     'data': [
         'security/maintenance.xml',

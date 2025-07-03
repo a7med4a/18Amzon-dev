@@ -48,6 +48,7 @@ class MaintenanceRequestInherit(models.Model):
     maintenance_external_job_order_count=fields.Integer(compute="_compute_maintenance_external_job_order_count")
     transfer_ids = fields.One2many(comodel_name='stock.picking', inverse_name='maintenance_request_id', string="Transfer")
     transfer_count = fields.Integer(compute="_compute_transfer_count")
+    transfer_old_spare_parts_count = fields.Integer(compute="_compute_transfer_count")
     route_branch_domain = fields.Binary(string="Route Branch domain", help="Dynamic domain used for Vehicle",compute="_compute_route_branch_domain")
     vehicle_domain = fields.Binary(string="Route Branch domain", help="Dynamic domain used for Vehicle",compute="_compute_vehicle_domain")
     allow_maintenance_expense_billing = fields.Boolean(related='maintenance_team_id.allow_maintenance_expense_billing',required=False,default=False)
@@ -91,7 +92,8 @@ class MaintenanceRequestInherit(models.Model):
     @api.depends('transfer_ids')
     def _compute_transfer_count(self):
         for maintenance in self:
-            maintenance.transfer_count=len(maintenance.transfer_ids.ids)
+            maintenance.transfer_count=len(maintenance.transfer_ids.filtered(lambda x: x.is_old_spare_parts == False).ids)
+            maintenance.transfer_old_spare_parts_count=len(maintenance.transfer_ids.filtered(lambda x: x.is_old_spare_parts == True).ids)
 
     @api.depends('open_date', 'request_close_date')
     def _compute_duration(self):
@@ -267,8 +269,17 @@ class MaintenanceRequestInherit(models.Model):
             'name': _('Transfer'),
             'res_model': 'stock.picking',
             'view_mode': 'list,form',
-            'domain':[('id','in',self.transfer_ids.ids)]
+            'domain':[('id','in',self.transfer_ids.ids),('is_old_spare_parts', '=',False)]
         }
+    def view_maintenance_old_spare_parts_transfer(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Transfer'),
+            'res_model': 'stock.picking',
+            'view_mode': 'list,form',
+            'domain':[('id','in',self.transfer_ids.ids),('is_old_spare_parts', '=',True)]
+        }
+    
 
     def action_create_bill(self):
         action = self.env['ir.actions.act_window']._for_xml_id(
@@ -295,6 +306,7 @@ class MaintenanceTeamInherit(models.Model):
     external_route_id = fields.Many2one('stock.route',string='External Route')
     maintenance_shift_id = fields.Many2one('maintenance.shift.name')
     delivery_operation_id = fields.Many2one('stock.picking.type')
+    old_spare_parts_operation_type_id = fields.Many2one('stock.picking.type',domain=[('code','=','incoming')])
     allowed_branch_id = fields.Many2one('res.branch' ,domain=[('branch_type','=' ,'workshop')])
     allowed_branch_ids = fields.Many2many('res.branch' ,domain=[('branch_type','=' ,'rental')])
     is_quick_maintenance = fields.Boolean(string='Quick Maintenance',required=False,default=False)

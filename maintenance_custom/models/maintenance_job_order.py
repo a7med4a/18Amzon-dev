@@ -92,6 +92,8 @@ class MaintenanceJobOrder(models.Model):
         for rec in self:
             rec.job_order_close_date = fields.Datetime.now()
             close_shift = self.get_current_shift(rec.job_order_close_date)
+            if self.env['stock.move'].search([('maintenance_job_order_id', '=', rec.id),('picking_id.state', 'not in', ('done', 'cancel'))]):
+                raise ValidationError(_('Old transfer must be done or cancelled before closing job order'))
             if not close_shift:
                 raise ValidationError(_('No shift is working right now'))
             if any(rec.component_ids.filtered(lambda component: component.picking_status == 'in_progress')) or any(
@@ -225,6 +227,20 @@ class MaintenanceJobOrder(models.Model):
 
             return current_shift
         return False
+    
+    def action_assign_old_spare_parts(self):
+        return {
+            'name': 'Old Spare Parts',
+            'view_type': 'list',
+            'view_mode': 'list',
+            'res_model': 'old.spare.parts',
+            'type': 'ir.actions.act_window',
+            'domain': [('maintenance_job_order_id', '=', self.id)],
+            'context': {
+                'default_maintenance_job_order_id': self.id,
+                'default_maintenance_request_id': self.maintenance_request_id.id,
+            },
+        }
 
 
 class MaintenanceJobOrderComponent(models.Model):
@@ -248,6 +264,7 @@ class MaintenanceJobOrderComponent(models.Model):
     product_category_domain = fields.Binary(string="Product Category domain",
                                             help="Dynamic domain used for Product Category",
                                             compute="_compute_product_category_domain")
+    product_domain = fields.Binary(string="Product domain",compute="_compute_product_domain")
 
     def _compute_picking_status(self):
         for component in self:
@@ -280,6 +297,14 @@ class MaintenanceJobOrderComponent(models.Model):
                                component.maintenance_job_order_id.maintenance_workshop_id.workshop_product_category_ids.mapped(
                                    'product_category').ids))
             component.product_category_domain = domain
+    @api.depends('product_category_id','maintenance_job_order_id','maintenance_job_order_id.vehicle_id')
+    def _compute_product_domain(self):
+        for component in self:
+            domain = [('categ_id', '=',component.product_category_id.id)]
+            if component.maintenance_job_order_id.vehicle_id:
+                domain.append(('related_model_id', '=',
+                               component.maintenance_job_order_id.vehicle_id.model_id.id))
+            component.product_domain = domain
 
     def unlink(self):
         if self.spart_part_request == 'done':

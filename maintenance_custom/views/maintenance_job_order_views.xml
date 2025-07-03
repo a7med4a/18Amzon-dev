@@ -35,6 +35,8 @@
                                 confirm="Are you sure you finished all repairs?"/>
                         <button name="action_request_spare_parts" string="Request Spare Parts" type="object"
                                 class="btn-primary" invisible="state != 'in_progress'"/>
+                        <button name="action_assign_old_spare_parts" string="Assign Old Spare Parts" type="object"
+                                class="btn-warning" invisible="state != 'in_progress'"/>
                         <button name="action_cancelled" string="Cancel" type="object"
                                 confirm="Are you sure you want to Cancel this Job order ?"
                                 class="btn-secondary" invisible="state not in ('cancelled','under_process')"/>
@@ -81,8 +83,9 @@
                                 <field name="component_ids" readonly="state not in ('under_process','in_progress')">
                                     <list editable="bottom">
                                         <field name="product_category_domain" column_invisible="1"/>
+                                        <field name="product_domain" column_invisible="1"/>
                                         <field name="product_category_id" domain="product_category_domain" optional='show' options="{'no_open': True, 'no_create': True}"/>
-                                        <field name="product_id" domain="[('categ_id', '=',product_category_id)]" optional='show' options="{'no_open': True, 'no_create': True}" readonly="not product_category_id"/>
+                                        <field name="product_id" domain="product_domain" optional='show' options="{'no_open': True, 'no_create': True}" readonly="not product_category_id"/>
                                         <field name="uom_id" optional='show' options="{'no_open': True, 'no_create': True}"/>
                                         <field name="demand_qty" optional='show'/>
                                         <field name="done_qty" optional='show' readonly="1"/>

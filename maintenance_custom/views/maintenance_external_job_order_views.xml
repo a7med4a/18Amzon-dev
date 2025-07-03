@@ -49,6 +49,8 @@
                         <button name="action_cancelled" string="Cancel" type="object"
                                 confirm="Are you sure you want to Cancel external Job order ?"
                                 class="btn-secondary" invisible="state not in ('approved','waiting_transfer_to_workshop')"/>
+                        <button name="action_assign_old_spare_parts" string="Assign Old Spare Parts" type="object"
+                                class="btn-warning" invisible="state not in ('approved','waiting_approve','waiting_transfer_to_workshop')"/>
                         <button name="action_set_to_under_process" string="Reset To Draft" type="object"
                                 confirm="Are you sure you want to reset back to waiting approve state ?"
                                 class="btn-secondary" invisible="state not in  ('reject','cancelled')"/>
@@ -106,8 +108,9 @@
                                 <field name="component_ids" readonly="state not in ('waiting_approve','approved','waiting_transfer_to_workshop')">
                                     <list editable="bottom">
                                         <field name="product_category_domain" column_invisible="1"/>
+                                        <field name="product_domain" column_invisible="1"/>
                                         <field name="product_category_id" domain="product_category_domain" optional='show' options="{'no_open': True, 'no_create': True}"/>
-                                        <field name="product_id" domain="[('categ_id', '=',product_category_id)]" optional='show' options="{'no_open': True, 'no_create': True}" readonly="not product_category_id"/>
+                                        <field name="product_id" domain="product_domain" optional='show' options="{'no_open': True, 'no_create': True}" readonly="not product_category_id"/>
                                         <field name="uom_id" optional='show' options="{'no_open': True, 'no_create': True}"/>
                                         <field name="demand_qty" optional='show'/>
                                         <field name="done_qty" optional='show' readonly="1"/>

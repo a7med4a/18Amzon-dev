@@ -663,7 +663,9 @@ class LongTermRentalContract(models.Model):
     def _compute_long_term_pricing_request(self):
         for rec in self:
             long_term_pricing_request = self.env['long.term.pricing.request.line'].search([('vehicle_id', '=', rec.vehicle_id.id), (
-                'long_term_pricing_request_id.state', 'in', ('draft', 'under_review', 'confirmed')), ('pricing_status', '=', 'running')], limit=1)
+                'long_term_pricing_request_id.state', 'in', ('draft', 'under_review', 'confirmed')), ('pricing_status', '=', 'confirmed')], limit=1)
+            # long_term_pricing_request = self.env['long.term.pricing.request.line'].search([('vehicle_id', '=', rec.vehicle_id.id), ('pricing_status', '=', 'confirmed')], limit=1)
+            print(">>>>>>>>>>", long_term_pricing_request)
             if long_term_pricing_request:
                 rec.long_term_pricing_request = long_term_pricing_request.long_term_pricing_request_id.name
             else:
@@ -682,7 +684,7 @@ class LongTermRentalContract(models.Model):
                 [('vehicle_id', '=', rec.vehicle_id.id),
                  ('long_term_pricing_request_id.state', 'in',
                   ('draft', 'under_review', 'confirmed')),
-                 ('pricing_status', '=', 'running')])
+                 ('pricing_status', '=', 'confirmed')])
             if not long_term_request_price_running:
                 raise ValidationError(
                     _("No Running Long Term Pricing Request Found For Selected Vehicle,Please Create Running one !"))

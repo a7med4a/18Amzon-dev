@@ -48,6 +48,7 @@ class MaintenanceRequestInherit(models.Model):
     maintenance_external_job_order_count=fields.Integer(compute="_compute_maintenance_external_job_order_count")
     transfer_ids = fields.One2many(comodel_name='stock.picking', inverse_name='maintenance_request_id', string="Transfer")
     transfer_count = fields.Integer(compute="_compute_transfer_count")
+    damage_number = fields.Integer()
     transfer_old_spare_parts_count = fields.Integer(compute="_compute_transfer_count")
     route_branch_domain = fields.Binary(string="Route Branch domain", help="Dynamic domain used for Vehicle",compute="_compute_route_branch_domain")
     vehicle_domain = fields.Binary(string="Route Branch domain", help="Dynamic domain used for Vehicle",compute="_compute_vehicle_domain")

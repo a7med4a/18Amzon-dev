@@ -2,29 +2,6 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
 
-class StockMove(models.Model):
-    _inherit = 'stock.move'
-    _description = "Stock Moves"
-
-    old_spare_parts_id=fields.Many2one(
-        comodel_name='old.spare.parts',
-        string='Old Spare Parts'
-    )
-    maintenance_job_order_id = fields.Many2one(
-        comodel_name='maintenance.job.order',
-        string='Job Order'
-    )
-    maintenance_external_job_order_id = fields.Many2one(
-        comodel_name='maintenance.external.job.order',
-        string='External Job Order'
-    )
-
-
-class StockPicking(models.Model):
-    _inherit = 'stock.picking'
-    _description = "Stock Picking"
-
-    is_old_spare_parts = fields.Boolean(string='Is Old Spare Parts', default=False)
 
 class OldSpareParts(models.Model):
     _name = 'old.spare.parts'

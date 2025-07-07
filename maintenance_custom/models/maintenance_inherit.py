@@ -287,17 +287,28 @@ class MaintenanceRequestInherit(models.Model):
         action = self.env['ir.actions.act_window']._for_xml_id(
             'maintenance_custom.action_maintenance_create_bill'
         )
+        view_id = self.env.ref('maintenance_custom.view_maintenance_vendor_bill_form').id
         action['context'] = {
             'default_move_type': 'in_invoice',
             'default_maintenance_request_id': self.id,
+            'default_account_id': self.maintenance_team_id.account_id.id if self.maintenance_team_id and self.maintenance_team_id.account_id else False,
             'default_journal_id': self.maintenance_team_id.journal_id.id if self.maintenance_team_id and self.maintenance_team_id.journal_id else False,
         }
+        action['views']=[[view_id, 'form']]
+        action['view_mode']='form'
+        action['target']='new'
         return action
 
 
     def view_expense_bills(self):
-        action = self.env['ir.actions.actions']._for_xml_id('account.action_move_in_invoice')
-        action['domain'] =[('move_type', 'in', ['in_invoice', 'in_refund']),('maintenance_request_id', '=',self.id)]
+        if self.env.user.id in self.maintenance_team_id.notified_accountant_ids.ids:
+            action = self.env['ir.actions.actions']._for_xml_id('account.action_move_in_invoice')
+            action['domain'] =[('move_type', 'in', ['in_invoice', 'in_refund']),('maintenance_request_id', '=',self.id)]
+        else:
+            action = self.env['ir.actions.actions']._for_xml_id('maintenance_custom.action_maintenance_create_bill')
+            action['domain'] =[('move_type', 'in', ['in_invoice', 'in_refund']),('maintenance_request_id', '=',self.id)]
+            action['target'] = 'current'
+
         return action
 
 

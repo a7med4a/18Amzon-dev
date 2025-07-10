@@ -5,6 +5,7 @@ from odoo.exceptions import ValidationError
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 from datetime import  timedelta
+from lxml import etree
 
 DAYS_reverse = {'Monday': '0',
                 'Tuesday': '1',
@@ -310,6 +311,29 @@ class MaintenanceRequestInherit(models.Model):
             action['target'] = 'current'
 
         return action
+
+    @api.model
+    def get_view(self, view_id=None, view_type='form', **options):
+        res = super().get_view(view_id, view_type, **options)
+        if view_type == 'form' and options.get('action_id') == self.env.ref('maintenance_custom.maintenance_request_under_approval_action').id:
+            doc = etree.XML(res['arch'])
+            fields = doc.xpath("//field")
+            for field in fields:
+                field.set("readonly", "1")
+            buttons = doc.xpath("//button")
+            for button in buttons:
+                button.set("invisible", "1")
+            action_confirm = doc.xpath("//button[@name='action_confirm']")
+            for btn in action_confirm:
+                btn.set("invisible", "stage_type != 'under_approval'")
+                break
+            action_reject = doc.xpath("//button[@name='action_reject']")
+            for btn in action_reject:
+                btn.set("invisible", "stage_type != 'under_approval'")
+
+            res['arch'] = etree.tostring(doc, encoding='unicode')
+        return res
+
 
 
 class MaintenanceTeamInherit(models.Model):

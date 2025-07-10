@@ -9,8 +9,51 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='categ_id']" position="after">
                 <field name="is_spare_part" invisible="1"/>
-                <field name="related_model_id" invisible="is_spare_part == False" required="is_spare_part == True"/>
+                <field name="related_model_ids" widget="many2many_tags" invisible="is_spare_part == False" required="is_spare_part == True"/>
                 <field name="usage_type" invisible="is_spare_part == False" required="is_spare_part == True"/>
+            </xpath>
+        </field>
+    </record>
+    <!-- Inherit Form View to Modify it -->
+    <record id="view_maintenance_job_order_form_inherit" model="ir.ui.view">
+        <field name="name">Maintenance Job order Only Form View</field>
+        <field name="model">maintenance.job.order</field>
+        <field name="inherit_id" ref="maintenance_custom.view_maintenance_job_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <div class="oe_button_box" name="button_box">
+                    <button class="oe_stat_button" name="action_assign_old_spare_parts"
+                            type="object"
+                            icon="fa-bars" invisible="transfer_old_spare_parts_count == 0">
+                        <div class="o_stat_info">
+                            <span class="o_stat_value">
+                                <field name="transfer_old_spare_parts_count"/>
+                            </span>
+                            <span class="o_stat_text">Old Spare Parts</span>
+                        </div>
+                    </button>
+                </div>
+
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_maintenance_external_job_order_form_inherit" model="ir.ui.view">
+        <field name="name">Maintenance Job order Only Form View</field>
+        <field name="model">maintenance.external.job.order</field>
+        <field name="inherit_id" ref="maintenance_custom.view_maintenance_external_job_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet//div[@name='button_box']" position="inside">
+                    <button class="oe_stat_button" name="action_assign_old_spare_parts"
+                            type="object"
+                            icon="fa-bars" invisible="transfer_old_spare_parts_count == 0">
+                        <div class="o_stat_info">
+                            <span class="o_stat_value">
+                                <field name="transfer_old_spare_parts_count"/>
+                            </span>
+                            <span class="o_stat_text">Old Spare Parts</span>
+                        </div>
+                    </button>
             </xpath>
         </field>
     </record>

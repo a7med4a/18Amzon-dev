@@ -76,7 +76,7 @@ class MaintenanceJobOrder(models.Model):
         for rec in self:
             picking_moves = rec.transfer_ids
             stock_valuation_layer = picking_moves.move_ids.stock_valuation_layer_ids
-            rec.spare_parts_cost = sum((layer.value) for layer in stock_valuation_layer)
+            rec.spare_parts_cost = abs(sum((layer.value) for layer in stock_valuation_layer))
 
     def action_in_progress(self):
         for rec in self:
@@ -204,6 +204,9 @@ class MaintenanceJobOrder(models.Model):
                 for component in rec.component_ids.filtered(lambda x: x.spart_part_request == 'pending'):
                     component.spart_part_request = 'done'
 
+                for component in rec.component_ids.filtered(lambda x: x.picking_status == 'pending'):
+                    component.picking_status = 'in_progress'
+
     def _time_to_float(self, dt):
         """Convert a datetime object to a float representing hours (e.g., 14:30 -> 14.5)."""
         if not dt:
@@ -258,8 +261,8 @@ class MaintenanceJobOrderComponent(models.Model):
                                           selection=[('pending', 'Pending'), ('done', 'Done'), ], required=False,
                                           default="pending")
     picking_status = fields.Selection(string='Picking Status',
-                                      selection=[('in_progress', 'In Progress'), ('done', 'Done'),
-                                                 ('cancelled', 'Cancelled'), ], required=False, default="in_progress",
+                                      selection=[('pending', 'Pending'), ('in_progress', 'In Progress'), ('done', 'Done'),
+                                                 ('cancelled', 'Cancelled'), ], required=False, default="pending",
                                       compute="_compute_picking_status")
     product_category_domain = fields.Binary(string="Product Category domain",
                                             help="Dynamic domain used for Product Category",
@@ -268,7 +271,8 @@ class MaintenanceJobOrderComponent(models.Model):
 
     def _compute_picking_status(self):
         for component in self:
-            picking_moves = component.maintenance_job_order_id.transfer_ids
+            picking_moves = component.maintenance_job_order_id.transfer_ids.filtered(
+                lambda x: component.id in x.component_ids.ids)
             if picking_moves:
                 move_lines= picking_moves[-1].move_line_ids
                 done_qty = sum(move_lines.mapped('qty_done'))
@@ -302,7 +306,7 @@ class MaintenanceJobOrderComponent(models.Model):
         for component in self:
             domain = [('categ_id', '=',component.product_category_id.id)]
             if component.maintenance_job_order_id.vehicle_id:
-                domain.append(('related_model_id', '=',
+                domain.append(('related_model_ids', 'in',
                                component.maintenance_job_order_id.vehicle_id.model_id.id))
             component.product_domain = domain
 
@@ -318,6 +322,8 @@ class StockPicking(models.Model):
 
     maintenance_request_id = fields.Many2one(comodel_name='maintenance.request')
     maintenance_job_order_id = fields.Many2one(comodel_name='maintenance.job.order')
+    job_order_component_id = fields.Many2one(comodel_name='maintenance.job.order.component')
+    component_ids = fields.Many2many(comodel_name='maintenance.job.order.component', string='Components', required=False)
     number = fields.Integer(
         string='Number',
         required=False)
@@ -343,10 +349,16 @@ class StockMove(models.Model):
                 vals.update({
                     'maintenance_job_order_id': job_order.id,
                     'maintenance_request_id': job_order.maintenance_request_id.id,
+                    'component_ids': job_order.component_ids.filtered(lambda x:x.spart_part_request == 'pending').ids,
                     'origin': job_order.maintenance_request_id.name,
                 })
 
         return vals
+
+class StockMoveLine(models.Model):
+    _inherit = 'stock.move.line'
+
+    job_order_component_id = fields.Many2one(comodel_name='maintenance.job.order.component',related='move_id.job_order_component_id')
 
 
 class ProcurementGroup(models.Model):

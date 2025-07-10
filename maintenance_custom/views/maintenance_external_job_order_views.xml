@@ -12,11 +12,18 @@
                     <field name="plate_number"/>
                     <field name="vin_sn"/>
                     <field name="maintenance_workshop_id"/>
-                    <field name="job_order_start_date"/>
-                    <field name="job_order_close_date"/>
-                    <field name="duration"/>
+                    <field name="job_order_start_date" optional='hide'/>
+                    <field name="job_order_close_date" optional='hide'/>
+                    <field name="duration" optional="hide"/>
                     <field name="technicians_ids" widget="many2many_tags"/>
-                    <field name="technicians_cost"/>
+                    <field name="technicians_cost" optional='hide'/>
+                    <field name="workshop_type" optional='hide'/>
+                    <field name="job_order_start_date" optional='hide'/>
+                    <field name="job_order_close_date" optional='hide'/>
+                    <field name="duration" optional='hide'/>
+                    <field name="spare_parts_cost" optional='hide'/>
+                    <field name="note" optional='hide'/>
+                    <field name="state" widget="badge" decoration-danger="state in ('cancelled','rejected')" decoration-success="state=='repaired'" decoration-info="state in ('approved','waiting_transfer_to_workshop','transfer_to_workShop','waiting_check_in')" decoration-warning="state=='waiting_approve'"/>
                 </list>
             </field>
         </record>
@@ -98,7 +105,7 @@
                                 <field name="job_order_start_date" readonly="1"/>
                                 <field name="job_order_close_date" readonly="1"/>
                                 <field name="duration" />
-                                <field name="technicians_ids" widget="many2many_tags"/>
+                                <field name="technicians_ids" widget="many2many_tags" domain="[('is_technical','=', True)]" options="{'no_open': True, 'no_create': True}"/>
                                 <field name="technicians_cost"/>
                                 <field name="spare_parts_cost" />
                             </group>

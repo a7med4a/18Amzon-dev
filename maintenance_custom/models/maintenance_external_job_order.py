@@ -93,7 +93,7 @@ class MaintenanceExternalJobOrder(models.Model):
         for rec in self:
             picking_moves = rec.transfer_ids
             stock_valuation_layer = picking_moves.move_ids.stock_valuation_layer_ids
-            rec.spare_parts_cost = sum((layer.value) for layer in stock_valuation_layer)
+            rec.spare_parts_cost = abs(sum((layer.value) for layer in stock_valuation_layer))
 
 
     def action_approve(self):
@@ -254,6 +254,8 @@ class MaintenanceExternalJobOrder(models.Model):
                 # Mark components as requested
                 for component in rec.component_ids.filtered(lambda x: x.spart_part_request == 'pending'):
                     component.spart_part_request = 'done'
+                for component in rec.component_ids.filtered(lambda x: x.picking_status == 'pending'):
+                    component.picking_status = 'in_progress'
 
     def _time_to_float(self, dt):
         """Convert a datetime object to a float representing hours (e.g., 14:30 -> 14.5)."""
@@ -318,8 +320,9 @@ class MaintenanceExternalJobOrderComponent(models.Model):
                                           selection=[('pending', 'Pending'), ('done', 'Done'), ], required=False,
                                           default="pending")
     picking_status = fields.Selection(string='Picking Status',
-                                      selection=[('in_progress', 'In Progress'), ('done', 'Done'),
-                                                 ('cancelled', 'Cancelled'), ], required=False, default="in_progress",
+                                      selection=[('pending', 'Pending'), ('in_progress', 'In Progress'),
+                                                 ('done', 'Done'),
+                                                 ('cancelled', 'Cancelled'), ], required=False, default="pending",
                                       compute="_compute_picking_status")
     product_category_domain = fields.Binary(string="Product Category domain",
                                             help="Dynamic domain used for Product Category",
@@ -363,7 +366,7 @@ class MaintenanceExternalJobOrderComponent(models.Model):
         for component in self:
             domain = [('categ_id', '=',component.product_category_id.id)]
             if component.maintenance_external_job_order_id.vehicle_id:
-                domain.append(('related_model_id', '=',
+                domain.append(('related_model_ids', 'in',
                                component.maintenance_external_job_order_id.vehicle_id.model_id.id))
             component.product_domain = domain
 

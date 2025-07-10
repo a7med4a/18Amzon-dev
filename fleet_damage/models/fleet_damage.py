@@ -12,7 +12,7 @@ from datetime import datetime, date, timedelta
 class FleetDamage(models.Model):
     _name = 'fleet.damage'
     _inherit = ['mail.thread', 'mail.activity.mixin']
-    _rec_name = "vehicle_id"
+    _rec_name = "name"
 
     name = fields.Char(string="Reference",
                        copy=False, readonly=True, default="New")

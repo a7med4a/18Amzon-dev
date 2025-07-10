@@ -54,6 +54,16 @@
                             </div>
                         </button>
                     </div>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+                                <div style="flex-grow: 1;">
+                                    <field name="name"/>
+                                </div>
+                            </div>
+                        </h1>
+                    </div>
                     <group>
                         <group string="Vehicle Info">
                             <field name="name" invisible="1"/>

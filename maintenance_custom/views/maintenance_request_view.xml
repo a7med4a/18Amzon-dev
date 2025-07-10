@@ -78,8 +78,8 @@
             </xpath>
             <xpath expr="//field[@name='maintenance_type']" position="after">
                 <field name="request_description" readonly="stage_type in ('opened','closed')"/>
-                <field name="damage_id" invisible="maintenance_type != 'damage'" readonly="stage_type not in ('new', 'under_approval','opened')" domain="[('vehicle_id', '=', vehicle_id)]"/>
-                <field name="accident_id" invisible="maintenance_type != 'accident'" readonly="stage_type not in ('new', 'under_approval','opened')" domain="[('fleet_vehicle_id', '=', vehicle_id)]"/>
+                <field name="damage_id" options="{'no_open': True, 'no_create': True}" invisible="maintenance_type != 'damage'" readonly="stage_type not in ('new', 'under_approval','opened')" domain="[('vehicle_id', '=', vehicle_id)]"/>
+                <field name="accident_id" options="{'no_open': True, 'no_create': True}" invisible="maintenance_type != 'accident'" readonly="stage_type not in ('new', 'under_approval','opened')" domain="[('fleet_vehicle_id', '=', vehicle_id)]"/>
             </xpath>
             <xpath expr="//sheet//div//label[@for='name']" position="replace">
                 <label for="name" string="Maintenance Request Number"/>
@@ -275,17 +275,93 @@
         <field name="view_mode">list,form</field>
     </record>
 
-    <record id="maintenance_request_under_approval_action" model="ir.actions.act_window">
-        <field name="name">Maintenance Request Under Approval</field>
-        <field name="type">ir.actions.act_window</field>
-        <field name="res_model">fleet.vehicle</field>
-        <field name="domain">[('state_id.type', 'in', ('waiting_maintenance','under_external_maintenance','ready_to_transfer_from_workshop'))]</field>
-        <field name="view_mode">kanban,list</field>
+    <record id='maintenance_fleet_vehicle_view_kanban' model='ir.ui.view'>
+        <field name="name">fleet.vehicle.kanban</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="arch" type="xml">
+            <kanban sample="1">
+                <field name="contract_renewal_due_soon" />
+                <field name="contract_renewal_overdue" />
+                <progressbar field="activity_state" colors='{"planned": "success", "today": "warning", "overdue": "danger"}'/>
+
+                <templates>
+                    <t t-if="record.state_id.type.value in ('waiting_maintenance', 'under_external_maintenance','under_internal_maintenance', 'ready_to_transfer_from_workshop')">
+                        <t t-name="card" class="flex-row">
+                            <aside class="d-flex align-items-center me-2">
+                                <field name="image_128" widget="image" options="{'img_class': 'object-fit-cover'}"/>
+                            </aside>
+                            <main>
+                                <div>
+                                    <t t-if="record.license_plate.raw_value">
+                                        <field class="fw-bolder fs-5" name="license_plate"/>:
+                                    </t>
+                                    <field class="fw-bolder fs-5" name="model_id"/>
+                                </div>
+                                <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
+                                <field t-if="record.driver_id.raw_value" name="driver_id" widget="many2one_avatar"
+                                       options="{'display_avatar_name': True}" class="small pt-1 pb-1"/>
+                                <div class="small">
+                                    <t t-if="record.future_driver_id.raw_value">Future Driver :
+                                        <field name="future_driver_id"/>
+                                    </t>
+                                </div>
+                                <t t-if="record.location.raw_value">
+                                    <small>
+                                        <i class="fa fa-map-marker" title="Location"></i>
+                                        <field name="location"/>
+                                    </small>
+                                </t>
+                                <field name="vehicle_properties" widget="properties"/>
+                                <field name="state_id" widget="badge"/>
+                                <footer class="pt-0 mt-0" t-if="!selection_mode">
+                                    <div class="d-flex fs-6">
+                                        <a t-if="record.contract_count.raw_value>0" type="object"
+                                           name="return_action_to_open" href="#"
+                                           data-context='{"xml_id":"fleet_vehicle_log_contract_action"}'>
+                                            <field name="contract_count"/>
+                                            Contract(s)
+                                            <span t-if="record.contract_renewal_due_soon.raw_value and !record.contract_renewal_overdue.raw_value"
+                                                  class="fa fa-exclamation-triangle text-warning" role="img"
+                                                  aria-label="Warning: renewal due soon"
+                                                  title="Warning: renewal due soon">
+                                            </span>
+                                            <span t-if="record.contract_renewal_overdue.raw_value"
+                                                  class="fa fa-exclamation-triangle text-danger" role="img"
+                                                  aria-label="Attention: renewal overdue"
+                                                  title="Attention: renewal overdue">
+                                            </span>
+                                        </a>
+                                        <field name="activity_ids" widget="kanban_activity" class="ms-2"/>
+                                    </div>
+                                </footer>
+                            </main>
+                        </t>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
     </record>
+
+
+<record id="maintenance_request_fleet_vehicle_action" model="ir.actions.act_window">
+    <field name="name">Maintenance Dashboard</field>
+    <field name="type">ir.actions.act_window</field>
+    <field name="res_model">fleet.vehicle</field>
+    <field name="domain">
+        [('state_id.type', 'in', ['waiting_maintenance','under_external_maintenance','under_internal_maintenance','ready_to_transfer_from_workshop'])]
+    </field>
+    <field name="view_mode">kanban,list</field>
+    <field name="view_ids" eval="[
+        (5, 0, 0),
+        (0, 0, {'view_mode': 'kanban', 'view_id': ref('maintenance_custom.maintenance_fleet_vehicle_view_kanban')}),
+        (0, 0, {'view_mode': 'list', 'view_id': ref('fleet.fleet_vehicle_view_tree')})
+    ]"/>
+</record>
+
 
     <!-- This Menu Item must have a parent and an action -->
     <menuitem id="menu_maintenance_request_under_approval" name="Maintenance Request Under Approval" parent="maintenance.menu_m_request" action="maintenance_request_under_approval_action" sequence="200"/>
 
-    <menuitem id="menu_maintenance_dashboard" name="Maintenance Dashboard" parent="maintenance.menu_maintenance_title" action="maintenance_request_under_approval_action"/>
+    <menuitem id="menu_maintenance_dashboard" name="Maintenance Dashboard" parent="maintenance.menu_maintenance_title" action="maintenance_request_fleet_vehicle_action"/>
 
 </odoo>

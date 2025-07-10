@@ -10,12 +10,30 @@ class JobOrderInherit(models.Model):
 
     old_spare_parts_ids = fields.One2many(comodel_name='old.spare.parts', inverse_name='maintenance_job_order_id',
                                    string="Old Spare Parts")
+    transfer_old_spare_parts_count=fields.Integer(compute="_compute_transfer_old_spare_parts_count")
+
+    @api.depends('old_spare_parts_ids')
+    def _compute_transfer_old_spare_parts_count(self):
+        for job in self:
+            job.transfer_old_spare_parts_count=len(job.old_spare_parts_ids.ids)
+
+class ExternalJobOrderInherit(models.Model):
+    _inherit = 'maintenance.external.job.order'
+
+    old_spare_parts_ids = fields.One2many(comodel_name='old.spare.parts', inverse_name='maintenance_external_job_order_id',
+                                   string="Old Spare Parts")
+    transfer_old_spare_parts_count=fields.Integer(compute="_compute_transfer_old_spare_parts_count")
+
+    @api.depends('old_spare_parts_ids')
+    def _compute_transfer_old_spare_parts_count(self):
+        for job in self:
+            job.transfer_old_spare_parts_count=len(job.old_spare_parts_ids.ids)
 
 class ProductTemplateInherit(models.Model):
     _inherit = 'product.template'
 
 
-    related_model_id = fields.Many2one('fleet.vehicle.model', string='Related Model')
+    related_model_ids = fields.Many2many('fleet.vehicle.model', string='Related Models')
     usage_type = fields.Selection(
         string='Usage Type',
         selection=[('original', 'Original'), ('copy', 'Copy'), ],

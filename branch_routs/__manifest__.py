@@ -4,11 +4,11 @@
     'summary': "Add Branch Routs Cycle To Product",
     'description': """Add Branch Routs Cycle To Product""",
     'author': "M.Deep",
-    'website': "",
     'category': 'Uncategorized',
     'version': '0.1',
     'depends': ['fleet_master_configuration', 'hr_fleet', 'vehicle_info', 'fleet_status'],
     'data': [
+        'security/groups.xml',
         'security/ir.model.access.csv',
         'security/rule.xml',
         'data/branch_routs_sequence.xml',

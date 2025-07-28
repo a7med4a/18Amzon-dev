@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Main STA Integration Menu -->
+        <menuitem id="menu_sta_integration_root"
+                  name="STA Integration"
+                  sequence="100"
+                  web_icon="sta_integration,static/description/icon.png"/>
+
+        <!-- Configuration Menu -->
+        <menuitem id="menu_sta_configuration"
+                  name="Configuration"
+                  parent="menu_sta_integration_root"
+                  sequence="1000"/>
+
+        <!-- STA Contracts Menu -->
+        <menuitem id="menu_sta_contracts"
+                  name="Contracts"
+                  parent="menu_sta_integration_root"
+                  sequence="20"
+                  action="action_sta_contract"/>
+
+        <!-- STA Branches Menu -->
+        <menuitem id="menu_sta_branches"
+                  name="Branches"
+                  parent="menu_sta_integration_root"
+                  sequence="10"
+                  action="action_sta_branch"/>
+
+        <!-- STA Rent Policies Menu -->
+        <menuitem id="menu_sta_rent_policies"
+                  name="Rent Policies"
+                  parent="menu_sta_integration_root"
+                  sequence="20"
+                  action="action_sta_rent_policy"/>
+
+        <!-- Settings Menu - هذا هو التغيير الوحيد المطلوب -->
+
+
+        <!-- Action للإعدادات المخصصة -->
+        <record id="action_sta_integration_settings" model="ir.actions.act_window">
+            <field name="name">STA Integration Settings</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">res.config.settings</field>
+            <field name="view_mode">form</field>
+            <field name="target">inline</field>
+            <field name="context">{
+                'default_module': 'sta_integration',
+                'module': 'sta_integration'
+            }</field>
+        </record>
+         <menuitem id="menu_sta_settings"
+                  name="Settings"
+                  parent="menu_sta_configuration"
+                  sequence="30"
+                  action="action_sta_integration_settings"/>
+    </data>
+</odoo>

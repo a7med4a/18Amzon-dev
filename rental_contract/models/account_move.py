@@ -16,7 +16,7 @@ class AccountMove(models.Model):
         string='Payment Type Selection',
         selection=[('advance', 'مقدم'), ('extension', 'تمديد'), ('close', 'إغلاق'), ('debit', 'سداد مديونية'), ('extension_offline', 'تمديد بدون منصة'),
                    ('suspended_payment', 'سداد عقد معلق'), ('fine', 'غرامة'), ('closing_batch', 'دفعة اغلاق'), ('refund', 'مردودات')],
-        required=True, )
+        required=False, )
 
     @api.depends('rental_contract_id')
     def _compute_is_individual_contract(self):

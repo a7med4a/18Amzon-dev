@@ -79,25 +79,31 @@ class FleetAccident(models.Model):
         'res.partner', string='Selected Partner', compute="_compute_other_party_partner_ids")
 
     # Evaluation Page Fields
+    evaluation_report_ids = fields.One2many(
+        'accident.evaluation.report', 'accident_id', string='Evaluation Report')
+    confirmed_evaluation_report_id = fields.Many2one(
+        'accident.evaluation.report', string='Confirmed Evaluation')
     evaluation_type = fields.Selection([
         ('internal', 'Internal'),
         ('external', 'External')
-    ], string='Evaluation Type')
+    ], string='Evaluation Type', related="confirmed_evaluation_report_id.evaluation_type", store=True)
     evaluation_party_id = fields.Many2one(
-        'fleet.accident.evaluation.party', string='Evaluation Party', domain="[('company_id', '=', company_id)]")
+        'fleet.accident.evaluation.party', string='Evaluation Party', domain="[('company_id', '=', company_id)]",
+        related="confirmed_evaluation_report_id.evaluation_party_id", store=True)
     evaluation_item_ids = fields.One2many(
-        'accident.evaluation.item.line', 'accident_id', string='Evaluation Items')
+        'accident.evaluation.item.line', 'accident_id', string='Evaluation Items',
+        related="confirmed_evaluation_report_id.evaluation_item_ids")
     total_evaluation = fields.Float(
         'Total Evaluation', compute="_compute_total_evaluation", store=True)
-    compensation_type = fields.Selection([
-        ('full', 'Full'),
-        ('third', 'Third')
-    ], string='Compensation Type')
+    compensation_type = fields.Selection(string='Compensation Type',
+                                         related="confirmed_evaluation_report_id.compensation_type", store=True)
 
     # Due Amount Tab Fields
     due_amount_line_ids = fields.One2many(
         'accident.due.amount.line', 'accident_id', string='Due Amount Lines')
 
+    evaluation_count = fields.Integer(
+        'Payment Count', compute='_compute_evaluation_count', store=True)
     state = fields.Selection([
         ('announcement', 'Announcement'),
         ('accident_report', 'Waiting Accident Report'),
@@ -139,6 +145,11 @@ class FleetAccident(models.Model):
         for rec in self:
             if rec.accident_type == 'not_covered':
                 rec.customer_percentage = '100'
+
+    @api.depends('evaluation_report_ids')
+    def _compute_evaluation_count(self):
+        for record in self:
+            record.evaluation_count = len(record.evaluation_report_ids)
 
     @api.constrains('accident_date', 'announcement_date', 'report_date')
     def _check_accident_date(self):
@@ -279,9 +290,26 @@ class FleetAccident(models.Model):
     def button_evaluation(self):
         self.state = 'evaluation'
 
+    def button_add_evaluation(self):
+        self.ensure_one()
+        view_id = self.env.ref(
+            'fleet_accident.add_accident_evaluation_report_view_form').id
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Add Evaluation'),
+            'res_model': 'accident.evaluation.report',
+            'target': 'new',
+            'view_mode': 'form',
+            'context': {'default_accident_id': self.id},
+            'views': [[view_id, 'form']]
+        }
+
     def button_insurance_approve(self):
         if any(rec.total_evaluation <= 0.0 for rec in self):
             raise ValidationError(_("Please fill evaluation table "))
+        if any(not rec.confirmed_evaluation_report_id for rec in self):
+            raise ValidationError(
+                _("You can't move to insurance approve state before confirm at least one evaluation!"))
         self.state = 'insurance_approve'
 
     def button_invoicing(self):
@@ -321,14 +349,26 @@ class FleetAccident(models.Model):
             self._check_percentage()
         return super().write(vals)
 
+    def view_related_evaluation(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Evaluations'),
+            'res_model': 'accident.evaluation.report',
+            'view_mode': 'list,form',
+            'domain': [('accident_id', '=', self.id)],
+            'context': {'create': 0}
+        }
+
 
 class AccidentEvaluationItemLine(models.Model):
     _name = "accident.evaluation.item.line"
     _description = "Accident Evaluation Item Line"
 
+    evaluation_report_id = fields.Many2one(
+        'accident.evaluation.report', string='Evaluation Report')
     accident_id = fields.Many2one('fleet.accident', string='Accident')
     company_id = fields.Many2one(
-        'res.company', string='Company', related="accident_id.company_id", store=True)
+        'res.company', string='Company', related="evaluation_report_id.company_id", store=True)
     evaluation_item_id = fields.Many2one(
         'fleet.accident.evaluation.item', string='Evaluation Item', required=True, domain="[('company_id', '=', company_id)]")
     evaluation_item_value = fields.Float(string='Evaluation Item Value')

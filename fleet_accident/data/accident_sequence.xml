@@ -10,4 +10,15 @@
         </record>
 
     </data>
+
+    <data noupdate="1">
+
+        <record id="seq_fleet_accident_evaluation" model="ir.sequence">
+            <field name="name">Fleet Accident Evaluation</field>
+            <field name="code">fleet.accident.evaluation.seq</field>
+            <field name="prefix">AE/</field>
+            <field name="padding">3</field>
+        </record>
+
+    </data>
 </odoo>

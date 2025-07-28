@@ -50,7 +50,7 @@ class vehicle_info(models.Model):
     vin_sn = fields.Char()
     model_year = fields.Char(readonly=True)
     category_id = fields.Many2one(
-        'fleet.vehicle.model.category')
+        'fleet.vehicle.model.category',related="model_id.category_id",store=True)
 
     # Vehicle Information
     serial_number = fields.Char('Serial Number')

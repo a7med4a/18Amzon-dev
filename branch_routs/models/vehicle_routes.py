@@ -16,7 +16,8 @@ class VehicleRouts(models.Model):
         'fleet.vehicle', string='Vehicle', required=True)
     branch_route_id = fields.Many2one(
         'branch.route', string='Branch Route', ondelete="cascade")
-    maintenance_external_job_order_id = fields.Many2one('maintenance.external.job.order', string='External Job order')
+    maintenance_external_job_order_id = fields.Many2one(
+        'maintenance.external.job.order', string='External Job order')
     destination_type = fields.Selection(
         related='branch_route_id.destination_type', store=True)
     source_branch_id = fields.Many2one(
@@ -31,11 +32,15 @@ class VehicleRouts(models.Model):
         related='branch_route_id.is_new_vehicle', string='New Vehicle', store=True)
     exit_checklist_status = fields.Selection([
         ('under_check', 'Under Check'),
+        ('exit_under_approval', 'Exit Under Approval'),
         ('in_transfer', 'Exit Check Done'),
+        ('rejected', 'Rejected'),
     ], string='Exist CheckList Status', tracking=True)
     entry_checklist_status = fields.Selection([
         ('in_transfer', 'In Transfer'),
+        ('entry_under_approval', 'Entry Under Approval'),
         ('done', 'Entry Check Done'),
+        ('rejected', 'Rejected'),
     ], string='Entry CheckList Status', tracking=True)
     exist_under_check_date = fields.Datetime(
         'Exist Under Check Date', tracking=True)
@@ -47,9 +52,12 @@ class VehicleRouts(models.Model):
     state = fields.Selection([
         ('draft', 'Draft'),
         ('exit_check', 'Exit Check'),
+        ('exit_under_approval', 'Exit Under Approval'),
         ('exit_done', 'Exit Done'),
         ('entry_check', 'Entry Check'),
+        ('entry_under_approval', 'Entry Under Approval'),
         ('entry_done', 'Entry Done'),
+        ('rejected', 'Rejected'),
         ('cancel', 'Cancelled')
     ], string='State', default='draft')
     fleet_domain = fields.Binary(
@@ -159,10 +167,13 @@ class VehicleRouts(models.Model):
     side_5 = fields.Binary(string="Side 5", readonly=False)
     side_6 = fields.Binary(string="Side 6", readonly=False)
 
+    is_returned = fields.Boolean(
+        copy=False, default=False, help="Indicates if this vehicle route is a return route to the source branch")
+
     @api.depends('is_new_vehicle')
     def _compute_fleet_domain(self):
         running_vehicle_ids = self.env['vehicle.route'].search(
-            [('branch_route_id.state', 'not in', ['entry_done', 'cancel'])]).mapped('fleet_vehicle_id')
+            [('branch_route_id.state', 'in', ['draft', 'under_check'])]).mapped('fleet_vehicle_id')
         running_vehicle_ids |= self.branch_route_id.vehicle_route_ids.fleet_vehicle_id
         for route in self:
             if route.branch_route_id.is_new_vehicle:
@@ -184,10 +195,41 @@ class VehicleRouts(models.Model):
     def _check_exist_vehicle_route(self):
         for rec in self:
             exist_running_vehicle_route = self.sudo().search([('branch_route_id.state', 'not in', [
-                'entry_done', 'cancel']), ('id', '!=', rec.id), ('fleet_vehicle_id', '=', rec.fleet_vehicle_id.id)], limit=1)
+                'checked', 'cancel', 'closed']), ('id', '!=', rec.id), ('fleet_vehicle_id', '=', rec.fleet_vehicle_id.id)], limit=1)
             if exist_running_vehicle_route and not rec.is_external_job_order:
                 raise ValidationError(
                     _(f"Vehicle {rec.fleet_vehicle_id.display_name} exist in branch route {exist_running_vehicle_route.branch_route_id.name} which is in {exist_running_vehicle_route.branch_route_id.state} state"))
+
+    def send_group_branch_route_manager_notification(self):
+        # send activity to group_branch_route_manager
+        self.ensure_one()
+        group_branch_route_manager = self.env.ref(
+            'branch_routs.group_branch_route_manager')
+        if group_branch_route_manager:
+            for user in group_branch_route_manager.users:
+                self.branch_route_id.activity_schedule(
+                    'mail.mail_activity_data_todo',
+                    user_id=user.id,
+                    summary=_('Vehicle Route Approval Needed'),
+                    note=_(
+                        'Vehicle Route %s is waiting for approval.') % self.fleet_vehicle_id.display_name,
+                    date_deadline=fields.Date.context_today(self),
+                    res_model='branch.route',
+                    res_id=self.branch_route_id.id
+                )
+
+    def _get_related_activities(self):
+        domain = [
+            ('res_model', '=', 'branch.route'),
+            ('activity_type_id', '=', self.env.ref(
+                'mail.mail_activity_data_todo').id),
+            ('res_id', 'in', self.branch_route_id.ids),
+            ('user_id', 'in', self.env.ref(
+                'branch_routs.group_branch_route_manager').users.ids)
+        ]
+
+        activities = self.env['mail.activity'].search(domain)
+        return activities
 
     # Exit Functions
 
@@ -244,6 +286,13 @@ class VehicleRouts(models.Model):
                     'entry_in_transfer_date': fields.Datetime.now()
                 })
 
+    def action_exit_under_approval(self):
+        for rec in self:
+            rec.send_group_branch_route_manager_notification()
+            rec.write({
+                'exit_checklist_status': 'exit_under_approval',
+                'state': 'exit_under_approval'
+            })
 
     def action_exit_done(self):
         self.write({
@@ -251,8 +300,7 @@ class VehicleRouts(models.Model):
             'exit_checklist_status': 'in_transfer',
             'exist_in_transfer_date': fields.Datetime.now()
         })
-        self.branch_route_id.action_exit_done()
-
+        self.branch_route_id.check_all_exit_done()
 
     def action_branch_exit_done(self):
         in_transfer_fleet_status = self.env['fleet.vehicle.state'].search(
@@ -302,20 +350,39 @@ class VehicleRouts(models.Model):
                 'vehicle_status': rec.exit_vehicle_status,
                 'state_id': in_transfer_fleet_status.id
             })
+
+            rec._get_related_activities().action_feedback()
+
+    def action_reject_exit_vehicle_route(self):
+        self.write({
+            'state': 'rejected',
+            'exit_checklist_status': 'rejected',
+        })
+        self.branch_route_id.check_all_exit_done()
+        for rec in self:
+            rec._get_related_activities().action_feedback()
+
     # Entry Functions
 
+    def action_entry_under_approval(self):
+        self._check_odometer_validity()
+        for rec in self:
+            rec.send_group_branch_route_manager_notification()
+            rec.write({
+                'entry_checklist_status': 'entry_under_approval',
+                'state': 'entry_under_approval'
+            })
 
     def action_entry_done(self):
-        self._check_odometer_validity()
+        self.update_fleet(type='done')
         self.write({
             'state': 'entry_done',
             'entry_checklist_status': 'done',
             'entry_done_date': fields.Datetime.now()
         })
-        self.branch_route_id.action_entry_done()
+        self.branch_route_id.action_checked()
 
-    def action_branch_entry_done(self):
-
+    def update_fleet(self, type):
         ready_to_rent_fleet_status = self.env['fleet.vehicle.state'].search(
             [('type', '=', 'ready_to_rent')])
         # under_maintenance_fleet_status = self.env['fleet.vehicle.state'].search(
@@ -325,16 +392,8 @@ class VehicleRouts(models.Model):
         in_service_fleet_status = self.env['fleet.vehicle.state'].search(
             [('type', '=', 'in_service')])
         for rec in self:
-            fleet_status = self.env['fleet.vehicle.state']
-            if rec.branch_route_id.destination_type == 'branch' or (rec.branch_route_id.is_new_vehicle and rec.destination_branch_id.branch_type in ['rental', 'limousine']):
-                fleet_status = ready_to_rent_fleet_status
-            elif rec.branch_route_id.destination_type == 'workshop' or (rec.branch_route_id.is_new_vehicle and rec.destination_branch_id.branch_type == 'workshop'):
-                # fleet_status = under_maintenance_fleet_status
-                fleet_status = waiting_maintenance_fleet_status
-            elif rec.branch_route_id.is_new_vehicle and rec.destination_branch_id.branch_type == 'administration':
-                fleet_status = in_service_fleet_status
-
-            rec.fleet_vehicle_id.write({
+            dict_to_update = {
+                'odometer': rec.entry_odometer,
                 'ac': rec.entry_ac,
                 'radio_stereo': rec.entry_radio_stereo,
                 'screen': rec.entry_screen,
@@ -353,9 +412,30 @@ class VehicleRouts(models.Model):
                 'oil_type': rec.entry_oil_type,
                 'oil_change_date': rec.entry_oil_change_date,
                 'vehicle_status': rec.entry_vehicle_status,
-                'state_id': fleet_status.id if fleet_status else False,
                 'branch_id': rec.branch_route_id.destination_branch_id.id
-            })
+            }
+            if type == 'done':
+                fleet_status = self.env['fleet.vehicle.state']
+                if rec.branch_route_id.destination_type == 'branch' or (rec.branch_route_id.is_new_vehicle and rec.destination_branch_id.branch_type in ['rental', 'limousine']):
+                    fleet_status = ready_to_rent_fleet_status
+                elif rec.branch_route_id.destination_type == 'workshop' or (rec.branch_route_id.is_new_vehicle and rec.destination_branch_id.branch_type == 'workshop'):
+                    # fleet_status = under_maintenance_fleet_status
+                    fleet_status = waiting_maintenance_fleet_status
+                elif rec.branch_route_id.is_new_vehicle and rec.destination_branch_id.branch_type == 'administration':
+                    fleet_status = in_service_fleet_status
+                dict_to_update.update({
+                    'state_id': fleet_status.id if fleet_status else False,
+                })
+
+            rec.fleet_vehicle_id.write(dict_to_update)
+            rec._get_related_activities().action_feedback()
+
+    def action_reject_entry_vehicle_route(self):
+        self.update_fleet(type='rejected')
+        self.write({
+            'state': 'rejected',
+            'entry_checklist_status': 'rejected',
+        })
 
     def action_branch_button_cancel(self):
         self.write({
@@ -370,3 +450,22 @@ class VehicleRouts(models.Model):
             'exit_checklist_status': False,
             'state': 'draft'
         })
+
+    # Return Cycle
+
+    def action_return(self):
+        # create new branch route with the same vehicle
+        # exchange source and destination branches
+        if self.branch_route_id.is_new_vehicle:
+            raise ValidationError(
+                _("You can't return a new vehicle branch route."))
+        new_branch_route = self.branch_route_id.copy()
+        new_branch_route.write({
+            'source_branch_id': self.branch_route_id.destination_branch_id.id,
+            'destination_branch_id': self.branch_route_id.source_branch_id.id,
+            'source_branch_route_id': self.branch_route_id.id,
+            'vehicle_route_ids': [(0, 0, {
+                'fleet_vehicle_id': self.fleet_vehicle_id.id
+            })]
+        })
+        self.is_returned = True

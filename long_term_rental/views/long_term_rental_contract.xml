@@ -8,12 +8,12 @@
       <form string="Rental Contract">
         <header>
           <!-- Draft Buttons -->
-          <button name="next_draft_state" type="object" class="oe_highlight" invisible="state != 'draft' or draft_state == 'financial_info'" icon="fa-arrow-circle-o-right" string="Next" />
           <button name="prev_draft_state" type="object" class="oe_highlight" invisible="state != 'draft' or draft_state == 'customer_info'" icon="fa-arrow-circle-o-left" string="Back" />
+          <button name="next_draft_state" type="object" class="oe_highlight" invisible="state != 'draft' or draft_state == 'financial_info'" icon="fa-arrow-circle-o-right" string="Next" />
           <button name="action_open" type="object" invisible="state != 'draft' or draft_state != 'financial_info'" string="Open" class="oe_highlight" confirm="Are you sure you want to open this contract?" />
           <!-- After draft -->
-          <button name="action_pay" type="object" invisible="draft_state != 'financial_info'" string="Pay" class="oe_highlight" />
-          <button name="calculate_installment" type="object" invisible="draft_state != 'financial_info' or state != 'draft'" string="Calculate Installment" class="oe_highlight" />
+          <!-- <button name="action_pay" type="object" invisible="draft_state != 'financial_info'" string="Pay" class="oe_highlight" /> -->
+          <!-- <button name="calculate_installment" type="object" invisible="draft_state != 'financial_info' or state != 'draft'" string="Calculate Installment" class="oe_highlight" /> -->
           <!-- Open Buttons -->
           <button name="%(rental_contract.rental_contract_fines_wiz_action)d" type="action" invisible="state in ['draft', 'closed']" string="Add Fines" class="oe_highlight" />
           <button name="%(rental_contract.rental_contract_discount_wiz_action)d" type="action" invisible="state in ['draft', 'closed']" string="Add Discount Voucher" class="oe_highlight" />
@@ -32,14 +32,14 @@
           <!-- button box -->
           <div class="oe_button_box" name="button_box">
 
-            <button class="oe_stat_button" name="view_contract_additional_supplement_service" type="object" icon="fa-bars" invisible="additional_supplement_service_count == 0" groups="base.group_system">
+            <!-- <button class="oe_stat_button" name="view_contract_additional_supplement_service" type="object" icon="fa-bars" invisible="additional_supplement_service_count == 0" groups="base.group_system">
               <div class="o_stat_info">
                 <span class="o_stat_value">
                   <field name="additional_supplement_service_count" />
                 </span>
                 <span class="o_stat_text">Services</span>
               </div>
-            </button>
+            </button> -->
 
 
             <button class="oe_stat_button" name="view_related_payments" type="object" icon="fa-dollar" invisible="payment_count == 0">
@@ -51,6 +51,14 @@
               </div>
             </button>
 
+            <button class="oe_stat_button" name="view_related_invoices" type="object" icon="fa-edit" invisible="invoice_count == 0">
+              <div class="o_stat_info">
+                <span class="o_stat_value">
+                  <field name="invoice_count" />
+                </span>
+                <span class="o_stat_text">Invoices</span>
+              </div>
+            </button>
           </div>
 
           <!-- title -->
@@ -72,11 +80,11 @@
           <!-- vehicle_info -->
           <group invisible="(state == 'draft' and draft_state != 'vehicle_info') or state == 'close_info'" string="Vehicle Info">
             <group>
-              <field name="vehicle_id" required="draft_state != 'customer_info'" options="{'no_create': True}" readonly="state != 'draft'" domain="[('state_id.type', '=', 'ready_to_rent'), ('usage_type', '=', 'long_term'), ('branch_id.branch_type', '=', 'long_term')]" invisible="contract_type == 'rental'"/>
+              <field name="vehicle_id" required="draft_state != 'customer_info'" readonly="state != 'draft'" domain="[('state_id.type', '=', 'ready_to_rent'), ('usage_type', '=', 'long_term'), ('branch_id.branch_type', '=', 'long_term')]" invisible="contract_type == 'rental'"  options="{'no_create': True, 'no_open': True}"/>
               <field name="license_plate"/>
               <field name="model_id" options="{'no_create': True, 'no_open': True}"/>
               <field name="category_id" options="{'no_create': True, 'no_open': True}"/>
-              <field name="out_odometer" readonly="state != 'draft'" />
+              <field name="out_odometer" readonly="1" force_save="1"/>
             </group>
             <group>
               <field name="long_term_pricing_request" readonly="1"/>
@@ -107,13 +115,17 @@
               <field name="out_oil_change_date" required="draft_state != 'customer_info'" readonly="state != 'draft'" />
               <field name="out_vehicle_status" required="draft_state != 'customer_info'" readonly="state != 'draft'" />
             </group>
+             <group>
+              <field name="out_image_attachment_ids" widget="many2many_binary" readonly="state != 'draft'" />
+            </group>
           </group>
           <!-- contract_info -->
           <group invisible="(state == 'draft' and draft_state != 'contract_info') or state == 'close_info'" string="Contract Info">
             <group>
-              <field name="vehicle_branch_id" />
+              <field name="vehicle_branch_id" options="{'no_create': True, 'no_open': True}"/>
               <field name="pickup_date" required="draft_state not in ['customer_info', 'vehicle_info']" readonly="state != 'draft'" />
               <field name="contract_start_date" required="draft_state not in ['customer_info', 'vehicle_info']" readonly="state != 'draft'" />
+              <field name="allowed_duration" invisible="1" />
               <label for="duration" />
               <div class="o_row">
                   <field name="duration" required="draft_state not in ['customer_info', 'vehicle_info']" readonly="state != 'draft'" /> Month
@@ -141,10 +153,9 @@
                  string="Financial Info">
             <group>
               <field name="monthly_rate"/>
-              <field name="one_time_services"/>
+              <field name="monthly_day_price"/>
+              <field name="one_time_services" string="Other Cost"/>
               <field name="duration" readonly="1"/>
-              <field name="advanced_payment"/>
-              <field name="ownership_amount"/>
             </group>
             <group>
               <field name="total_amount"/>
@@ -154,13 +165,12 @@
               <field name="advanced_paid_amount"/>
               <field name="paid_amount" invisible="1"/>
               <field name="remaining_amount"/>
-              <field name="monthly_installment"/>
             </group>
           </group>
 
           <!-- Current Due Amount -->
 
-          <group invisible="state == 'draft'" string="Current Due Amount">
+          <group invisible="state == 'draft'" string="Due Amount">
             <group>
               <label for="display_actual_days" string="Actual" invisible="state != 'opened'" style="font-weight:bold;" />
               <div class="o_row o_row_readonly" invisible="state != 'opened'">
@@ -192,18 +202,16 @@
                 <field name="current_hours" readonly="1" />
               </div>
 
-              <field name="assumed_amount" />
-              <field name="paid_amount" />
             </group>
 
             <group>
-              <field name="display_current_amount" invisible="state != 'opened'" />
-              <field name="current_amount" invisible="state in ['draft', 'opened']" />
-              <label for="current_km_extra_amount" />
+              <!-- <field name="display_current_amount" invisible="state != 'opened'" />
+              <field name="current_amount" invisible="state in ['draft', 'opened']" /> -->
+              <!-- <label for="current_km_extra_amount" />
               <div class="o_row">
                 <field name="current_km_extra_amount" readonly="1" />
                 <button name="view_calculate_km" type="object" class="oe_highlight" icon="fa-external-link" string="Calculate KM" />
-              </div>
+              </div> -->
               <div class="row">
                 <div class="col-7">
                   <h3 style="padding-bottom:7px; font-weight:bold; color:red;">Current Due Amount :</h3>
@@ -243,6 +251,9 @@
               <field name="in_oil_change_date" required="state == 'close_info'" readonly="state != 'close_info'" />
               <field name="in_vehicle_status" required="state == 'close_info'" readonly="state != 'close_info'" />
             </group>
+            <group>
+              <field name="in_image_attachment_ids" widget="many2many_binary" readonly="state != 'close_info'" />
+            </group>
           </group>
           <group invisible="state in ['draft', 'opened']" name="accident_damage">
             <group>
@@ -260,14 +271,38 @@
           <notebook invisible="(state == 'draft' and draft_state != 'financial_info') or state == 'close_info'">
             <page string="Installments lines">
               <field name="contract_installment_ids" readonly="state != 'draft'">
-                <list create="0">
-                  <field name="name" optional='show'/>
+                <list create="0" editable="bottom" string="Installments">
+                  <field name="name" optional='show' readonly="1" force_save="1" invisible="is_down_payment"/>
                   <field name="installment_date" optional='show'/>
                   <field name="monthly_installment" optional='show' sum="Total"/>
-                  <field name="paid_amount" optional='show' sum="Total Paid"/>
-                  <field name="remaining_amount" optional='show' sum="1"/>
-                  <field name="payment_status" optional='show' widget="badge"/>
-                  <field name="due_status" optional='show' widget="badge"/>
+                  <field name="paid_amount" optional='show' sum="Total Paid" readonly="1" force_save="1"/>
+                  <field name="remaining_amount" optional='show' sum="1" readonly="1" force_save="1"/>
+                  <field name="is_down_payment" optional='show' sum="1" readonly="1" force_save="1" widget="boolean_toggle"/>
+                  <field name="payment_status" optional='show' widget="badge" readonly="1" force_save="1"
+                      decoration-danger="payment_status == 'not_paid'"
+                      decoration-success="payment_status == 'paid'"/>
+                  <field name="due_status" optional='show' widget="badge" readonly="1" force_save="1"
+                      decoration-danger="due_status == 'due'"
+                      decoration-success="due_status == 'not_due'"/>
+                  <field name="account_payment_ids" widget="many2many_tags" readonly="1" force_save="1"/>
+                  <field name="account_move_ids" widget="many2many_tags" readonly="1" force_save="1"/>
+                  <button name="action_pay" type="object" invisible="remaining_amount &lt;= 0.0 or (not is_down_payment and parent.state == 'draft')" string="Pay" class="oe_highlight" />
+                </list>
+              </field>
+            </page>
+            <page string="Additional Supplementary Services">
+              <field name="additional_supplement_service_line_ids" readonly="1" domain="['|', ('id', 'in', additional_service_ids), ('id', 'in', supplementary_service_ids)]">
+                <list create="0">
+                  <field name="name" />
+                  <field name="price" />
+                  <field name="paid_amount" />
+                  <field name="remaining_amount" />
+                  <field name="payment_status" optional='show' widget="badge" readonly="1" force_save="1"
+                      decoration-danger="payment_status == 'not_paid'"
+                      decoration-success="payment_status == 'paid'"/>
+                  <field name="account_payment_ids" widget="many2many_tags" readonly="1" force_save="1"/>
+                  <field name="account_move_ids" widget="many2many_tags" readonly="1" force_save="1" />
+                  <button name="action_pay" type="object" invisible="remaining_amount &lt;= 0.0" string="Pay" class="oe_highlight" />
                 </list>
               </field>
             </page>

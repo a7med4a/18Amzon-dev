@@ -1,0 +1,30 @@
+<odoo>
+  <record id="fleet_branch_tracking_view_list" model="ir.ui.view">
+    <field name="name">fleet.branch.tracking.view.tree</field>
+    <field name="model">fleet.branch.tracking</field>
+    <field name="arch" type="xml">
+      <list string="Fleet Branch Tracking" create="0">
+          <field name="fleet_id"/>
+          <field name="from_branch_id"/>
+          <field name="to_branch_id"/>
+          <field name="type"/>
+          <field name="ref"/>
+          <field name="create_date"/>
+          <field name="create_uid"/>
+      </list>
+    </field>
+  </record>
+
+  <record id="fleet_branch_tracking_view_action" model="ir.actions.act_window">
+    <field name="name">Fleet Branch Tracking</field>
+    <field name="res_model">fleet.branch.tracking</field>
+    <field name="view_mode">list</field>
+  </record>
+
+  <menuitem
+    id="fleet_branch_tracking_menu"
+    name="Fleet Branch Tracking"
+    action="fleet_branch_tracking_view_action"
+    parent="fleet.menu_fleet_reporting"
+    sequence="20"/>
+</odoo>

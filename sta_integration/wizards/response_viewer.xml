@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+         <!-- Form View لعرض البيانات الخام -->
+    <record id="view_api_response_viewer_form" model="ir.ui.view">
+        <field name="name">api.response.viewer.form</field>
+        <field name="model">api.response.viewer</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <field name="title" readonly="1" class="oe_title"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-info">
+                        <i class="fa fa-info-circle"></i>
+                        <strong>Content Type:</strong> <field name="content_type" readonly="1"/>
+                    </div>
+
+                    <group>
+                        <field name="content"
+                               widget="ace"
+                               options="{'mode': 'json'}"
+                               readonly="1"
+                               nolabel="1"
+                               style="min-height: 400px; font-family: 'Courier New', monospace;"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button string="Close" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+
+    </data>
+</odoo>

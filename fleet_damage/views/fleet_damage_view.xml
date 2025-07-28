@@ -40,6 +40,7 @@
                     <button name="action_charge" string="Charge Invoice" type="object"
                             class="btn-success" invisible="state != 'waiting_evaluation'"
                             confirm="Are you sure you want to Charge Invoice ?"/>
+                    <button string="Add Evaluation" class="btn-primary" type="object" name="button_add_evaluation" invisible="state != 'waiting_evaluation'"/>
                     <button name="action_cancel" string="Cancel" type="object"
                             confirm="Are you sure you want to Cancel Damage ?"
                             class="btn-danger" invisible="state not in ('draft', 'waiting_evaluation')"/>
@@ -51,6 +52,14 @@
                                 help="Show invoices related to this Damage">
                             <div class="o_field_widget o_stat_info">
                                 <span class="o_stat_text">Invoice</span>
+                            </div>
+                        </button>
+                        <button class="oe_stat_button" name="view_related_evaluation" type="object" icon="fa-bars" invisible="evaluation_count == 0">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value">
+                                <field name="evaluation_count" />
+                                </span>
+                                <span class="o_stat_text">Evaluation</span>
                             </div>
                         </button>
                     </div>
@@ -86,8 +95,8 @@
                     </group>
                     <notebook>
                         <page string="Evaluation" invisible="state == 'draft'">
-                            <field name="evaluation_ids" readonly="state in ('charged','cancelled')">
-                                <list editable="bottom" create="true" edit="true">
+                            <field name="evaluation_ids">
+                                <list editable="bottom">
                                     <field name="evaluation_item_id" optional='show'/>
                                     <field name="amount_without_tax" optional='hide'/>
                                     <field name="tax_ids" optional='hide' widget="many2many_tags"/>

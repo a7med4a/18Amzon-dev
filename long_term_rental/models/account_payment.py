@@ -7,7 +7,10 @@ class AccountPayment(models.Model):
 
     term_long_rental_contract_id = fields.Many2one(
         'long.term.rental.contract', string='Long Term Rental Contract')
-
+    additional_supplement_service_line_id = fields.Many2one(
+        'additional.supplementary.services.line')
+    contract_installment_line_id = fields.Many2one(
+        'contract.installment.line')
     payment_type_selection = fields.Selection(
         string='Payment Type Selection',
         selection=[('advance', 'مقدم'), ('extension', 'تمديد'), ('close', 'إغلاق'), ('debit', 'سداد مديونية'), ('extension_offline', 'تمديد بدون منصة'),

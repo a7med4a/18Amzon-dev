@@ -91,6 +91,7 @@
       </xpath>
        <xpath expr="//field[@name='location']" position="after">
         <field name="branch_domain" invisible="1" />
+        <field name="state_id" invisible="1" />
         <field name="branch_id" required="state_id.type != 'under_preparation'" options="{'no_create': True, 'no_open': True}" domain="branch_domain"/>
        </xpath>
       <xpath expr="//button[@name='action_view_bills']" position="attributes">

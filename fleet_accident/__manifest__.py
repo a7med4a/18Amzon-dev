@@ -13,6 +13,7 @@
         'data/accident_sequence.xml',
         'views/evaluation_party.xml',
         'views/evaluation_item.xml',
+        'views/evaluation_report.xml',
         'views/default_accident_item.xml',
         'views/account_move.xml',
         'views/fleet_accident.xml',

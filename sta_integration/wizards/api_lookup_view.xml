@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- List View منفصل للـ API Lines مع الحقول الجديدة -->
+    <record id="view_api_lines_list" model="ir.ui.view">
+        <field name="name">api.lookup.lines.list</field>
+        <field name="model">api.lookup.lines</field>
+        <field name="arch" type="xml">
+            <list create="false" delete="false" edit="false">
+                <field name="description" string="Description"/>
+                <field name="ar_name" string="Arabic Name"/>
+                <field name="en_name" string="English Name"/>
+                <field name="city_ar_name" string="City (AR)" invisible="context.get('lookup_action') != 'branch-all'"/>
+                <field name="region_ar_name" string="Region (AR)" invisible="context.get('lookup_action') != 'branch-all'"/>
+                <field name="district_ar" string="District (AR)" invisible="context.get('lookup_action') != 'branch-all'"/>
+                <field name="transfer_id" string="ID"/>
+                <field name="system_id" string="Code"/>
+                <button name="action_view_raw_data"
+                        type="object"
+                        string="View Raw"
+                        icon="fa-code"
+                        class="btn-link"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View للـ API Lines -->
+    <record id="view_api_lines_form" model="ir.ui.view">
+        <field name="name">api.lookup.lines.form</field>
+        <field name="model">api.lookup.lines</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="description" placeholder="Description..."/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Names">
+                            <field name="ar_name"/>
+                            <field name="en_name"/>
+                        </group>
+                        <group string="IDs">
+                            <field name="transfer_id"/>
+                            <field name="system_id"/>
+                        </group>
+                    </group>
+
+                    <!-- مجموعة خاصة بالفروع -->
+                    <group string="Branch Location Details" invisible="not city_ar_name and not region_ar_name and not district_ar">
+                        <group>
+                            <field name="city_ar_name"/>
+                            <field name="region_ar_name"/>
+                        </group>
+                        <group>
+                            <field name="district_ar"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Raw Data" name="raw_data">
+                            <field name="raw_data"
+                                   widget="text"
+                                   style="font-family: 'Courier New', monospace; font-size: 12px;"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Form View لـ API Response Viewer -->
+    <record id="view_api_response_viewer_form" model="ir.ui.view">
+        <field name="name">api.response.viewer.form</field>
+        <field name="model">api.response.viewer</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="title" readonly="1"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <field name="content_type" readonly="1"/>
+                    </group>
+
+                    <field name="content"
+                           widget="text"
+                           readonly="1"
+                           style="font-family: 'Courier New', monospace; font-size: 12px; background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 10px;"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Form View للـ API Wizard -->
+    <record id="view_api_wizard_form" model="ir.ui.view">
+        <field name="name">api.lookup.wizard.form</field>
+        <field name="model">api.lookup.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_fetch_data"
+                            type="object"
+                            string="🔄 Fetch Data"
+                            class="oe_highlight"
+                            invisible="state == 'loading'"/>
+                    <button name="action_clear_data"
+                            type="object"
+                            string="🗑️ Clear Data"
+                            class="btn-secondary"
+                            invisible="state in ['draft', 'loading']"/>
+                    <button name="action_view_full_response"
+                            type="object"
+                            string="📄 View Full Response"
+                            class="btn-info"
+                            invisible="state != 'loaded'"/>
+                    <!-- زر ربط البلدان والجنسيات - الدالة الموحدة -->
+                    <button name="action_link_countries"
+                            type="object"
+                            string="🔗 Link to Odoo Countries"
+                            class="btn-success"
+                            invisible="lookup_action not in ['country', 'yakeen-nationality'] or state != 'loaded'"
+                            confirm="هل تريد ربط البيانات تلقائياً مع البلدان في نظام أودو؟ سيتم مطابقة البيانات بناءً على الأسماء والأكواد."/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="lookup_action"
+                                   placeholder="Select API Endpoint..."
+                                   required="1"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group>
+                            <field name="url" readonly="1" invisible="not url"/>
+                            <field name="total_records" readonly="1" invisible="not total_records"/>
+                        </group>
+                        <group>
+                            <field name="last_sync" readonly="1" invisible="not last_sync"/>
+                        </group>
+                    </group>
+
+                    <!-- تحذير خاص بالبلدان والجنسيات - الدالة الموحدة -->
+                    <div class="alert alert-info"
+                         invisible="lookup_action not in ['country', 'yakeen-nationality'] or state != 'loaded'">
+                        <h4><strong>🌍 ميزة الربط التلقائي الموحد</strong></h4>
+                        <p invisible="lookup_action != 'country'">يمكنك الآن ربط البلدان الموجودة في أودو مع معرفاتها في منصة نقل تلقائياً.</p>
+                        <p invisible="lookup_action != 'yakeen-nationality'">يمكنك الآن ربط الجنسيات الموجودة في أودو مع معرفاتها في منصة نقل تلقائياً.</p>
+                        <p><strong>طريقة العمل:</strong> سيتم مطابقة البيانات بناءً على الاسم الإنجليزي، العربي، والكود.</p>
+                        <p invisible="lookup_action != 'country'"><strong>حقل الربط:</strong> <code>naql_id</code></p>
+                        <p invisible="lookup_action != 'yakeen-nationality'"><strong>حقل الربط:</strong> <code>nationality_naql_id</code></p>
+                        <p><strong>✨ الجديد:</strong> دالة موحدة للنوعين مع معالجة محسنة للـ IDs!</p>
+                    </div>
+
+                    <!-- رسائل الحالة -->
+                    <div class="alert alert-info text-center"
+                         invisible="state != 'loading'">
+                        <i class="fa fa-spinner fa-spin fa-2x"></i>
+                        <h4 class="mt-3"><strong>🔄 Loading data from STA API...</strong></h4>
+                        <p>Please wait while we fetch the latest data.</p>
+                    </div>
+
+                    <div class="alert alert-success"
+                         invisible="state != 'loaded'">
+                        <i class="fa fa-check-circle fa-2x"></i>
+                        <h4><strong>✅ Data loaded successfully!</strong></h4>
+                        <p><field name="response_message" readonly="1"/></p>
+                    </div>
+
+                    <div class="alert alert-danger"
+                         invisible="state != 'error'">
+                        <i class="fa fa-exclamation-triangle fa-2x"></i>
+                        <h4><strong>❌ Error occurred!</strong></h4>
+                        <p><field name="response_message" readonly="1"/></p>
+                    </div>
+
+                    <!-- البيانات -->
+                    <notebook invisible="not api_lines_ids">
+                        <page string="📊 API Response Data" name="api_data">
+                            <field name="api_lines_ids" nolabel="1" context="{'lookup_action': lookup_action}">
+                                <list>
+                                    <field name="description" string="Description"/>
+                                    <field name="ar_name" string="🇸🇦 Arabic Name"/>
+                                    <field name="en_name" string="🇺🇸 English Name"/>
+                                    <field name="city_ar_name" string="🏙️ City (AR)"
+                                           invisible="parent.lookup_action != 'branch-all'"/>
+                                    <field name="region_ar_name" string="🗺️ Region (AR)"
+                                           invisible="parent.lookup_action != 'branch-all'"/>
+                                    <field name="district_ar" string="🏘️ District (AR)"
+                                           invisible="parent.lookup_action != 'branch-all'"/>
+                                    <field name="transfer_id" string="ID"/>
+                                    <field name="system_id" string="Code"/>
+                                    <button name="action_view_raw_data"
+                                            type="object"
+                                            string="View Raw"
+                                            icon="fa-code"
+                                            class="btn-link"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <page string="📈 Statistics" name="stats">
+                            <div class="row mt-3">
+                                <div class="col-md-3">
+                                    <div class="card bg-primary text-white text-center">
+                                        <div class="card-body">
+                                            <i class="fa fa-database fa-2x mb-2"></i>
+                                            <h2><field name="total_records" readonly="1"/></h2>
+                                            <p>Total Records</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="card bg-success text-white text-center">
+                                        <div class="card-body">
+                                            <i class="fa fa-check-circle fa-2x mb-2"></i>
+                                            <h2>
+                                                <span invisible="state != 'loaded'">✓</span>
+                                                <span invisible="state != 'error'">✗</span>
+                                                <span invisible="state not in ['loaded', 'error']">-</span>
+                                            </h2>
+                                            <p>Status</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="card bg-info text-white text-center">
+                                        <div class="card-body">
+                                            <i class="fa fa-flag fa-2x mb-2"></i>
+                                            <h2><span class="badge badge-light">AR/EN</span></h2>
+                                            <p>Multi-Language</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="card bg-warning text-white text-center">
+                                        <div class="card-body">
+                                            <!-- أيقونات مختلفة حسب النوع -->
+                                            <i class="fa fa-link fa-2x mb-2"
+                                               invisible="lookup_action not in ['country', 'yakeen-nationality']"></i>
+                                            <i class="fa fa-building fa-2x mb-2"
+                                               invisible="lookup_action != 'branch-all'"></i>
+                                            <i class="fa fa-eye fa-2x mb-2"
+                                               invisible="lookup_action in ['country', 'yakeen-nationality', 'branch-all']"></i>
+
+                                            <!-- زر الربط الموحد للبلدان والجنسيات -->
+                                            <button name="action_link_countries"
+                                                    type="object"
+                                                    string="🔗 Link Data"
+                                                    class="btn btn-light btn-block"
+                                                    invisible="lookup_action not in ['country', 'yakeen-nationality'] or state != 'loaded'"/>
+
+                                            <!-- زر عرض الاستجابة للأنواع الأخرى -->
+                                            <button name="action_view_full_response"
+                                                    type="object"
+                                                    string="📄 View Response"
+                                                    class="btn btn-light btn-block"
+                                                    invisible="lookup_action in ['country', 'yakeen-nationality'] or state != 'loaded'"/>
+
+                                            <!-- نصوص مختلفة حسب النوع -->
+                                            <p invisible="state == 'loaded'">No Data</p>
+                                            <p invisible="lookup_action not in ['country', 'yakeen-nationality'] or state != 'loaded'">Smart Link</p>
+                                            <p invisible="lookup_action != 'branch-all' or state != 'loaded'">Branch Details</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </page>
+                    </notebook>
+
+                    <!-- رسالة في حالة عدم وجود بيانات -->
+                    <div class="alert alert-warning text-center"
+                         invisible="api_lines_ids or state != 'draft'">
+                        <i class="fa fa-info-circle fa-2x"></i>
+                        <h4 class="mt-3">Welcome to API Lookup Tool</h4>
+                        <p>Please select an API endpoint and click "Fetch Data" to begin.</p>
+                        <p class="text-muted">This tool will extract Arabic and English names from the API response.</p>
+
+                        <!-- رسائل خاصة بكل نوع مع الميزات الجديدة -->
+                        <p class="text-info" invisible="lookup_action != 'branch-all'">
+                            <strong>🏢 Branch Mode:</strong> Will also extract city, region, and district information.
+                        </p>
+                        <p class="text-success" invisible="lookup_action != 'country'">
+                            <strong>🌍 Country Mode:</strong> Unified auto-linking with Odoo countries using <code>naql_id</code> field.
+                        </p>
+                        <p class="text-primary" invisible="lookup_action != 'yakeen-nationality'">
+                            <strong>🆔 Nationality Mode:</strong> Unified auto-linking with Odoo countries using <code>nationality_naql_id</code> field.
+                        </p>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Window Action -->
+    <record id="action_api_wizard" model="ir.actions.act_window">
+        <field name="name">API Lookup Tool</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">api.lookup.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{
+            'default_state': 'draft'
+        }</field>
+    </record>
+
+    <!-- Menu Item -->
+    <menuitem id="api_menu"
+              name="API Lookup"
+              parent="sta_integration.menu_sta_integration_root"
+              action="action_api_wizard"
+              sequence="50"/>
+</odoo>

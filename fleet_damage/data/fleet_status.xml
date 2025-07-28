@@ -6,4 +6,14 @@
             <field name="type">total_loss</field>
         </record>
     </data>
+    <data noupdate="1">
+
+        <record id="seq_fleet_damage_evaluation" model="ir.sequence">
+            <field name="name">Fleet Damage Evaluation</field>
+            <field name="code">fleet.damage.evaluation.seq</field>
+            <field name="prefix">DE/</field>
+            <field name="padding">3</field>
+        </record>
+
+    </data>
 </odoo>

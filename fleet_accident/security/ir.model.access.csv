@@ -2,6 +2,7 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_fleet_accident,fleet.accident,model_fleet_accident,base.group_user,1,1,1,1
 access_fleet_accident_evaluation_party,fleet.accident.evaluation.party,model_fleet_accident_evaluation_party,base.group_user,1,1,1,1
 access_fleet_accident_evaluation_item,fleet.accident.evaluation.item,model_fleet_accident_evaluation_item,base.group_user,1,1,1,1
+access_accident_evaluation_report,accident.evaluation.report,model_accident_evaluation_report,base.group_user,1,1,1,1
 access_accident_evaluation_item_line,accident.evaluation.item.line,model_accident_evaluation_item_line,base.group_user,1,1,1,1
 access_default_accident_item,default.accident.item,model_default_accident_item,base.group_user,1,1,1,1
 access_accident_due_amount_line,accident.due.amount.line,model_accident_due_amount_line,base.group_user,1,1,1,1

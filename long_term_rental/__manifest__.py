@@ -4,8 +4,9 @@
     'category': 'Rental',
     'author': 'Ahmed Amen',
     "license": 'OPL-1',
-    'depends': ['base','account','rental_contract','customer_info'],
+    'depends': ['base', 'account', 'rental_contract', 'customer_info'],
     'data': [
+        'security/groups.xml',
         'security/ir.model.access.csv',
         'security/security.xml',
         # 'views/long_term_contract_views.xml',

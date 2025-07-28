@@ -9,6 +9,7 @@
     'data': [
         'security/ir.model.access.csv',
         'data/fleet_status.xml',
+        'views/evaluation_report.xml',
         'views/fleet_damage_view.xml',
         'views/set_default_damage_view.xml',
     ],

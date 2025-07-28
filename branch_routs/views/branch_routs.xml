@@ -7,20 +7,39 @@
       type="xml">
       <form string="Branches Routes">
         <header>
-          <field name="all_vehicle_exit_done"
+          <field name="can_close_branch_route"
             invisible="1" />
-          <field name="all_vehicle_entry_done"
-            invisible="1" />
-          <button name="action_approve"
+
+            <!-- Draft Buttons -->
+          <button name="action_send_to_check"
             type="object"
-            string="Approve"
+            string="Send To Check"
             class="oe_highlight"
             invisible="state != 'draft'" />
+            <!-- Under Check Buttons -->
+          <!-- <button name="action_checked"
+            type="object"
+            string="Approved"
+            class="btn-success"
+            invisible="state != 'under_check'" />
+          <button name="action_reject"
+            type="object"
+            string="Reject"
+            class="btn btn-danger"
+            invisible="state != 'under_check'" /> -->
+          
+          <button name="action_closed"
+            type="object"
+            string="Close"
+            class="btn-success"
+            invisible="state != 'checked' or not can_close_branch_route" />
+
           <button name="action_button_cancel"
             type="object"
             string="Cancel"
             class="oe_highlight"
-            invisible="state not in ['draft', 'approved']" />
+            invisible="state not in ['draft']" />
+
           <button name="action_button_draft"
             type="object"
             string="Set Draft"
@@ -30,12 +49,12 @@
           <field name="state"
             widget="statusbar"
             invisible="is_new_vehicle"
-            statusbar_visible="draft,approved,exit_done,entry_done" />
+            statusbar_visible="draft,under_check,checked,closed" />
 
           <field name="state"
             widget="statusbar"
             invisible="not is_new_vehicle"
-            statusbar_visible="draft,approved,entry_done" />
+            statusbar_visible="draft,under_check,checked" />
             <field name="user_can_access_source_branch" invisible="1"/>
             <field name="user_can_access_destination_branch" invisible="1"/>
         </header>
@@ -64,6 +83,18 @@
                   <field name="entry_permit_count" />
                 </span>
                 <span class="o_stat_text">Entry Permits</span>
+              </div>
+            </button>
+            <button class="oe_stat_button"
+              type="object"
+              name="view_returned_branch_routes"
+              icon="fa-link"
+              invisible="returned_branch_routes_count == 0">
+              <div class="o_stat_info">
+                <span class="o_stat_value">
+                  <field name="returned_branch_routes_count" />
+                </span>
+                <span class="o_stat_text">Returned Routes</span>
               </div>
             </button>
           </div>
@@ -136,6 +167,7 @@
                 readonly="True" />
               <field name="close_date"
                 readonly="True" />
+              <field name="source_branch_route_id" invisible="not source_branch_route_id" />
             </group>
           </group>
           <notebook>
@@ -164,8 +196,14 @@
                   <field name="fleet_vehicle_id" options="{'no_open': True, 'no_create': True}" domain="fleet_domain"/>
                   <field name="exit_checklist_status"
                     readonly="True" 
+                    decoration-danger="exit_checklist_status == 'rejected'"
+                    decoration-warning="exit_checklist_status not in ['in_transfer', 'rejected']"
+                    decoration-success="exit_checklist_status == 'in_transfer'"
                     column_invisible="parent.is_new_vehicle"/>
-                  <field name="entry_checklist_status"
+                  <field name="entry_checklist_status" 
+                    decoration-danger="entry_checklist_status == 'rejected'"
+                    decoration-warning="entry_checklist_status not in ['done', 'rejected']"
+                    decoration-success="entry_checklist_status == 'done'"
                     readonly="True" />
                 </list>
               </field>
@@ -191,6 +229,7 @@
         <field name="destination_branch_id" />
         <field name="create_date"
           string="Request Date" />
+        <field name="source_branch_route_id" />
         <field name="state" />
       </list>
     </field>

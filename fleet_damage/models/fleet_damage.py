@@ -31,9 +31,14 @@ class FleetDamage(models.Model):
         comodel_name='fleet.accident.evaluation.party', string="Evaluation Party", tracking=True)
     company_id = fields.Many2one(comodel_name='res.company', default=lambda self: self.env.company.id, domain=lambda self: [
                                  ('id', 'in', self.env.user.company_ids.ids)], string='Company', required=False, tracking=True)
+    evaluation_report_ids = fields.One2many(
+        'damage.evaluation.report', 'damage_id', string='Evaluation Report')
+    confirmed_evaluation_report_id = fields.Many2one(
+        'damage.evaluation.report', string='Confirmed Evaluation')
     evaluation_ids = fields.One2many(
-        comodel_name='fleet.evaluation', inverse_name='fleet_damage_id', string='Evaluations', required=False)
-
+        comodel_name='fleet.evaluation', inverse_name='fleet_damage_id', string='Evaluations', related="confirmed_evaluation_report_id.evaluation_ids")
+    evaluation_count = fields.Integer(
+        'Payment Count', compute='_compute_evaluation_count', store=True)
     total_without_tax = fields.Float(
         string='Total Without Tax', compute="_compute_total_amount")
     total_tax = fields.Float(
@@ -71,6 +76,11 @@ class FleetDamage(models.Model):
                 record.invoice_fleet_damage = 'invoiced'
             else:
                 record.invoice_fleet_damage = ''
+
+    @api.depends('evaluation_report_ids')
+    def _compute_evaluation_count(self):
+        for record in self:
+            record.evaluation_count = len(record.evaluation_report_ids)
 
     def action_reset_draft(self):
         for rec in self:
@@ -182,6 +192,30 @@ class FleetDamage(models.Model):
                     "Can't delete Fleet Damage which is related to rental contract!")
         return super().unlink(),
 
+    def button_add_evaluation(self):
+        self.ensure_one()
+        view_id = self.env.ref(
+            'fleet_damage.add_damage_evaluation_report_view_form').id
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Add Evaluation'),
+            'res_model': 'damage.evaluation.report',
+            'target': 'new',
+            'view_mode': 'form',
+            'context': {'default_damage_id': self.id},
+            'views': [[view_id, 'form']]
+        }
+
+    def view_related_evaluation(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Evaluations'),
+            'res_model': 'damage.evaluation.report',
+            'view_mode': 'list,form',
+            'domain': [('damage_id', '=', self.id)],
+            'context': {'create': 0}
+        }
+
 
 class FleetEvaluation(models.Model):
     _name = 'fleet.evaluation'
@@ -206,6 +240,8 @@ class FleetEvaluation(models.Model):
         string='Amount Include Tax', required=True)
     tax_ids = fields.Many2many('account.tax', string="Taxes", domain=[
                                ("type_tax_use", "=", "sale")])
+    evaluation_report_id = fields.Many2one(
+        'damage.evaluation.report', string='Damage Evaluation Report')
 
     @api.depends("amount_include_tax", "tax_ids")
     def _compute_amount_without_tax(self):

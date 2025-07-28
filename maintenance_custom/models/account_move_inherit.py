@@ -5,7 +5,7 @@ from odoo import api, fields, models, _
 class AccountMoveInherit(models.Model):
     _inherit = 'account.move'
 
-    maintenance_request_id = fields.Many2one(comodel_name='maintenance.request',string='Maintenance Request Number',required=True)
+    maintenance_request_id = fields.Many2one(comodel_name='maintenance.request',string='Maintenance Request Number',required=False)
     account_id = fields.Many2one(comodel_name='account.account')
 
     @api.model_create_multi

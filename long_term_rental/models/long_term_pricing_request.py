@@ -13,9 +13,8 @@ class LongTermPricingRequest(models.Model):
     _rec_name = 'name'
 
     name = fields.Char(string="Name", readonly=True)
-    company_id = fields.Many2one(comodel_name='res.company', default=lambda self: self.env.company.id,
-                                 domain=lambda self: [
-                                     ('id', 'in', self.env.user.company_ids.ids)], string='Company', required=True)
+    company_id = fields.Many2one('res.company', string='Company', required=True,
+                                 default=lambda self: self.env.company, domain=lambda self: [('id', 'in', self.env.companies.ids)])
     description = fields.Text(string="Description", required=False)
     long_term_pricing_request_line_ids = fields.One2many(
         comodel_name='long.term.pricing.request.line', inverse_name='long_term_pricing_request_id', string='Long Term Pricing Request Line')
@@ -42,6 +41,37 @@ class LongTermPricingRequest(models.Model):
             else:
                 rec.is_all_pricing_lines_expired = False
 
+    def send_group_branch_route_manager_notification(self):
+        # send activity to group_branch_route_manager
+        self.ensure_one()
+        group_pricing_request_manager = self.env.ref(
+            'long_term_rental.group_pricing_request_manager')
+        if group_pricing_request_manager:
+            for user in group_pricing_request_manager.users:
+                self.activity_schedule(
+                    'mail.mail_activity_data_todo',
+                    user_id=user.id,
+                    summary=_('Pricing Request Approval Needed'),
+                    note=_(
+                        'Pricing Request %s is waiting for approval.') % self.name,
+                    date_deadline=fields.Date.context_today(self),
+                    res_model='long.term.pricing.request',
+                    res_id=self.id
+                )
+
+    def _get_related_activities(self):
+        domain = [
+            ('res_model', '=', 'long.term.pricing.request'),
+            ('activity_type_id', '=', self.env.ref(
+                'mail.mail_activity_data_todo').id),
+            ('res_id', 'in', self.ids),
+            ('user_id', 'in', self.env.ref(
+                'long_term_rental.group_pricing_request_manager').users.ids)
+        ]
+
+        activities = self.env['mail.activity'].search(domain)
+        return activities
+
     def action_under_review(self):
         for rec in self:
             if not rec.long_term_pricing_request_line_ids:
@@ -50,6 +80,7 @@ class LongTermPricingRequest(models.Model):
                 if line.rental_pricing_monthly <= 0:
                     raise ValidationError(
                         "Rental Pricing(Monthly) must be greater than 0")
+            rec.send_group_branch_route_manager_notification()
             rec.state = 'under_review'
 
     def action_cancel(self):
@@ -58,10 +89,12 @@ class LongTermPricingRequest(models.Model):
 
     def action_confirm(self):
         for rec in self:
+            rec._get_related_activities().action_feedback()
             rec.state = 'confirmed'
 
     def action_refuse(self):
         for rec in self:
+            rec._get_related_activities().action_feedback()
             rec.state = 'refused'
 
     def action_reset_draft(self):
@@ -134,7 +167,7 @@ class LongTermPricingRequestLine(models.Model):
              ('draft', 'under_review', 'confirmed'))
         ]).mapped('vehicle_id').ids
         for rec in self:
-            domain = [('usage_type', '=', 'long_term'), ('company_id', '=', self.env.company.id), ('branch_id.branch_type', '=', 'long_term'),
+            domain = [('usage_type', '=', 'long_term'), ('company_id', '=', rec.long_term_pricing_request_id.company_id.id), ('branch_id.branch_type', '=', 'long_term'),
                       ('id', 'not in', running_vehicle_ids + rec.long_term_pricing_request_id.long_term_pricing_request_line_ids.mapped('vehicle_id').ids)]
             rec.vehicle_domain = domain
 

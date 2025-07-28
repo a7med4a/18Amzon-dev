@@ -1,0 +1,11 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sta_contract,STA Contract,model_sta_contract,base.group_user,1,1,1,1
+access_sta_branch,STA Branch,model_sta_branch,base.group_user,1,1,1,0
+access_sta_rent_policy,STA Rent Policy,model_sta_rent_policy,base.group_user,1,1,1,0
+access_sta_send_otp_wizard,STA Send OTP Wizard,model_sta_send_otp_wizard,base.group_user,1,1,1,1
+access_sta_cancel_contract_wizard,STA Cancel Contract Wizard,model_sta_cancel_contract_wizard,base.group_user,1,1,1,1
+access_sta_suspend_contract_wizard,STA Suspend Contract Wizard,model_sta_suspend_contract_wizard,base.group_user,1,1,1,1
+access_sta_close_contract_wizard,STA Close Contract Wizard,model_sta_close_contract_wizard,base.group_user,1,1,1,1
+access_api_lookup_wizard,API Lookup Wizard,model_api_lookup_wizard,base.group_user,1,1,1,1
+access_api_lookup_lines,API Lookup Lines,model_api_lookup_lines,base.group_user,1,1,1,1
+access_api_response_viewer,api.response.viewer,model_api_response_viewer,base.group_user,1,1,1,1

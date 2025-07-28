@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+
+    <record id="damage_evaluation_report_view_form" model="ir.ui.view">
+        <field name="name">damage.evaluation.report.view.form</field>
+        <field name="model">damage.evaluation.report</field>
+        <field name="arch" type="xml">
+            <form string="Damage Evaluation Report">
+                <header>
+                    <button string="Confirm" class="btn-primary" type="object" name="action_confirm" invisible="state != 'draft'"/>
+                    <button string="Reject" class="btn-secondary" type="object" name="action_reject" invisible="state != 'draft'"/>
+                    <button string="Reset To Draft" class="btn-secondary" type="object" name="action_draft" invisible="state != 'rejected'"/>
+                    <field name="state" widget="statusbar"/>
+                    <field name="damage_id" invisible="1"/>
+                    <field name="company_id" invisible="1"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only" />
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <field name="evaluation_ids" readonly="state != 'draft'">
+                        <list editable="bottom" create="true" edit="true">
+                            <field name="evaluation_item_id" optional='show'/>
+                            <field name="amount_without_tax" optional='hide'/>
+                            <field name="tax_ids" optional='hide' widget="many2many_tags"/>
+                            <field name="amount_include_tax" optional='show'/>
+                        </list>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="add_damage_evaluation_report_view_form" model="ir.ui.view">
+        <field name="name">add.damage.evaluation.report.form</field>
+        <field name="model">damage.evaluation.report</field>
+        <field name="mode">primary</field>
+        <field name="priority">1000</field>
+        <field name="inherit_id" ref="damage_evaluation_report_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//div[hasclass('oe_title')]" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="confirm_warning_damage_evaluation_report_view_form" model="ir.ui.view">
+        <field name="name">confirm.warning.damage.evaluation.report.form</field>
+        <field name="model">damage.evaluation.report</field>
+        <field name="priority">1000</field>
+        <field name="arch" type="xml">
+            <form>
+                <div class="row justify-content-center" style="color:rgb(249, 0, 0);">
+                    <div class="col-auto">
+                        <field name="warning_confirm_message"/>
+                    </div>
+                </div>
+
+                <footer>
+                    <button name="action_confirm" string="Confirm" type="object" class="btn-success" context="{'wizard_confirm': True}"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    
+
+    <record id="damage_evaluation_report_view_list" model="ir.ui.view">
+        <field name="name">damage.evaluation.report.view.list</field>
+        <field name="model">damage.evaluation.report</field>
+        <field name="arch" type="xml">
+            <list string="damage Evaluation Report">
+                <field name="damage_id"/>
+                <field name="create_date"/>
+                <field name="create_uid"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="damage_evaluation_report_action" model="ir.actions.act_window">
+        <field name="name">damage Evaluation Report</field>
+        <field name="res_model">damage.evaluation.report</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+
+</odoo>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- إضافة حقل Naql ID للبلدان في النموذج -->
+    <record id="view_country_form_naql" model="ir.ui.view">
+        <field name="name">res.country.form.naql</field>
+        <field name="model">res.country</field>
+        <field name="inherit_id" ref="base.view_country_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='phone_code']" position="after">
+                <field name="naql_id" placeholder="Naql Platform Country ID"/>
+                <field name="nationality_naql_id" placeholder="Naql Platform nationality ID"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- إضافة حقل Naql ID في قائمة البلدان -->
+    <record id="view_country_tree_naql" model="ir.ui.view">
+        <field name="name">res.country.tree.naql</field>
+        <field name="model">res.country</field>
+        <field name="inherit_id" ref="base.view_country_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='code']" position="after">
+                <field name="naql_id" optional="hide"/>
+                <field name="nationality_naql_id" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,4 +1,5 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_fleet_damage,fleet.damage,model_fleet_damage,,1,1,1,1
+access_damage_evaluation_report,damage.evaluation.report,model_damage_evaluation_report,base.group_user,1,1,1,1
 access_fleet_evaluation,fleet.evaluation,model_fleet_evaluation,,1,1,1,1
 access_damage_config_settings,damage.config.settings,model_damage_config_settings,,1,1,1,1

@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Action مخصص لإعدادات STA Integration -->
+        <record id="action_sta_integration_config_settings" model="ir.actions.act_window">
+            <field name="name">STA Integration Settings</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">res.config.settings</field>
+            <field name="view_mode">form</field>
+            <field name="target">inline</field>
+            <field name="context">{
+                'default_module': 'sta_integration',
+                'bin_size': False,
+                'module': 'sta_integration'
+            }</field>
+        </record>
+
+        <!-- View للإعدادات -->
+        <record id="view_sta_config_settings" model="ir.ui.view">
+            <field name="name">STA Integration Settings</field>
+            <field name="model">res.config.settings</field>
+            <field name="priority" eval="200"/>
+            <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//form" position="inside">
+                    <app data-string="STA Integration"
+                         string="STA Integration"
+                         name="sta_integration"
+                         data-key="sta_integration">
+
+                        <!-- معلومات الاعتماد -->
+                        <block title="Saudi Transport Authority Integration"
+                               name="sta_integration_block">
+
+                            <setting id="sta_app_credentials"
+                                    title="STA Application Credentials"
+                                    help="Configure your Saudi Transport Authority application credentials">
+                                <div class="o_setting_left_pane">
+                                    <i class="fa fa-key fa-2x text-primary"></i>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <div class="content-group">
+                                        <div class="row mt16">
+                                            <div class="col-3">
+                                                <span class="o_form_label">App ID</span>
+                                            </div>
+                                            <div class="col-9">
+                                                <field name="sta_app_id"
+                                                       placeholder="e.g., c49fda9f"
+                                                       required="1"/>
+                                                <div class="text-muted small mt8">
+                                                    Application ID provided by Saudi Transport Authority
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row mt16">
+                                            <div class="col-3">
+                                                <span class="o_form_label">App Key</span>
+                                            </div>
+                                            <div class="col-9">
+                                                <field name="sta_app_key"
+                                                       placeholder="e.g., 0a0ecdd133cbda8414c36b1d9f8f8f51"
+                                                       required="1"
+                                                       password="True"/>
+                                                <div class="text-muted small mt8">
+                                                    Application Key provided by Saudi Transport Authority
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row mt16">
+                                            <div class="col-3">
+                                                <span class="o_form_label">Auth Token</span>
+                                            </div>
+                                            <div class="col-9">
+                                                <field name="sta_authorization_token"
+                                                       placeholder="e.g., Basic YXBpVXNlcjEzMTM4MjQ6QWFAMTIzNDU2"
+                                                       required="1"
+                                                       password="True"/>
+                                                <div class="text-muted small mt8">
+                                                    Authorization token for STA API (Basic Auth encoded)
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </setting>
+
+                            <!-- إعدادات API -->
+                            <setting id="sta_api_configuration"
+                                    title="API Configuration"
+                                    help="Configure STA API endpoint and connection settings">
+                                <div class="o_setting_left_pane">
+                                    <i class="fa fa-cog fa-2x text-info"></i>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <div class="content-group">
+                                        <div class="row mt16">
+                                            <div class="col-3">
+                                                <span class="o_form_label">Base URL</span>
+                                            </div>
+                                            <div class="col-9">
+                                                <field name="sta_base_url"
+                                                       placeholder="https://tajeer-stg.api.elm.sa"
+                                                       required="1"/>
+                                                <div class="text-muted small mt8">
+                                                    Base URL for STA API endpoints
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row mt16">
+                                            <div class="col-3">
+                                                <span class="o_form_label">Timeout (sec)</span>
+                                            </div>
+                                            <div class="col-9">
+                                                <field name="sta_connection_timeout"/>
+                                                <div class="text-muted small mt8">
+                                                    Connection timeout in seconds (default: 30)
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </setting>
+
+                            <!-- إعدادات البيئة -->
+                            <setting id="sta_environment_settings"
+                                    title="Environment Settings"
+                                    help="Configure production/staging environment">
+                                <div class="o_setting_left_pane">
+                                    <field name="sta_is_production"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <span class="o_form_label">Production Environment</span>
+                                    <div class="text-muted">
+                                        Check if using production environment, uncheck for staging
+                                    </div>
+                                    <div class="mt8">
+                                        <field name="sta_is_production" invisible="1"/>
+                                        <span class="badge badge-secondary"
+                                              invisible="sta_is_production">
+                                            Staging Environment
+                                        </span>
+                                        <span class="badge badge-success"
+                                              invisible="not sta_is_production">
+                                            Production Environment
+                                        </span>
+                                    </div>
+                                </div>
+                            </setting>
+
+                            <!-- حالة الاتصال -->
+                            <setting id="sta_connection_status"
+                                    title="Connection Status"
+                                    help="Current connection status and last test date">
+                                <div class="o_setting_left_pane">
+                                    <i class="fa fa-signal fa-2x text-warning"></i>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <div class="content-group">
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <span class="o_form_label">Connection Status</span>
+                                                <field name="sta_connection_status" readonly="1"/>
+                                                <div class="mt8"
+                                                     invisible="not sta_last_connection_test">
+                                                    <small class="text-muted">
+                                                        Last tested:
+                                                        <field name="sta_last_connection_test" readonly="1"/>
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </setting>
+
+                            <!-- اختبار الاتصال -->
+                            <setting id="sta_connection_test"
+                                    title="Connection Test"
+                                    help="Test your STA API connection and manage credentials">
+                                <div class="o_setting_left_pane">
+                                    <i class="fa fa-plug fa-2x text-success"></i>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <div class="content-group">
+                                        <div class="row mt16">
+                                            <div class="col-12">
+                                                <div class="btn-group" role="group">
+                                                    <button name="test_sta_connection"
+                                                           string="Test Connection"
+                                                           type="object"
+                                                           class="btn btn-primary"/>
+                                                    <button name="sync_sta_branches"
+                                                           string="Sync Branches"
+                                                           type="object"
+                                                           class="btn btn-info"/>
+                                                    <button name="reset_sta_credentials"
+                                                           string="Reset to Default"
+                                                           type="object"
+                                                           class="btn btn-secondary"
+                                                           confirm="Are you sure you want to reset all STA credentials to default values?"/>
+                                                    <button name="open_sta_documentation"
+                                                           string="Documentation"
+                                                           type="object"
+                                                           class="btn btn-info"/>
+                                                </div>
+                                                <div class="text-muted mt8">
+                                                    Test connection to STA API with current settings
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </setting>
+
+                        </block>
+                    </app>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

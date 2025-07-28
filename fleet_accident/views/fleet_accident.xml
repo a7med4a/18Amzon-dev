@@ -14,6 +14,7 @@
 
                     <!-- Waiting Evaluation -->
                     <button string="To Insurance Approve" class="btn-success" type="object" name="button_insurance_approve" invisible="state != 'evaluation'"/>
+                    <button string="Add Evaluation" class="btn-primary" type="object" name="button_add_evaluation" invisible="state != 'evaluation'"/>
                     <button string="Back To Report" class="btn-secondary" type="object" name="button_accident_report" invisible="state != 'evaluation'"/>
 
                     <!-- Waiting Insurance Approve -->
@@ -44,6 +45,14 @@
                                 <field name="invoice_count" />
                                 </span>
                                 <span class="o_stat_text">Invoices</span>
+                            </div>
+                        </button>
+                        <button class="oe_stat_button" name="view_related_evaluation" type="object" icon="fa-bars" invisible="evaluation_count == 0">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value">
+                                <field name="evaluation_count" />
+                                </span>
+                                <span class="o_stat_text">Evaluation</span>
                             </div>
                         </button>
                     </div>
@@ -141,13 +150,11 @@
                         <page string="Evaluation" name="evaluation">
                             <group>
                                 <group>
-                                    <field name="evaluation_type" required="state not in ['announcement', 'accident_report']" readonly="state in ['invoicing', 'closed', 'cancel']"/>
-                                    <field name="evaluation_party_id" domain="[('type', '=', evaluation_type)]" options="{'no_create': True, 'no_open': True}"
-                                        readonly="state in ['invoicing', 'closed', 'cancel']"
-                                        required="state not in ['announcement', 'accident_report']"/>
+                                    <field name="evaluation_type"/>
+                                    <field name="evaluation_party_id" domain="[('type', '=', evaluation_type)]" options="{'no_create': True, 'no_open': True}"/>
                                 </group>
                             </group>
-                            <field name="evaluation_item_ids"  readonly="state in ['invoicing', 'closed', 'cancel']">
+                            <field name="evaluation_item_ids">
                                 <list editable="bottom">
                                     <field name="evaluation_item_id" options="{'no_create': True, 'no_open': True}"/>
                                     <field name="evaluation_item_value" sum="Total"/>
@@ -155,7 +162,7 @@
                             </field>
                             <group>
                                 <group>
-                                    <field name="compensation_type" required="state not in ['announcement', 'accident_report']" readonly="state in ['invoicing', 'closed', 'cancel']"/>
+                                    <field name="compensation_type"/>
                                 </group>
                             </group>
                         </page>

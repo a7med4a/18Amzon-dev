@@ -407,6 +407,26 @@ class MaintenanceTeamInherit(models.Model):
         'account.account', string='Expense Account', required=True)
     notified_accountant_ids = fields.Many2many(
         comodel_name='res.users', string='Notified Accountants')
+    internal_maintenance_picking_ids = fields.One2many(comodel_name='internal.maintenance.picking',inverse_name='maintenance_team_id',string='Internal_maintenance_picking')
+    external_maintenance_picking_ids = fields.One2many(comodel_name='external.maintenance.picking',inverse_name='maintenance_team_id',string='Internal_maintenance_picking')
+
+    def set_line_number(self):
+        for i, line in enumerate(self.internal_maintenance_picking_ids, start=1):
+            line.sequence = i
+        for i, line in enumerate(self.external_maintenance_picking_ids, start=1):
+            line.sequence = i
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        moves = super().create(vals_list=vals_list)
+        for move in moves:
+            move.set_line_number()
+        return moves
+
+    def write(self, values):
+        res=super().write(values)
+        self.set_line_number()
+        return res
 
 
 class BranchRoute(models.Model):
@@ -427,3 +447,27 @@ class BranchRoute(models.Model):
         self.vehicle_route_ids.action_branch_approve()
         self.write({'state': 'under_check',
                    'approve_date': fields.Datetime.now()})
+
+class InternalMaintenancePicking(models.Model):
+    _name = 'internal.maintenance.picking'
+    _description = 'Internal Maintenance Picking'
+
+    sequence = fields.Integer(default=1,readonly=True)
+    operation_id = fields.Many2one('stock.picking.type',required=True)
+    location_src_id = fields.Many2one('stock.location', string='Source Location',required=True)
+    location_dest_id = fields.Many2one('stock.location', string='Destination Location',required=True)
+    user_ids = fields.Many2many('res.users', 'res_picking_users_rel', 'bid', 'user_id', string='Allowed Users',required=True)
+    maintenance_team_id = fields.Many2one(comodel_name='maintenance.team',string='Maintenance Team')
+
+
+
+class ExternalMaintenancePicking(models.Model):
+    _name = 'external.maintenance.picking'
+    _description = 'External Maintenance Picking'
+
+    sequence = fields.Integer(default=1,readonly=True)
+    operation_id = fields.Many2one('stock.picking.type',required=True)
+    location_src_id = fields.Many2one('stock.location', string='Source Location',required=True)
+    location_dest_id = fields.Many2one('stock.location', string='Destination Location',required=True)
+    user_ids = fields.Many2many('res.users', 'res_external_picking_users_rel', 'bid', 'user_id', string='Allowed Users',required=True)
+    maintenance_team_id = fields.Many2one(comodel_name='maintenance.team',string='Maintenance Team')

@@ -47,6 +47,9 @@
             <xpath expr="//field[@name='location_final_id']" position="attributes">
                  <attribute name="readonly">(state != 'draft' and not additional) or move_lines_count &gt; 0 or parent.maintenance_job_order_id</attribute>
             </xpath>
+            <xpath expr="//button[@name='action_next_transfer']" position="attributes">
+                 <attribute name="invisible">not show_next_pickings and not show_next_pickings_maintenance</attribute>
+            </xpath>
         </field>
     </record>
 

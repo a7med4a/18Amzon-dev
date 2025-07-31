@@ -251,11 +251,37 @@
                 <field name="is_quick_maintenance"/>
                 <field name="allowed_branch_ids" widget="many2many_tags" invisible="not is_quick_maintenance"/>
                 <field name="delivery_operation_id" options="{ 'no_open': True,'no_create': True}" invisible="not is_quick_maintenance"/>
-                 <field name="route_id" options="{ 'no_open': True,'no_create': True}" invisible="is_quick_maintenance"/>
-                 <field name="external_route_id" options="{ 'no_open': True,'no_create': True}" invisible="not is_quick_maintenance"/>
+<!--                 <field name="route_id" options="{ 'no_open': True,'no_create': True}" invisible="is_quick_maintenance"/>-->
+<!--                 <field name="external_route_id" options="{ 'no_open': True,'no_create': True}" invisible="not is_quick_maintenance"/>-->
                 <field name="maintenance_shift_id" options="{ 'no_open': True,'no_create': True}"/>
                 <field name="allowed_branch_id" options="{ 'no_open': True,'no_create': True}" invisible="is_quick_maintenance"/>
                 <field name="old_spare_parts_operation_type_id" options="{ 'no_open': True,'no_create': True}"/>
+            </xpath>
+            <xpath expr="//sheet" position="inside">
+                <notebook>
+                <page string="Internal Maintenance Picking">
+                    <field name="internal_maintenance_picking_ids">
+                        <list editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="operation_id"/>
+                            <field name="location_src_id"/>
+                            <field name="location_dest_id"/>
+                            <field name="user_ids" widget="many2many_tags"/>
+                        </list>
+                    </field>
+                </page>
+                <page string="External Maintenance Picking">
+                    <field name="external_maintenance_picking_ids">
+                        <list editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="operation_id"/>
+                            <field name="location_src_id"/>
+                            <field name="location_dest_id"/>
+                            <field name="user_ids" widget="many2many_tags"/>
+                        </list>
+                    </field>
+                </page>
+            </notebook>
             </xpath>
         </field>
     </record>

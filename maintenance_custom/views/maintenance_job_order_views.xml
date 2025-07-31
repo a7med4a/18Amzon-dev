@@ -97,7 +97,7 @@
                                         <field name="demand_qty" optional='show'/>
                                         <field name="done_qty" optional='show' readonly="1"/>
                                         <field name="spart_part_request" optional='show' widget="badge" decoration-success="spart_part_request == 'done'"/>
-                                        <field name="picking_status" optional='show' />
+<!--                                        <field name="picking_status" optional='show' />-->
                                     </list>
                                 </field>
                             </page>

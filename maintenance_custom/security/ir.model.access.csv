@@ -14,3 +14,5 @@ access_quick_maintenance_request,quick.maintenance.request,model_quick_maintenan
 access_quick_maintenance_request_component,quick.maintenance.request.component,model_quick_maintenance_request_component,base.group_user,1,1,1,1
 access_maintenance_external_job_order,maintenance.external.job.order,model_maintenance_external_job_order,base.group_user,1,1,1,1
 access_maintenance_external_job_order_component,maintenance.external.job.order.component,model_maintenance_external_job_order_component,base.group_user,1,1,1,1
+access_internal_maintenance_picking,internal.maintenance.picking,model_internal_maintenance_picking,base.group_user,1,1,1,1
+access_external_maintenance_picking,external.maintenance.picking,model_external_maintenance_picking,base.group_user,1,1,1,1

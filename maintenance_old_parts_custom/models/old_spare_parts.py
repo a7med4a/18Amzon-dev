@@ -80,7 +80,7 @@ class OldSpareParts(models.Model):
                 'state': 'draft',
             }
             self.env['stock.move'].create(move_vals)
-
+        picking.action_confirm()
         return {
             'name': _('Transfer'),
             'type': 'ir.actions.act_window',

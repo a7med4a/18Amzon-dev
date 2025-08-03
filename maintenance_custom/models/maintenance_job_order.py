@@ -161,7 +161,7 @@ class MaintenanceJobOrder(models.Model):
                     'state': 'draft',
                 }
                 self.env['stock.move'].create(move_vals)
-
+            picking.action_confirm()
             if picking:
                 for component in rec.component_ids.filtered(lambda x: x.spart_part_request == 'pending'):
                     component.spart_part_request = 'done'
@@ -408,6 +408,7 @@ class StockPicking(models.Model):
                         'show_next_pickings_maintenance': False
                     })
                     rec.show_next_pickings_maintenance = True
+                    next_picking.action_confirm()
                 else:
                     for line in rec.move_ids_without_package:
                         component = (

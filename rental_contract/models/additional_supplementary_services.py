@@ -29,3 +29,5 @@ class AdditionalSupplementaryServices(models.Model):
     def _onchange_type(self):
         if self.type in ['external_authorization', 'internal_authorization']:
             self.calculation = 'once'
+        if self.type in ['internal_authorization']:
+            self.calculation_type = 'fixed'

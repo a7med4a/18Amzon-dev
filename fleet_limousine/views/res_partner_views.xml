@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="view_partner_tree" model="ir.ui.view">
+        <field name="name">res.partner.list</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <list string="Drivers" sample="1" multi_edit="1">
+                <field name="complete_name" string="Name"/>
+                <field name="id_no"/>
+                <field name="mobile2"/>
+                <field name="nationality"/>
+                <field name="id_type"/>
+                <field name="category_id" optional="hide" widget="many2many_tags" options="{'color_field': 'color'}"/>
+                <field name="company_id" groups="base.group_multi_company" readonly="1"/>
+                <field name="limousine_driver" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_partner_form" model="ir.ui.view">
+        <field name="name">res.partner.form</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <form string="Drivers">
+                <header>
+                    <field name="driver_state" widget="statusbar" statusbar_visible="free,busy,warning,blocked"/>
+                </header>
+                <sheet>
+                    <field name="create_from_rental" invisible="1"/>
+                    <div class="oe_title mb24">
+                        <h1>
+                            <field id="individual" options="{'line_breaks': False}" widget="text" class="text-break"
+                                   name="name" default_focus="1" placeholder="e.g. Brandon Freeman" required="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group col="2">
+                            <field name="date_of_birth" widget="date"/>
+                            <field name="age"/>
+                            <field name="id_type"/>
+                            <field name="version_no"/>
+                            <field name="license_type"/>
+                            <label for="street" string="Address"/>
+                            <div class="o_address_format">
+                                <field name="street" placeholder="Street..." class="o_address_street"/>
+                                <field name="street2" placeholder="Street 2..." class="o_address_street"/>
+                                <field name="city" placeholder="City" class="o_address_city"/>
+                                <field name="state_id" class="o_address_state" placeholder="State"
+                                       options="{'no_open': True, 'no_quick_create': True}"
+                                       context="{'country_id': country_id, 'default_country_id': country_id, 'zip': zip}"/>
+                                <field name="zip" placeholder="ZIP" class="o_address_zip"/>
+                                <div name="partner_address_country" class="d-flex justify-content-between">
+                                    <field name="country_id" placeholder="Country" class="o_address_country"
+                                           options="{&quot;no_open&quot;: True, &quot;no_create&quot;: True}"/>
+                                </div>
+                            </div>
+                            <field name="driver_type"/>
+                            <field name="limousine_driver" invisible="True"/>
+                        </group>
+                        <group col="6">
+                            <field name="nationality"/>
+                            <field name="id_no"/>
+                            <field name="mobile2" class="oe_title"/>
+                            <field name="license_expiry_date" widget="date"/>
+                            <field name="id_no" string="License NO." readonly="1"/>
+                            <field name="id_expiry_date" widget="date"/>
+                            <field name="place_of_issue"/>
+                            <field name="function" placeholder="e.g. Sales Director"/>
+                            <field name="title" options="{&quot;no_open&quot;: True}" placeholder="e.g. Mister"/>
+                            <field name="lang" invisible="active_lang_count &lt;= 1"/>
+                            <field name="category_id" widget="many2many_tags" options="{'color_field': 'color'}"
+                                   placeholder="e.g. &quot;B2B&quot;, &quot;VIP&quot;, &quot;Consulting&quot;, ..."
+                                   readonly="True"/>
+                            <field name="property_account_receivable_id" readonly="True"/>
+                        </group>
+                    </group>
+                    <notebook colspan="4">
+                        <page name="internal_notes" string="Internal Notes">
+                            <field name="comment" placeholder="Internal notes..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_partner_kanban" model="ir.ui.view">
+        <field name="name">res.partner.kanban</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <kanban sample="1" default_group_by="driver_state">
+                <field name="avatar_128"/>
+                <field name="is_company"/>
+                <field name="active"/>
+                <templates>
+                    <t t-name="card" class="flex-row">
+                        <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+                        <aside class="o_kanban_aside_full">
+                            <t t-if="!record.is_company.raw_value">
+                                <div class="o_kanban_image_fill position-relative w-100">
+                                    <field name="avatar_128" alt="Contact image" class="h-100" widget="image"
+                                           options="{'img_class': 'object-fit-cover'}"/>
+                                    <field t-if="record.parent_id.raw_value" name="parent_id"
+                                           class="position-absolute bottom-0 end-0 w-25 bg-light" widget="image"
+                                           options="{'preview_image': 'image_128', 'img_class': 'object-fit-contain'}"/>
+                                </div>
+                            </t>
+                            <t t-else="">
+                                <field name="avatar_128" class="w-100" widget="image"
+                                       options="{'img_class': 'object-fit-contain w-100 h-100'}"/>
+                            </t>
+                        </aside>
+                        <main class="ps-2 ps-md-0">
+                            <div class="mb-1">
+                                <field name="display_name" class="mb-0 fw-bold fs-5"/>
+                                <field t-if="record.parent_id.raw_value and !record.function.raw_value"
+                                       class="text-muted" name="parent_id"/>
+                                <field t-elif="!record.parent_id.raw_value and record.function.raw_value"
+                                       class="text-muted" name="function"/>
+                                <div t-elif="record.parent_id.raw_value and record.function.raw_value"
+                                     class="text-muted">
+                                    <field name="function"/>
+                                    at
+                                    <field name="parent_id"/>
+                                </div>
+                            </div>
+                            <div t-if="record.city.raw_value or record.country_id.raw_value">
+                                <field name="city"/>
+                                <span t-if="record.city.raw_value and record.country_id.raw_value">,</span>
+                                <field name="country_id"/>
+                            </div>
+                            <field name="email" class="text-truncate"/>
+                            <footer>
+                                <div/>
+                            </footer>
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="res_partner_action" model="ir.actions.act_window">
+        <field name="name">Driver</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{'default_limousine_driver': True}</field>
+        <field name="domain">[('limousine_driver', '=', True)]</field>
+        <field name="view_ids" eval="[
+            (5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('fleet_limousine.view_partner_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('fleet_limousine.view_partner_form')}),
+            (0, 0, {'view_mode': 'kanban', 'view_id': ref('fleet_limousine.view_partner_kanban')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a Driver
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="res_partner_menu_action"
+              name="Driver"
+              parent="fleet_limousine.fleet_vehicle_menu_root"
+              action="res_partner_action"
+              sequence="10"
+    />
+
+</odoo>

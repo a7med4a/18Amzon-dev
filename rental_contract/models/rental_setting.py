@@ -15,7 +15,7 @@ class RentalConfigSettings(models.Model):
                              order="id desc", limit=1)
         if config:
             field_names = ['trip_days_account_id', 'trip_days_label',
-                           'extra_km_account_id', 'extra_km_label']
+                           'extra_km_account_id', 'extra_km_label', 'type', 'upgrade_account_id', 'upgrade_label', 'downgrade_account_id', 'downgrade_label']
             result.update({
                 field: config[field].id if isinstance(config[field], models.Model) else config[field] for field in field_names
             })
@@ -26,15 +26,19 @@ class RentalConfigSettings(models.Model):
     trip_days_account_id = fields.Many2one(
         "account.account", required=True, string="Trip Days Account")
     trip_days_label = fields.Char(string="Trip Days Label", required=True)
+
+    upgrade_account_id = fields.Many2one(
+        "account.account", required=True, string="Upgrade Account")
+    upgrade_label = fields.Char(string="Upgrade Label", required=True)
+    downgrade_account_id = fields.Many2one(
+        "account.account", required=True, string="Downgrade Account")
+    downgrade_label = fields.Char(string="Downgrade Label", required=True)
+
     extra_km_account_id = fields.Many2one(
         "account.account", required=True, string="Extra KM Account")
     extra_km_label = fields.Char(string="Extra KM Label", required=True)
     tax_ids = fields.Many2many('account.tax', string="Taxes", domain=[
                                ("type_tax_use", "=", "sale")])
-    in_attachment_image_required = fields.Integer('In Attachment Image Required',
-                                                  default=6, help="Number of images required for the rental contract to be considered valid.")
-    out_attachment_image_required = fields.Integer('Out Attachment Image Required',
-                                                   default=6, help="Number of images required for the rental contract to be considered valid.")
     company_id = fields.Many2one(
         'res.company', string='Company', default=lambda self: self.env.company)
     type = fields.Selection(

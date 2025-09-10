@@ -36,10 +36,10 @@
                 <sheet>
                     <div class="oe_button_box" name="button_box">
                         <button class="oe_stat_button"
-                            type="action"
-                            name="%(fleet_accident.fleet_accident_entry_action)d"
+                            type="object"
+                            name="view_related_invoices"
                             invisible="invoice_count &lt; 1"
-                            icon="fa-dollar">
+                            icon="fa-book">
                             <div class="o_stat_info">
                                 <span class="o_stat_value">
                                 <field name="invoice_count" />
@@ -47,6 +47,33 @@
                                 <span class="o_stat_text">Invoices</span>
                             </div>
                         </button>
+
+                        <button class="oe_stat_button"
+                            type="object"
+                            name="view_related_credit_notes"
+                            invisible="credit_note_count &lt; 1"
+                            icon="fa-book">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value">
+                                <field name="credit_note_count" />
+                                </span>
+                                <span class="o_stat_text">Credit Notes</span>
+                            </div>
+                        </button>
+
+                        <button class="oe_stat_button"
+                            type="object"
+                            name="view_related_payments"
+                            invisible="payment_count &lt; 1"
+                            icon="fa-dollar">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value">
+                                <field name="payment_count" />
+                                </span>
+                                <span class="o_stat_text">Payments</span>
+                            </div>
+                        </button>
+
                         <button class="oe_stat_button" name="view_related_evaluation" type="object" icon="fa-bars" invisible="evaluation_count == 0">
                             <div class="o_stat_info">
                                 <span class="o_stat_value">
@@ -91,7 +118,7 @@
                         <group string="Reporting" invisible="state == 'announcement'">
                             <field name="other_party_partner_ids" invisible="1"/>
                             <field name="accident_type" required="state != 'announcement'" readonly="state in ['invoicing', 'closed', 'cancel']"/>
-                            <field name="accident_report_no" required="state != 'announcement'" readonly="state in ['invoicing', 'closed', 'cancel']"/>
+                            <field name="accident_report_no" required="state != 'announcement'" readonly="state in ['invoicing', 'closed', 'cancel']" widget="text"/>
                             <field name="report_date" required="state != 'announcement'" readonly="state in ['invoicing', 'closed', 'cancel']"/>
                             <label for="customer_percentage" required="state != 'announcement'"/>
                             <div class="o_row o_hr_narrow_field">
@@ -170,18 +197,22 @@
                             <field name="due_amount_line_ids" readonly="state in ['closed', 'cancel']">
                                 <list editable="bottom">
                                     <field name="accident_item_type" column_invisible="1"/>
+                                    <field name="invoice_ids" column_invisible="1"/>
+                                    <field name="invoice_id" column_invisible="1"/>
                                     <field name="name"/>
+                                    <field name="partner_id" readonly="1"/>
                                     <field name="is_endurance" column_invisible="parent.accident_type != 'shared'" invisible="accident_item_type != 'customer'" widget="boolean_toggle"/>
                                     <field name="computation_type" invisible="accident_item_type == 'amazon' or is_endurance or parent.accident_type != 'shared'"/>
                                     <field name="amount" readonly="computation_type != 'fixed'" sum="Total Amount"/>
-                                    <field name="partner_id" readonly="1"/>
-                                    <field name="remaining_amount" readonly="1" sum="Total Remaining"/>
-                                    <field name="to_invoice_amount" sum="Total To Invoice"/>
-                                    <field name="invoiced_amount" readonly="1" sum="Total Invoiced"/>
-                                    <field name="is_tax_active"/>
+                                    <field name="paid_amount" sum="Total Paid Amount"/>
+                                    <field name="discount_amount" sum="Total Discount Amount"/>
+                                    <field name="remaining_amount" sum="Total Remaining Amount"/>
+                                    <field name="is_tax_active" optional="hide"/>
                                     <field name="tax_ids" widget="many2many_tags" domain="[('type_tax_use', '=', 'sale')]"/>
-                                    <button name="create_invoice" type="object" string="Create Invoice" class="btn btn-sm btn-primary" invisible="remaining_amount == 0.0 or to_invoice_amount == 0.0"
+                                    <button name="create_invoice" type="object" string="Create Invoice" class="btn btn-sm btn-primary" invisible="invoice_id"
                                         column_invisible="parent.state != 'invoicing'" confirm="Are you sure you want to create invoice ?" style="margin:2px;"/>
+                                    <button name="apply_discount" type="object" string="Create Credit Note" class="btn btn-sm btn-primary" invisible="accident_item_type == 'customer'"
+                                        column_invisible="parent.state != 'invoicing' or remaining_amount &lt;= 0.0" confirm="Are you sure you want to create credit note ?" style="margin:2px;"/>
                                     <field name="tax_ids" widget="many2many_tags" invisible="1" nolabel="1"/>
                                 </list>
                             </field>
@@ -190,6 +221,29 @@
                     </notebook>
                 </sheet>
                 <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="accident_due_amount_line_view_discount_wiz" model="ir.ui.view">
+        <field name="name">accident.due.amount.line.view.discount.wiz</field>
+        <field name="model">accident.due.amount.line</field>
+        <field name="arch" type="xml">
+            <form string="Discount">
+                <sheet>
+                    <group>
+                        <field name="wizard_discount_amount" />
+                    </group>
+                </sheet>
+                <footer>
+                    <button
+                        name="create_credit_note"
+                        string="Add"
+                        type="object"
+                        class="oe_highlight"
+                    />
+                    <button special="cancel" string="Cancel" class="oe_link" />
+                </footer>
             </form>
         </field>
     </record>
@@ -207,7 +261,7 @@
                 <field name="insurance_type"/>
                 <field name="compensation_type"/>
                 <field name="accident_type"/>
-                <field name="accident_report_no"/>
+                <field name="accident_report_no" widget="text"/>
                 <field name="report_source"/>
                 <field name="accident_date"/>
                 <field name="state"/>

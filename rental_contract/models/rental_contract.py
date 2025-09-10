@@ -119,9 +119,14 @@ class RentalContract(models.Model):
         string='Vehicle Status', compute="_compute_vehicle_editable_fields", store=True, readonly=False)
     out_odometer = fields.Float(
         'Odometer', compute="_compute_vehicle_editable_fields", store=True, readonly=False)
-    out_image_attachment_ids = fields.Many2many(
-        'ir.attachment', 'rental_contract_out_attachment_rel', string='Out Image Attachments')
-
+    out_attachment_1 = fields.Binary(attachment=True, string='Attachment 1')
+    out_attachment_2 = fields.Binary(attachment=True, string='Attachment 2')
+    out_attachment_3 = fields.Binary(attachment=True, string='Attachment 3')
+    out_attachment_4 = fields.Binary(attachment=True, string='Attachment 4')
+    out_attachment_5 = fields.Binary(attachment=True, string='Attachment 5')
+    out_attachment_6 = fields.Binary(attachment=True, string='Attachment 6')
+    out_attachment_7 = fields.Binary(attachment=True, string='Attachment 7')
+    out_attachment_8 = fields.Binary(attachment=True, string='Attachment 8')
     # Contract Info Fields
     vehicle_branch_id = fields.Many2one(
         'res.branch', string='Pickup Branch', compute='_compute_vehicle_branch_id', readonly=True, store=True)
@@ -150,6 +155,8 @@ class RentalContract(models.Model):
     ], string='Need Extra Driver', default='false')
     extra_driver_id = fields.Many2one(
         'res.partner', string='Extra Driver', domain="[('create_from_rental', '=', True)]")
+    is_authorized_renter = fields.Boolean(
+        'Authorized Renter', default=True, copy=False)
 
     # Additional & Suppl Service Fields
     additional_service_ids = fields.Many2many(
@@ -225,6 +232,11 @@ class RentalContract(models.Model):
     current_amount = fields.Monetary(
         'Current Amount', currency_field='company_currency_id')
 
+    display_late_amount = fields.Monetary(
+        'Current Amount', compute='_compute_late_amount', currency_field='company_currency_id')
+    late_amount = fields.Monetary(
+        'Late Amount', currency_field='company_currency_id')
+
     fines_discount_count = fields.Integer(
         'Discount Count', compute='_compute_fines_discount_count', store=True)
     fines_discount_line_ids = fields.One2many(
@@ -258,6 +270,9 @@ class RentalContract(models.Model):
 
     current_due_amount = fields.Monetary(
         'Current Due Amount', currency_field='company_currency_id', compute='_compute_current_due_amount', store=True)
+
+    total_in_na2l = fields.Monetary(
+        'Total In Na2l', currency_field='company_currency_id', compute='_compute_total_in_na2l', store=True)
 
     account_move_ids = fields.One2many(
         'account.move', 'rental_contract_id', string='Related Moves')
@@ -328,15 +343,24 @@ class RentalContract(models.Model):
         'res.branch', string='Entry Branch')
     in_branch_domain = fields.Binary(
         string="In Branch domain", help="Dynamic domain used for the in branch", compute="_compute_in_branch_domain")
-    in_image_attachment_ids = fields.Many2many(
-        'ir.attachment', 'rental_contract_in_attachment_rel', string='In Image Attachments')
-
+    in_attachment_1 = fields.Binary(attachment=True, string='Attachment 1')
+    in_attachment_2 = fields.Binary(attachment=True, string='Attachment 2')
+    in_attachment_3 = fields.Binary(attachment=True, string='Attachment 3')
+    in_attachment_4 = fields.Binary(attachment=True, string='Attachment 4')
+    in_attachment_5 = fields.Binary(attachment=True, string='Attachment 5')
+    in_attachment_6 = fields.Binary(attachment=True, string='Attachment 6')
+    in_attachment_7 = fields.Binary(attachment=True, string='Attachment 7')
+    in_attachment_8 = fields.Binary(attachment=True, string='Attachment 8')
     vehicle_in_state = fields.Selection([
         ('none', 'None'),
         ('damage', 'Damage'),
         ('accident', 'Accident'),
         ('other', 'Other'),
     ], string='Has accident / Damage')
+    has_extra_damage = fields.Boolean(
+        'Extra Damage', copy=False, default=False)
+    has_extra_accident = fields.Boolean(
+        'Extra Accident', copy=False, default=False)
 
     vehicle_in_state_other_reason = fields.Char('Other Reason')
 
@@ -356,7 +380,8 @@ class RentalContract(models.Model):
         'fleet.accident', 'rental_contract_id', string='accident')
     accident_count = fields.Integer(
         'invoice_count', compute="_compute_accident_count", store=True)
-
+    #  Damage Field
+    damage_note = fields.Char('Damage Note')
     damage_ids = fields.One2many(
         'fleet.damage', 'rental_contract_id', string='Damage')
     damage_count = fields.Integer(
@@ -390,9 +415,11 @@ class RentalContract(models.Model):
 
     # Configuration Fields
 
-    # ----------> Refund Fields
+    # ----------> Refund / Pay Fields
+    hide_pay_button = fields.Boolean(
+        string='Hide Refund Button', compute="_compute_hide_pay_refund_button")
     hide_refund_button = fields.Boolean(
-        string='Hide Refund Button', compute="_compute_hide_refund_button")
+        string='Hide Refund Button', compute="_compute_hide_pay_refund_button")
     #   ----------> Model Pricing Fields
     model_pricing_vehicle_brand_id = fields.Many2one(
         comodel_name='fleet.vehicle.model.brand', string='Vehicle Model Brand')
@@ -422,6 +449,14 @@ class RentalContract(models.Model):
     trip_days_account_id = fields.Many2one(
         "account.account", string="Trip Days Account")
     trip_days_label = fields.Char(string="Label")
+
+    upgrade_account_id = fields.Many2one(
+        "account.account", string="Upgrade Account")
+    upgrade_label = fields.Char(string="Upgrade Label")
+    downgrade_account_id = fields.Many2one(
+        "account.account", string="Downgrade Account")
+    downgrade_label = fields.Char(string="Downgrade Label")
+
     extra_km_account_id = fields.Many2one(
         "account.account", string="Trip Days Account")
     extra_km_label = fields.Char(string="Label")
@@ -442,6 +477,16 @@ class RentalContract(models.Model):
     invoice_damage_accident = fields.Selection([
         ('invoiced', 'Invoiced'),
         ('none', 'None')], string='Invoice Accident/Damage', readonly=True)
+
+    # Upgrade / Downgrade Plan
+    upgrade_downgrade_plan_ids = fields.One2many(
+        'upgrade.downgrade.rental.plan', 'rental_contract_id', string='Upgrade Downgrade Plans')
+    upgrade_downgrade_state = fields.Selection([
+        ('upgrade', 'Upgrade Plan Discount'),
+        ('downgrade', 'Downgrade Plan Fines'),
+    ], string='Upgrade Downgrade State', compute="_compute_upgrade_downgrade_state", store=True)
+    closing_message = fields.Char(
+        compute='_compute_closing_message', store=False)
 
     @api.depends('vehicle_id', 'draft_state')
     def _compute_vehicle_model_datail_id(self):
@@ -497,9 +542,9 @@ class RentalContract(models.Model):
     @api.depends('duration')
     def _compute_rental_plan(self):
         for record in self:
-            if record.duration >= 30:
+            if record.duration >= 26:
                 record.rental_plan = 'monthly'
-            elif record.duration >= 7:
+            elif record.duration >= 5:
                 record.rental_plan = 'weekly'
             else:
                 record.rental_plan = 'daily'
@@ -630,7 +675,7 @@ class RentalContract(models.Model):
 
     @api.depends('total_amount', 'paid_amount')
     def _compute_due_amount(self):
-        for record in self:
+        for record in self.filtered(lambda c: c.state == 'draft'):
             record.due_amount = record.total_amount_after_tax - record.paid_amount
 
     @api.depends('account_payment_ids', 'account_payment_ids.state', 'account_payment_ids.amount')
@@ -658,16 +703,24 @@ class RentalContract(models.Model):
     def _compute_display_open_state_fields(self):
         for record in self:
             if record.state in ['opened', 'close_info']:
+                if record.pickup_date > datetime.datetime.now():
+                    raise ValidationError(
+                        _("You can't open contract in the future!"))
                 display_actual_days = record.pickup_date and (
                     datetime.datetime.now() - record.pickup_date).days or 0
                 display_hours = record.pickup_date and (
                     datetime.datetime.now() - record.pickup_date).seconds // 3600 or 0
+
                 display_actual_hours = 0 \
                     if display_hours < record.model_pricing_number_delay_hours_allowed\
                     else display_hours
 
-                display_current_days = display_actual_days if display_actual_hours < 4 else display_actual_days + 1
-                display_current_hours = display_actual_hours if display_actual_hours < 4 else 0
+                if display_actual_hours >= 4 or (display_actual_days == 0 and display_actual_hours >= 1):
+                    display_current_days = display_actual_days + 1
+                else:
+                    display_current_days = display_actual_days
+                display_current_hours = 0 if display_actual_hours >= 4 or (
+                    display_actual_days == 0 and display_actual_hours >= 1) else display_actual_hours
 
                 display_late_days = display_current_days - record.duration\
                     if record.duration < display_current_days else 0
@@ -714,16 +767,31 @@ class RentalContract(models.Model):
             else:
                 record.assumed_amount = 0.0
 
-    @api.depends('total_per_day', 'display_current_days', 'display_current_hours', 'state')
+    @api.depends('total_per_day', 'display_current_days', 'display_current_hours', 'state', 'tax_percentage')
     def _compute_display_current_amount(self):
         for record in self:
             if record.total_per_day and (record.display_current_days or record.display_current_hours) and record.state == 'opened':
-                display_current_amount = (record.total_per_day * record.display_current_days) + \
+                display_current_amount_before_tax = (record.total_per_day * record.display_current_days) + \
                     (record.total_per_day / 24) * record.display_current_hours
-                record.display_current_amount = display_current_amount
-                record.current_amount = display_current_amount
+                record.display_current_amount = display_current_amount_before_tax * \
+                    (1 + (record.tax_percentage / 100))
+                record.current_amount = display_current_amount_before_tax * \
+                    (1 + (record.tax_percentage / 100))
             else:
                 record.display_current_amount = 0.0
+
+    @api.depends('display_late_days', 'display_late_hours', 'total_per_day', 'state', 'tax_percentage')
+    def _compute_late_amount(self):
+        for record in self:
+            if record.total_per_day and (record.display_late_hours or record.display_late_days) and record.state == 'opened':
+                late_amount_before_tax = (record.total_per_day * record.display_late_days) + \
+                    (record.total_per_day / 24) * record.display_late_hours
+                record.display_late_amount = late_amount_before_tax * \
+                    (1 + (record.tax_percentage / 100))
+                record.late_amount = late_amount_before_tax * \
+                    (1 + (record.tax_percentage / 100))
+            else:
+                record.display_late_amount = 0.0
 
     @api.depends('fines_discount_line_ids')
     def _compute_fines_discount_count(self):
@@ -733,14 +801,15 @@ class RentalContract(models.Model):
     @api.depends('fines_discount_line_ids', 'fines_discount_line_ids.price', 'fines_discount_line_ids.type')
     def _compute_current_fines_amount(self):
         for record in self:
+            # todo: Get tax from lines
             record.current_fines_amount = sum(record.fines_discount_line_ids.filtered(
-                lambda l: l.type == 'fine').mapped('price'))
+                lambda l: l.type == 'fine').mapped('price')) * (1 + (record.tax_percentage / 100))
 
     @api.depends('fines_discount_line_ids', 'fines_discount_line_ids.price', 'fines_discount_line_ids.type')
     def _compute_discount_voucher_amount(self):
         for record in self:
             record.discount_voucher_amount = sum(record.fines_discount_line_ids.filtered(
-                lambda l: l.type == 'discount').mapped('price'))
+                lambda l: l.type == 'discount').mapped('price')) * (1 + (record.tax_percentage / 100))
 
     @api.depends('model_pricing_free_kilometers', 'display_current_days', 'state')
     def _compute_display_total_free_km(self):
@@ -776,27 +845,33 @@ class RentalContract(models.Model):
     def _compute_display_current_km_extra_amount(self):
         for record in self:
             record.display_current_km_extra_amount = record.display_total_extra_km * \
-                record.model_pricing_extra_kilometers_cost
+                record.model_pricing_extra_kilometers_cost * \
+                (1 + (record.tax_percentage / 100))
 
     @api.depends('current_amount', 'current_fines_amount', 'current_accident_damage_amount', 'discount_voucher_amount', 'current_km_extra_amount', 'paid_amount')
     def _compute_current_due_amount(self):
         for record in self:
             total_current_amount = record.current_amount + record.current_fines_amount\
-                + record.current_accident_damage_amount + record.current_km_extra_amount + record.one_time_services\
+                + record.current_accident_damage_amount + record.current_km_extra_amount + (record.one_time_services * (1 + (record.tax_percentage / 100)))\
                 - record.discount_voucher_amount
             record.total_current_amount = total_current_amount
             record.current_due_amount = total_current_amount - record.paid_amount
 
-    @api.depends('account_move_ids', 'account_move_ids.move_type', 'damage_ids', 'damage_ids.invoice_id', 'damage_ids.state')
+    @api.depends('current_due_amount', 'late_amount')
+    def _compute_total_in_na2l(self):
+        for record in self:
+            record.total_in_na2l = record.current_due_amount + record.late_amount
+
+    @api.depends('account_move_ids', 'account_move_ids.move_type', 'damage_ids', 'damage_ids.invoice_id', 'damage_ids.state', 'accident_ids.due_amount_line_ids.invoice_id')
     def _compute_move_count(self):
         for record in self:
-            invoice_contract_related = len(record.account_move_ids.filtered(
-                lambda move: move.move_type == 'out_invoice'))
-            invoice_damage_relate = len(record.damage_ids.filtered(
-                lambda damage: damage.invoice_id != False and damage.invoice_id.state == 'posted'))
-            print(record.damage_ids.filtered(
-                lambda damage: damage.invoice_id != False))
-            record.invoice_count = invoice_contract_related + invoice_damage_relate
+            customer_accident_invoice = record.accident_ids.due_amount_line_ids.filtered(
+                lambda a: a.accident_item_type == 'customer').invoice_id
+            customer_damage_invoice = record.damage_ids.invoice_id
+            related_invoices = record.account_move_ids | customer_accident_invoice | customer_damage_invoice
+
+            record.invoice_count = len(related_invoices.filtered(
+                lambda m: m.move_type == 'out_invoice' and m.state in ('posted', 'draft')))
             record.credit_note_count = len(record.account_move_ids.filtered(
                 lambda move: move.move_type == 'out_refund'))
 
@@ -828,14 +903,25 @@ class RentalContract(models.Model):
             rec.late_log_count = len(rec.late_log_ids)
 
     @api.depends('draft_state', 'state', 'due_amount', 'current_due_amount')
-    def _compute_hide_refund_button(self):
+    def _compute_hide_pay_refund_button(self):
         for rec in self:
-            if rec.state == 'draft' and rec.draft_state == 'financial_info' and rec.due_amount < 0.0:
-                rec.hide_refund_button = False
-            elif rec.state != 'draft' and rec.current_due_amount < 0.0:
-                rec.hide_refund_button = False
+            if rec.state == 'draft':
+                if rec.draft_state == 'financial_info' and rec.due_amount < 0.0:
+                    rec.hide_refund_button = False
+                    rec.hide_pay_button = True
+                else:
+                    rec.hide_refund_button = True
+                    rec.hide_pay_button = False
+            elif rec.state != 'draft':
+                if rec.current_due_amount < 0.0:
+                    rec.hide_refund_button = False
+                    rec.hide_pay_button = True
+                else:
+                    rec.hide_refund_button = True
+                    rec.hide_pay_button = False
             else:
                 rec.hide_refund_button = True
+                rec.hide_pay_button = False
 
     def _compute_in_branch_domain(self):
         for rec in self:
@@ -845,6 +931,39 @@ class RentalContract(models.Model):
                 ('company_id', '=', rec.company_id.id)
             ]
             rec.in_branch_domain = domain
+
+    @api.depends('upgrade_downgrade_plan_ids', 'upgrade_downgrade_plan_ids.type')
+    def _compute_upgrade_downgrade_state(self):
+        for rec in self:
+            if rec.upgrade_downgrade_plan_ids:
+                rec.upgrade_downgrade_state = rec.upgrade_downgrade_plan_ids[0].type
+
+    @api.depends('upgrade_downgrade_plan_ids', 'upgrade_downgrade_plan_ids.upgrade_downgrade_applied', 'upgrade_downgrade_plan_ids.difference_total')
+    def _compute_closing_message(self):
+        for rec in self:
+            if rec.upgrade_downgrade_plan_ids and not rec.upgrade_downgrade_plan_ids[0].upgrade_downgrade_applied and rec.upgrade_downgrade_plan_ids[0].difference_total > 0:
+                rec.closing_message = f"Note: Customer has an amount of {rec.upgrade_downgrade_plan_ids[0].difference_total} due to {rec.upgrade_downgrade_plan_ids[0].type} plan"
+            else:
+                rec.closing_message = ''
+
+    def create_upgrade_downgrade_contract_plan(self):
+        for rec in self:
+            if self._context.get('server_action') and (rec.state != 'opened' or rec.duration >= rec.current_days or rec.rental_plan == 'monthly'):
+                raise ValidationError(
+                    _("You can upgrade contracts only on open state and current days greater than duration and not monthly plan!"))
+            if rec.state == 'opened':
+                rec._compute_display_open_state_fields()
+            if rec.upgrade_downgrade_plan_ids:
+                rec.upgrade_downgrade_plan_ids._compute_rental_contract_fields()
+            else:
+                self.env['upgrade.downgrade.rental.plan'].create({
+                    'rental_contract_id': rec.id
+                })
+
+    def apply_upgrade_downgrade_plan(self):
+        for rec in self:
+            rec.upgrade_downgrade_plan_ids.apply_discount_fine()
+        self.action_close()
 
     @api.constrains('partner_id')
     def _check_contract_partner_id_validity(self):
@@ -882,13 +1001,13 @@ class RentalContract(models.Model):
     @api.constrains('rental_plan', 'duration')
     def _check_rental_plan(self):
         for record in self:
-            if (record.duration < 7 and record.rental_plan != 'daily') or (record.duration < 30 and record.rental_plan not in ['daily', 'weekly']):
+            if (record.duration < 5 and record.rental_plan != 'daily') or (record.duration < 26 and record.rental_plan not in ['daily', 'weekly']):
                 raise ValidationError(
                     _(f"You Can't select rental plan {record.rental_plan} for duration {record.duration}"))
 
     @api.constrains('daily_rate', 'rental_plan')
     def _check_daily_rate_validation(self):
-        for rec in self.filtered(lambda c: c.daily_rate and c.rental_plan):
+        for rec in self.filtered(lambda c: c.daily_rate and c.rental_plan and c.draft_state == 'financial_info'):
             if rec.rental_plan == 'daily' and (rec.daily_rate > rec.model_pricing_max_normal_day_price or rec.daily_rate < rec.model_pricing_min_normal_day_price):
                 msg = f"You exceed maximum daily rate of {rec.vehicle_id.display_name} model pricing" \
                     if rec.daily_rate > rec.model_pricing_max_normal_day_price else\
@@ -905,28 +1024,18 @@ class RentalContract(models.Model):
                     f"You recede minimum weekly rate of {rec.vehicle_id.display_name} model pricing"
                 raise ValidationError(_(msg))
 
+    @api.constrains('extra_driver_id')
+    def _check_extra_driver_id(self):
+        for rec in self:
+            if rec.extra_driver_id and rec.extra_driver_id == rec.partner_id:
+                raise ValidationError(_("Extra driver can't be the customer"))
+
     @api.constrains('accident_date', 'announcement_date')
     def _check_accident_date(self):
         for rec in self:
             if rec.announcement_date and rec.accident_date and rec.announcement_date < rec.accident_date:
                 raise ValidationError(
                     "Accident Date must be less than Announcement Date")
-
-    def _check_in_image_attachment_ids(self):
-        # Check if state in closed and in_image_attachment_ids is empty or less than Number Exist in Rental Config
-        for rec in self:
-            if rec.rental_configuration_id.in_attachment_image_required and (
-                    not rec.in_image_attachment_ids or len(rec.in_image_attachment_ids) < rec.rental_configuration_id.in_attachment_image_required):
-                raise ValidationError(
-                    _(f"You must attach at least {rec.rental_configuration_id.in_attachment_image_required} images for the vehicle in closing info state."))
-
-    def _check_out_image_attachment_ids(self):
-        # Check if draft_state in contract info and out_image_attachment_ids is empty or less than Number Exist in Rental Config
-        for rec in self:
-            if rec.rental_configuration_id.out_attachment_image_required and (
-                    not rec.out_image_attachment_ids or len(rec.out_image_attachment_ids) < rec.rental_configuration_id.out_attachment_image_required):
-                raise ValidationError(
-                    _(f"You must attach at least {rec.rental_configuration_id.out_attachment_image_required} images for the vehicle in contract info state."))
 
     @api.constrains('current_due_amount')
     def _check_current_due_amount(self):
@@ -937,8 +1046,12 @@ class RentalContract(models.Model):
     @api.constrains('account_payment_ids', 'account_move_ids')
     def reconcile_invoices_with_payments(self):
         for rec in self:
+            customer_accident_invoice = rec.accident_ids.due_amount_line_ids.filtered(
+                lambda a: a.accident_item_type == 'customer').invoice_id
+            customer_damage_invoice = rec.damage_ids.invoice_id
+            related_invoices = rec.account_move_ids | customer_accident_invoice | customer_damage_invoice
             while (rec.account_payment_ids.filtered(lambda payment: payment.payment_type == 'inbound').move_id.line_ids.filtered(lambda l: not l.reconciled and l.account_type == 'asset_receivable')
-                   and rec.account_move_ids.line_ids.filtered(lambda l: l.move_id.move_type == 'out_invoice' and not l.reconciled and l.account_type == 'asset_receivable')):
+                   and related_invoices.line_ids.filtered(lambda l: l.move_id.move_type == 'out_invoice' and not l.reconciled and l.account_type == 'asset_receivable')):
                 oldest_unreconciled_invoice_line = rec.account_move_ids.line_ids.filtered(
                     lambda l: l.move_id.move_type == 'out_invoice' and not l.reconciled and l.account_type == 'asset_receivable').sorted(key=lambda l: l.date)[0]
                 oldest_unreconciled_payment_line = rec.account_payment_ids.filtered(lambda payment: payment.payment_type == 'inbound').move_id.line_ids.filtered(
@@ -949,16 +1062,6 @@ class RentalContract(models.Model):
                 except Exception as e:
                     raise ValidationError(
                         _("Failed to reconcile invoice and payment lines: %s") % str(e))
-
-    def _check_non_zero_daily_rate(self):
-        for rec in self:
-            if rec.daily_rate <= 0.0:
-                raise ValidationError(_("Daily rate can't be zero or less"))
-
-    def update_state_after_close(self):
-        for rec in self:
-            if rec.state == 'closed' and rec.current_due_amount > 0:
-                rec.state = 'delivered_debit'
 
     # Accounting Functions
 
@@ -972,13 +1075,45 @@ class RentalContract(models.Model):
             if hours < self.model_pricing_number_delay_hours_allowed\
             else hours
 
-        current_days = actual_days if actual_hours < 4 else actual_days + 1
-        current_hours = actual_hours if actual_hours < 4 else 0
+        if actual_hours >= 4 or (actual_days == 0 and actual_hours >= 1):
+            current_days = actual_days + 1
+        else:
+            current_days = actual_days
+
+        current_hours = 0 if actual_hours >= 4 or (
+            actual_days == 0 and actual_hours >= 1) else actual_hours
         return {
             'actual_days': actual_days,
             'actual_hours': actual_hours,
             'current_days': current_days,
             'current_hours': current_hours,
+        }
+
+    def _prepare_extra_km_invoice_line_values(self):
+
+        price_unit = self.current_km_extra_amount / \
+            (1 + (self.tax_percentage / 100))
+        branch_analytic_account_ids = self.vehicle_branch_id.analytic_account_ids
+
+        if not branch_analytic_account_ids:
+            raise ValidationError(
+                _(f"Add Analytic Accounts To {self.vehicle_branch_id.name}"))
+
+        analytic_data = {
+            self.vehicle_id.analytic_account_id.id: 100,
+            branch_analytic_account_ids[0].id: 100
+        }
+
+        if not self.trip_days_account_id:
+            raise ValidationError(_(f"Insert account for {self.name}"))
+
+        return {
+            'name': self.extra_km_label,
+            'account_id': self.extra_km_account_id.id,
+            'quantity': 1,
+            'price_unit': price_unit,
+            'analytic_distribution': analytic_data,
+            'tax_ids': [(6, 0, self.tax_ids.ids)]
         }
 
     def _prepare_trip_days_invoice_line_values(self, day_hour_dict={}):
@@ -993,7 +1128,7 @@ class RentalContract(models.Model):
         total_price_unit = (day_hour_dict.get('current_days') * self.daily_rate) + \
             (day_hour_dict.get('current_hours') * self.daily_rate / 24)
 
-        price_unit = total_price_unit / (1 + (self.tax_percentage / 100))
+        price_unit = total_price_unit
         branch_analytic_account_ids = self.vehicle_branch_id.analytic_account_ids
 
         if not branch_analytic_account_ids:
@@ -1033,6 +1168,17 @@ class RentalContract(models.Model):
             'partner_id': self.partner_id.id,
             'currency_id': self.company_currency_id.id,
         }
+
+    def _prepare_extra_km_invoice_vals(self):
+        self.ensure_one()
+        invoice_vals = {}
+        invoice_line_ids = [
+            (0, 0, self._prepare_extra_km_invoice_line_values())]
+        if invoice_line_ids:
+            invoice_vals = self._prepare_account_move_values()
+            invoice_vals.update({'invoice_line_ids': invoice_line_ids})
+
+        return invoice_vals
 
     def _prepare_invoice_vals_from_dates(self, day_hour_dict={}):
         self.ensure_one()
@@ -1231,7 +1377,8 @@ class RentalContract(models.Model):
 
         for contract in self.filtered(lambda c: c.state == 'close_info'):
             # create missing schedular if exist
-            contract._create_missing_schedular_invoice(drop_off_date)
+            # todo: check if schedular is exist
+            # contract._create_missing_schedular_invoice(drop_off_date)
             # Create Drop Off Invoice
             day_hour_dict = contract.get_closing_day_hour(drop_off_date)
             invoice_vals = contract._prepare_invoice_vals_from_dates(
@@ -1248,6 +1395,9 @@ class RentalContract(models.Model):
                 })
                 invoice_vals.update({'invoice_log_id': invoice_log_id.id})
                 invoice_vals_list.append(invoice_vals)
+            # Extra KM Invoice
+            extra_km_invoice_vals = contract._prepare_extra_km_invoice_vals()
+            invoice_vals_list.append(extra_km_invoice_vals)
 
         invoices = self.env['account.move'].create(invoice_vals_list)
         invoices.action_post()
@@ -1354,6 +1504,10 @@ class RentalContract(models.Model):
             #   ----------> Rental Config Fields
             rec.trip_days_account_id = rec.rental_configuration_id.trip_days_account_id
             rec.trip_days_label = rec.rental_configuration_id.trip_days_label
+            rec.upgrade_account_id = rec.rental_configuration_id.upgrade_account_id
+            rec.upgrade_label = rec.rental_configuration_id.upgrade_label
+            rec.downgrade_account_id = rec.rental_configuration_id.downgrade_account_id
+            rec.downgrade_label = rec.rental_configuration_id.downgrade_label
             rec.extra_km_account_id = rec.rental_configuration_id.extra_km_account_id
             rec.extra_km_label = rec.rental_configuration_id.extra_km_label
             rec.tax_ids = [(6, 0, rec.rental_configuration_id.tax_ids.ids)]
@@ -1408,7 +1562,6 @@ class RentalContract(models.Model):
         elif self.draft_state == 'vehicle_info':
             self.check_model_pricing()
             self.check_customer_age()
-            self._check_out_image_attachment_ids()
             self.assign_model_pricing_fields()
             self.set_additional_supplementary_lines()
             self.draft_state = 'contract_info'
@@ -1431,9 +1584,24 @@ class RentalContract(models.Model):
         elif self.draft_state == 'vehicle_info':
             self.draft_state = 'customer_info'
 
+    def create_tam_accrues_expenses(self):
+        self.ensure_one()
+        internal_auth = self.env['additional.supplementary.services'].search(
+            [('type', '=', 'internal_authorization'), ('company_id', '=', self.company_id.id)], limit=1)
+        if not internal_auth:
+            raise ValidationError(
+                _("There is no internal authorization in configuration to create tam accrued expenses!"))
+        self.env['tam.accrued.expenses'].create({
+            'rental_contract_id': self.id,
+            'auth_start_date': self.pickup_date.date(),
+            'auth_end_date': self.authorization_expiry_date,
+            'amount': internal_auth.price
+        })
+
     def action_open(self):
-        self._check_non_zero_daily_rate()
-        if not all(record.due_amount <= 0 for record in self):
+        self._check_daily_rate_validation()
+        if not self.env.user.has_group('rental_contract.group_open_contract_without_payment') and\
+                not all(record.due_amount <= 0 for record in self):
             raise UserError(
                 _('You cannot open this contract because due amount must be less or equal zero.'))
 
@@ -1447,29 +1615,39 @@ class RentalContract(models.Model):
         self.vehicle_id.write({'state_id': rental_vehicle_state.id})
 
         for rec in self:
-            # Set Contract Name
-            rec.name = self.env['ir.sequence'].next_by_code(
-                'rental.contract.seq')
             # Create OneTime Services Invoice
             rec.create_one_time_services_invoice()
+
+            # Create Tam Expense Log Record
+            rec.create_tam_accrues_expenses()
 
         self.write({'state': 'opened'})
 
     def action_close_info(self):
         self.assign_in_check_list_fields()
+        self.create_upgrade_downgrade_contract_plan()
         self.write({'state': 'close_info'})
 
     def action_back_to_opened(self):
         self.write({'state': 'opened'})
 
     def _create_closing_actions(self):
+        for rec in self:
+            rec.vehicle_id.odometer = rec.in_odometer
+
         drop_off_date = fields.Datetime.now()
         self._compute_display_open_state_fields()
         self.create_closing_invoice(drop_off_date)
         self.write({'drop_off_date': drop_off_date})
 
+    def _check_in_odometer(self):
+        for rec in self:
+            if rec.in_odometer <= rec.out_odometer or rec.in_odometer == 0:
+                raise ValidationError(
+                    _("KM in can't be less than KM out or equal zero!"))
+
     def action_close(self):
-        self._check_in_image_attachment_ids()
+        self._check_in_odometer()
         self._create_closing_actions()
         accident_obj = self.env['fleet.accident'].sudo()
         damage_obj = self.env['fleet.damage'].sudo()
@@ -1488,6 +1666,7 @@ class RentalContract(models.Model):
                     'other_report_source': rec.other_report_source,
                     'announcement_date': rec.announcement_date,
                     'accident_date': rec.accident_date,
+                    'created_from_rental': True
                 })
 
             elif rec.vehicle_in_state == 'damage':
@@ -1497,6 +1676,8 @@ class RentalContract(models.Model):
                     'customer_id': rec.partner_id.id,
                     'source': 'rental',
                     'id_no': rec.partner_id_no,
+                    'note': rec.damage_note,
+                    'created_from_rental': True
                 })
 
             elif rec.vehicle_in_state == 'none':
@@ -1516,17 +1697,34 @@ class RentalContract(models.Model):
 
             rec.apply_in_check_list_to_vehicle()
 
+    def apply_upgrade_downgrade_before_close(self):
+        view_id = self.env.ref(
+            'rental_contract.view_rental_contract_upgrade_downgrade_plan_form').id
+
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Apply Upgrade/Downgrade Plan'),
+            'res_model': 'rental.contract',
+            'target': 'new',
+            'view_mode': 'form',
+            'res_id': self.id,
+            'views': [[view_id, 'form']]
+        }
+
     def action_final_close(self):
         for rec in self:
 
             # InDebit Status due amount check
-            if rec.state == 'delivered_debit' and rec.due_amount > 0:
+            if rec.state == 'delivered_debit' and rec.current_due_amount > 0:
                 raise ValidationError(
                     _("Due amount must be less than or equal to zero !"))
-            elif rec.state == 'delivered_pending' and rec.due_amount > 0:
+            elif rec.state in ['delivered_pending', 'closed'] and rec.current_due_amount > 0:
                 rec.state = 'delivered_debit'
             else:
                 rec.state = 'closed'
+                if rec.damage_ids:
+                    rec.damage_ids.filtered(lambda d: d.charged_waiting_contract).write(
+                        {'state': 'charged'})
 
     def action_cancel(self):
         if not all(payment.state == 'draft' for payment in self.account_payment_ids):
@@ -1534,6 +1732,15 @@ class RentalContract(models.Model):
                 _('You cannot cancel this contract because there are payments that are not in draft state.'))
         self.account_payment_ids.action_cancel()
         self.write({'state': 'cancelled'})
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        contracts = super().create(vals_list)
+        for contract in contracts:
+            # Set Contract Name
+            contract.name = self.env['ir.sequence'].next_by_code(
+                'rental.contract.seq')
+        return contracts
 
     def set_current_km_extra_amount(self):
         self.ensure_one()
@@ -1543,7 +1750,7 @@ class RentalContract(models.Model):
         return {'type': 'ir.actions.act_window_close'}
 
     def action_pay(self):
-        self._check_non_zero_daily_rate()
+        self._check_daily_rate_validation()
         return {
             'type': 'ir.actions.act_window',
             'name': _('Pay'),
@@ -1606,12 +1813,17 @@ class RentalContract(models.Model):
         }
 
     def view_related_invoices(self):
+        self.ensure_one()
+        customer_accident_invoice = self.accident_ids.due_amount_line_ids.filtered(
+            lambda a: a.accident_item_type == 'customer').invoice_id
+        customer_damage_invoice = self.damage_ids.invoice_id
+        related_invoices = self.account_move_ids | customer_accident_invoice | customer_damage_invoice
         return {
             'type': 'ir.actions.act_window',
             'name': _('Invoices'),
             'res_model': 'account.move',
             'view_mode': 'list,form',
-            'domain': ['|', ('damage_id', 'in', self.damage_ids.ids), ('rental_contract_id', '=', self.id), ('move_type', '=', 'out_invoice'), ('state', 'in', ('posted', 'draft'))]
+            'domain': [('move_type', '=', 'out_invoice'), ('state', 'in', ('posted', 'draft')), ('id', 'in', related_invoices.ids)]
         }
 
     def view_related_credit_note(self):
@@ -1651,6 +1863,7 @@ class RentalContract(models.Model):
             'name': _('Accident'),
             'res_model': 'fleet.accident',
             'view_mode': 'list, form',
+            'views': [[False, 'list'], [False, 'form']],
             'domain': [('rental_contract_id', '=', self.id)],
             'context': {'create': 0}
         }
@@ -1673,7 +1886,6 @@ class RentalContract(models.Model):
             'rental_contract.contract_create_late_log_view_form').id
         context = {
             'default_rental_contract_id': self.id,
-            'default_total_per_day': self.total_per_day,
             'default_current_days': self.current_days,
             'default_current_hours': self.current_hours,
             'default_late_days': self.late_days,
@@ -1704,6 +1916,16 @@ class RentalContract(models.Model):
             'domain': [('id', 'in', self.late_log_ids.ids)]
         }
 
+    def view_upgrade_downgrade_contract_plan(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Upgrade / Downgrade Plan'),
+            'res_model': 'upgrade.downgrade.rental.plan',
+            'view_mode': 'list',
+            'domain': [('rental_contract_id', 'in', self.ids)]
+        }
+
 
 class RentalContractFinesDiscountLine(models.Model):
     _name = 'rental.contract.fines.discount.line'
@@ -1711,7 +1933,7 @@ class RentalContractFinesDiscountLine(models.Model):
     _rec_name = 'name'
 
     fines_discount_id = fields.Many2one(
-        'contract.fines.discount.config', string='Fines/Discount', required=True)
+        'contract.fines.discount.config', string='Fines/Discount', required=False)
     rental_contract_id = fields.Many2one(
         'rental.contract', string='Rental Contract', required=True)
     name = fields.Char(string='Description', required=True)
@@ -1764,8 +1986,7 @@ class ContractFinesDiscountConfigLines(models.Model):
                     self.rental_contract_id.model_pricing_max_monthly_day_price
 
         if self.calculation == 'once':
-            price_unit = line_price / \
-                (1 + (self.rental_contract_id.tax_percentage / 100))
+            price_unit = line_price
 
         elif self.calculation == 'repeated':
             if day_hour_dict.get('current_days'):
@@ -1778,8 +1999,7 @@ class ContractFinesDiscountConfigLines(models.Model):
             total_price_unit = (day_hour_dict.get('current_days') * line_price) + \
                 (day_hour_dict.get('current_hours') * line_price / 24)
 
-            price_unit = total_price_unit / \
-                (1 + (self.rental_contract_id.tax_percentage / 100))
+            price_unit = total_price_unit
 
         return {
             'name': self.name,
@@ -1807,7 +2027,8 @@ class RentalContractLateLog(models.Model):
 
     # Wizard Fields
     extended_payment = fields.Float('Extended Payment')
-    total_per_day = fields.Float('Total Per Day')
+    total_per_day = fields.Float(
+        'Total Per Day', compute='_compute_total_per_day', store=True)
     current_payment = fields.Float(
         'Current Payment', compute="_compute_current_payment", store=True)
     total_payment = fields.Float(
@@ -1847,6 +2068,12 @@ class RentalContractLateLog(models.Model):
         ('failed', 'Failed')
     ], string='state')
 
+    @api.depends('rental_contract_id', 'rental_contract_id.total_per_day', 'rental_contract_id.tax_percentage')
+    def _compute_total_per_day(self):
+        for rec in self:
+            rec.total_per_day = rec.rental_contract_id.total_per_day * \
+                (1 + (rec.rental_contract_id.tax_percentage / 100))
+
     @api.depends('rental_contract_id', 'old_paid_amount')
     def _compute_current_payment(self):
         for rec in self:
@@ -1874,9 +2101,9 @@ class RentalContractLateLog(models.Model):
                 rec.extended_days = (rec.total_payment //
                                      rec.total_per_day) - rec.old_duration
 
-    @api.onchange('actual_extended_days')
-    def _onchange_actual_extended_days(self):
-        if self.actual_extended_days > 0:
+    @api.onchange('extended_payment')
+    def _onchange_extended_payment(self):
+        if self.extended_payment > 0:
             self.create_payment = True
 
     def action_register_payment(self):

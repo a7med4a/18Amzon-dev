@@ -9,6 +9,15 @@
                 records._compute_display_open_state_fields()
             </field>
         </record>
+        <record id="action_create_upgrade_downgrade_contract_plan" model="ir.actions.server">
+            <field name="name">Upgrade Plan</field>
+            <field name="model_id" ref="rental_contract.model_rental_contract" />
+            <field name="binding_model_id" ref="rental_contract.model_rental_contract" />
+            <field name="state">code</field>
+            <field name="code">
+                records.with_context(server_action=True).create_upgrade_downgrade_contract_plan()
+            </field>
+        </record>
     </data>
 
 </odoo>

@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="limousine_contract_view_form" model="ir.ui.view">
+        <field name="name">limousine.contract.view.form</field>
+        <field name="model">limousine.contract</field>
+        <field name="arch" type="xml">
+            <form string="Limousine Contract">
+                <header>
+                    <button name="action_open" string="Open" type="object"
+                            class="btn-success" invisible="state != 'draft'"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            class="btn-danger" invisible="state != 'draft'"/>
+                    <button name="action_pay" string="Pay" type="object"
+                            class="btn-primary" invisible="state not in ('open', 'closing_info', 'delivered_indebit')"/>
+                    <button name="action_return" string="Return" type="object"
+                            class="btn-primary" invisible="state != 'open'"/>
+                    <button name="action_return" string="Back" type="object"
+                            class="btn-primary" invisible="state != 'closing_info'"/>
+                    <button name="action_add_fines" string="Add Fines" type="object"
+                            class="btn-primary" invisible="state not in ('open', 'closing_info', 'delivered_indebit', 'close')"/>
+                    <button name="action_add_accident" string="Add Accident" type="object"
+                            class="btn-primary" invisible="state not in ('open', 'closing_info')"/>
+                    <button name="action_add_damage" string="Add Damage" type="object"
+                            class="btn-primary" invisible="state not in ('open', 'closing_info')"/>
+                    <button name="action_refund" string="Refund" type="object"
+                            class="btn-primary" invisible="state not in ('open', 'closing_info')"/>
+                    <button name="action_draft" string="Reset to Draft" type="object"
+                            class="btn-secondary" invisible="state == 'draft'"/>
+
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,open,closing_info,delivered_indebit,close,cancelled"/>
+                </header>
+                <sheet>
+                    <!-- button box -->
+                    <div class="oe_button_box" name="button_box">
+                        <button type="object" name="action_view_timesheets" class="oe_stat_button" icon="fa-clock-o"
+                                invisible="timesheet_count &lt;= 0">
+                            <field name="timesheet_count" string="Timesheet" widget="statinfo"/>
+                        </button>
+                        <button class="oe_stat_button" name="view_related_payments" type="object" icon="fa-dollar"
+                                invisible="payment_count == 0">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="payment_count"/>
+                                </span>
+                                <span class="o_stat_text">Payments</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="d-flex">
+                        <h2 class="flex-grow-1" dir="ltr">
+                            <field name="name" readonly="True"/>
+                        </h2>
+                    </div>
+
+                    <group>
+                        <field name="company_id" options="{'no_create': True, 'no_open': True}" readonly="state != 'draft'"/>
+                    </group>
+
+                    <!-- driver_info -->
+                    <group string="Driver Info">
+                        <group>
+                            <field name="partner_id" options="{'no_create': True, 'no_open': True}" readonly="state != 'draft'"/>
+                            <field name="driver_type" invisible="True"/>
+                            <field name="mobile_no" force_save="1" readonly="True"/>
+                            <field name="id_no" force_save="1" readonly="True"/>
+                        </group>
+                    </group>
+
+                    <!-- vehicle_info -->
+                    <group string="Vehicle Info">
+                        <group>
+                            <field name="vehicle_id" options="{'no_create': True, 'no_open': True}" readonly="state != 'draft'"/>
+                            <field name="license_plate" force_save="1" readonly="True"/>
+                            <field name="model_id" force_save="1" options="{'no_open': True, 'no_create': True}"
+                                   readonly="True"/>
+                            <field name="category_id" force_save="1" options="{'no_open': True, 'no_create': True}"
+                                   readonly="True"/>
+                            <field name="odometer" force_save="1" readonly="True"/>
+                            <field name="vehicle_color" widget="color" force_save="1" readonly="True"/>
+                        </group>
+                    </group>
+
+                    <group string="Out CheckList">
+                        <group>
+                            <field name="out_ac" readonly="state != 'draft'"/>
+                            <field name="out_radio_stereo" readonly="state != 'draft'"/>
+                            <field name="out_screen" readonly="state != 'draft'"/>
+                            <field name="out_spare_tire_tools" readonly="state != 'draft'"/>
+                            <field name="out_tires" readonly="state != 'draft'"/>
+                            <field name="out_spare_tires" readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                            <field name="out_speedometer" readonly="state != 'draft'"/>
+                            <field name="out_keys" readonly="state != 'draft'"/>
+                            <field name="out_care_seats" readonly="state != 'draft'"/>
+                            <field name="out_oil_change_km" readonly="state != 'draft'"/>
+                            <field name="out_fuel_type_code" readonly="state != 'draft'"/>
+                            <field name="out_keys_number" readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                            <field name="out_safety_triangle" readonly="state != 'draft'"/>
+                            <field name="out_fire_extinguisher" readonly="state != 'draft'"/>
+                            <field name="out_first_aid_kit" readonly="state != 'draft'"/>
+                            <field name="out_oil_type" readonly="state != 'draft'"/>
+                            <field name="out_oil_change_date" readonly="state != 'draft'"/>
+                            <field name="out_vehicle_status" readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                        </group>
+                        <group>
+                            <field name="out_attachment_1" widget="image" required="True" readonly="state != 'draft'"/>
+                            <field name="out_attachment_2" widget="image" required="True" readonly="state != 'draft'"/>
+                            <field name="out_attachment_3" widget="image" required="True" readonly="state != 'draft'"/>
+                            <field name="out_attachment_4" widget="image" required="True" readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                            <field name="out_attachment_5" widget="image" required="True" readonly="state != 'draft'"/>
+                            <field name="out_attachment_6" widget="image" required="True" readonly="state != 'draft'"/>
+                            <field name="out_attachment_7" widget="image" required="True" readonly="state != 'draft'"/>
+                            <field name="out_attachment_8" widget="image" required="True" readonly="state != 'draft'"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <field name="first_driver_signature" widget="signature" readonly="state != 'draft'"
+                               options="{'full_name': 'display_name', 'size': ['',100]}"/>
+                    </group>
+
+                    <!-- contract_info -->
+                    <group string="Contract Info">
+                        <group colspan="2">
+                            <field name="branch_id" force_save="True" readonly="True"
+                                   options="{'no_open': True, 'no_create': True} "/>
+                        </group>
+                        <group>
+                            <field name="start_date" readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                            <field name="drop_off_date" readonly="True"/>
+                        </group>
+                    </group>
+
+
+                    <group string="In CheckList" invisible="state != 'closing_info'">
+                        <group>
+                            <field name="in_ac"/>
+                            <field name="in_radio_stereo"/>
+                            <field name="in_screen"/>
+                            <field name="in_spare_tire_tools"/>
+                            <field name="in_tires"/>
+                            <field name="in_spare_tires"/>
+                        </group>
+                        <group>
+                            <field name="in_speedometer"/>
+                            <field name="in_keys"/>
+                            <field name="in_care_seats"/>
+                            <field name="in_oil_change_km"/>
+                            <field name="in_fuel_type_code"/>
+                            <field name="in_keys_number"/>
+                        </group>
+                        <group>
+                            <field name="in_safety_triangle"/>
+                            <field name="in_fire_extinguisher"/>
+                            <field name="in_first_aid_kit"/>
+                            <field name="in_oil_type"/>
+                            <field name="in_oil_change_date"/>
+                            <field name="in_vehicle_status"/>
+                        </group>
+                        <group>
+                        </group>
+                    </group>
+
+                    <group invisible="state != 'closing_info'">
+                        <field name="second_driver_signature" widget="signature"
+                               options="{'full_name': 'display_name', 'size': ['',100]}"/>
+                    </group>
+
+
+                    <!-- financial_info -->
+                    <group string="Financial Info">
+                        <group>
+                            <field name="daily_rate"/>
+                            <field name="total_duration"/>
+                            <field name="free_duration"/>
+                        </group>
+                        <group>
+                            <field name="total_before_tax"/>
+                            <field name="tax_amount"/>
+                            <field name="total_after_tax"/>
+                            <field name="paid_amount"/>
+                            <field name="due_amount"/>
+                        </group>
+                    </group>
+
+                </sheet>
+                <!-- Chatter -->
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="limousine_contract_view_tree" model="ir.ui.view">
+        <field name="name">limousine.contract.view.tree</field>
+        <field name="model">limousine.contract</field>
+        <field name="arch" type="xml">
+            <list string="Limousine Contract">
+                <field name="name"/>
+                <field name="mobile_no"/>
+                <field name="id_no"/>
+                <field name="vehicle_id"/>
+                <field name="license_plate"/>
+                <field name="model_id"/>
+                <field name="category_id"/>
+                <field name="odometer"/>
+                <field name="vehicle_color" widget="color"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="limousine_contract_action" model="ir.actions.act_window">
+        <field name="name">Contracts</field>
+        <field name="res_model">limousine.contract</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="limousine_contract_menu_root"
+              name="Contracts"
+              parent="fleet_limousine.fleet_vehicle_menu_root"
+              sequence="15">
+        <menuitem id="limousine_contract_menu_action"
+                  name="Contracts"
+                  action="limousine_contract_action"
+                  sequence="5"/>
+    </menuitem>
+
+</odoo>

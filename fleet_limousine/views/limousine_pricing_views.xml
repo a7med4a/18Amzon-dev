@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Tree View -->
+    <record id="limousine_pricing_view_tree" model="ir.ui.view">
+        <field name="name">limousine.pricing.view.tree</field>
+        <field name="model">limousine.pricing</field>
+        <field name="arch" type="xml">
+            <list string="Limousine Pricing" multi_edit="1">
+                <field name="state"/>
+                <field name="model_id"/>
+                <field name="company_id"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="limousine_pricing_view_form" model="ir.ui.view">
+        <field name="name">limousine.pricing.view.form</field>
+        <field name="model">limousine.pricing</field>
+        <field name="arch" type="xml">
+            <form string="Limousine Pricing">
+                <header>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,active,expire,cancel"/>
+                    <button name="action_active" string="Active" type="object" class="oe_highlight btn-success"
+                            invisible="state != 'draft'" data-hotkey="a"/>
+                    <button name="action_cancel" string="Cancel" type="object" invisible="state != 'draft'"
+                            data-hotkey="c"/>
+                    <button name="action_expire" string="Expire" type="object" class="oe_highlight btn-danger"
+                            invisible="state != 'active'" data-hotkey="e"/>
+                    <button name="action_draft" string="Reset To Draft" type="object"
+                            invisible="state in ('draft', 'expire')" data-hotkey="r"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="model_id" required="1" readonly="state != 'draft'"
+                                   options="{'no_open': True, 'no_create': True}"/>
+                        </group>
+                        <group>
+                            <field name="company_id" readonly="state != 'draft'"
+                                   options="{'no_open': True, 'no_create': True}"/>
+                        </group>
+                    </group>
+
+                    <field name="pricing_line_ids" readonly="state != 'draft'">
+                        <list string="Pricing Lines" editable="bottom">
+                            <field name="driver_type"/>
+                            <field name="daily_rate"/>
+                            <field name="is_friday_free"/>
+                        </list>
+                    </field>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="limousine_pricing_view_search" model="ir.ui.view">
+        <field name="name">limousine.pricing.view.search</field>
+        <field name="model">limousine.pricing</field>
+        <field name="arch" type="xml">
+            <search string="Search Limousine Pricing">
+                <field name="model_id"/>
+                <field name="state"/>
+                <field name="company_id"/>
+                <filter string="Active" name="active" domain="[('state','=','active')]"/>
+                <filter string="Draft" name="draft" domain="[('state','=','draft')]"/>
+                <filter string="Expired" name="expired" domain="[('state','=','expire')]"/>
+                <filter string="Cancelled" name="cancelled" domain="[('state','=','cancel')]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="limousine_pricing_action" model="ir.actions.act_window">
+        <field name="name">Pricing</field>
+        <field name="res_model">limousine.pricing</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Menu -->
+    <menuitem
+            id="limousine_pricing_menu_action"
+            name="Pricing"
+            action="limousine_pricing_action"
+            parent="fleet_limousine.fleet_configuration"
+            groups="fleet_limousine.group_limousine_pricing_user"
+            sequence="5"/>
+
+</odoo>

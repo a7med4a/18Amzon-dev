@@ -1,0 +1,6 @@
+<odoo>
+    <record model="res.groups" id="group_open_contract_without_payment">
+        <field name="name">Allow Open Contract Without Payment</field>
+        <field name="users" eval="[(4, ref('base.user_admin'))]"/>
+    </record>
+</odoo>

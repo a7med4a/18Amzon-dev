@@ -18,16 +18,22 @@ class PaymentRegister(models.TransientModel):
         return contract.company_currency_id
 
     journal_id = fields.Many2one(
-        'account.journal', string='Journal', required=True)
+        'account.journal', string='Journal', required=True,
+        domain=lambda self: [('id', 'in', self.env.user.branch_ids.filtered(lambda b: b.branch_type == 'rental').cash_journal_ids.ids + self.env.user.branch_ids.filtered(lambda b: b.branch_type == 'rental').bank_journal_ids.ids)])
+    allowed_journal_ids = fields.Many2many(
+        'account.journal', string='Allowed Journals', compute="_compute_allowed_journal_ids")
     payment_method_line_id = fields.Many2one(
-        'account.payment.method.line', string='Payment Method', compute="_compute_payment_method_line_id", store=True)
+        'account.payment.method.line', string='Payment Method', required=True)
+    available_payment_method_line_ids = fields.Many2many(
+        'account.payment.method.line', compute='_compute_payment_method_line_fields')
     payment_date = fields.Date(
         string='Payment Date', default=fields.Date.today())
     amount = fields.Float(string='Amount', required=True,
                           default=_default_amount, readonly=False)
     currency_id = fields.Many2one(
         'res.currency', default=_default_currency, string='Currency', readonly=True)
-    communication = fields.Char(string='Memo')
+    communication = fields.Char(
+        string='Memo', compute="_compute_communication", store=True, readonly=False)
 
     payment_type_selection = fields.Selection(
         string='Payment Type Selection',
@@ -49,6 +55,8 @@ class PaymentRegister(models.TransientModel):
 
     @api.depends('rental_contract_id.state')
     def _compute_payment_type_selection(self):
+        if self._context.get('default_payment_type_selection') == 'refund':
+            pass
         for rec in self:
             if rec.rental_contract_id.state == 'draft':
                 rec.payment_type_selection = 'advance' if rec.rental_contract_id.due_amount > 0 else 'refund'
@@ -60,8 +68,39 @@ class PaymentRegister(models.TransientModel):
                 rec.payment_type_selection = 'debit'
             elif rec.rental_contract_id.state == 'delivered_pending':
                 rec.payment_type_selection = 'suspended_payment'
+            elif rec.rental_contract_id.state == 'closed':
+                rec.payment_type_selection = 'close'
             else:
                 rec.payment_type_selection = False
+
+    @api.depends('rental_contract_id')
+    def _compute_allowed_journal_ids(self):
+        for rec in self:
+            rec.allowed_journal_ids = self.env.branches.filtered(lambda b: b.branch_type == 'rental').cash_journal_ids.ids +\
+                self.env.branches.filtered(
+                    lambda b: b.branch_type == 'rental').bank_journal_ids.ids
+
+    @api.depends('journal_id', 'currency_id', 'amount')
+    def _compute_payment_method_line_fields(self):
+        for wizard in self:
+            payment_type = 'inbound' if self.amount > 0 else 'outbound'
+            if wizard.journal_id:
+                wizard.available_payment_method_line_ids = wizard.journal_id._get_available_payment_method_lines(
+                    payment_type)
+            else:
+                wizard.available_payment_method_line_ids = False
+
+    @api.depends('rental_contract_id', 'payment_type_selection')
+    def _compute_communication(self):
+        for rec in self:
+            memo = ''
+            if rec.payment_type_selection:
+                memo += dict(self._fields['payment_type_selection'].selection).get(
+                    self.payment_type_selection)
+            if rec.rental_contract_id:
+                memo += ' - ' + str(rec.rental_contract_id.vehicle_id.display_name) +\
+                    ' - ' + str(rec.rental_contract_id.name)
+            rec.communication = memo
 
     def _get_due_amount(self):
         contract = self.env['rental.contract'].browse(
@@ -99,12 +138,4 @@ class PaymentRegister(models.TransientModel):
         if payment:
             payment.action_post()
         contract.reconcile_invoices_with_payments()
-        return {
-            'name': _('Payment'),
-            'view_mode': 'form',
-            'view_id': False,
-            'view_type': 'form',
-            'res_model': 'account.payment',
-            'res_id': payment.id,
-            'type': 'ir.actions.act_window',
-        }
+        return {'type': 'ir.actions.act_window_close'}

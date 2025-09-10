@@ -1,0 +1,40 @@
+<odoo>
+    <data>
+        <menuitem id="rental_collection_main_menu" name="Collection" web_icon="rental_contract_collection,static/icons/icon.png"/>
+        <menuitem id="collection_rental_contracts" name="Rental Contract" sequence="10" parent="rental_collection_main_menu"/>
+        <menuitem id="rental_collection_configuration" name="Configuration" sequence="100" parent="rental_collection_main_menu"/>
+
+        <!-- Rental Contracts -->
+        <menuitem name="All Contracts" id="collection_all_contracts_action_menu"
+                  action="rental_contract_collection.action_all_collection_contract"
+                  parent="collection_rental_contracts" sequence="10"/>
+
+        <menuitem name="My Contracts" id="collection_my_contracts_action_menu"
+                  action="rental_contract_collection.action_my_collection_contract"
+                  parent="collection_rental_contracts" sequence="20"/>
+
+        <!-- Collection Report -->
+
+        <menuitem id="collection_action_report_menu" name="Collection Report" sequence="20" parent="rental_collection_main_menu"
+        action="rental_contract_collection.action_collection_action_report"/>
+
+        <!-- Payment Grace Agreement Report -->
+
+        <menuitem id="payment_grace_agreement_report_menu" name="Payment Grace Agreement Report" sequence="30" parent="rental_collection_main_menu"
+        action="rental_contract_collection.payment_grace_agreement_report_report"/>
+
+        <!-- Configurations -->
+        <menuitem name="Setting" id="collection_setting_action_menu"
+                  action="rental_contract_collection.collection_setting_action"
+                  parent="rental_collection_configuration" sequence="10"/>
+        
+        <menuitem name="Contact Type" id="collection_contact_type_action_menu"
+                  action="rental_contract_collection.collection_contact_type_action"
+                  parent="rental_collection_configuration" sequence="20"/>
+
+        <menuitem name="Contact Result" id="collection_contact_result_action_menu"
+                  action="rental_contract_collection.collection_contact_result_action"
+                  parent="rental_collection_configuration" sequence="30"/>
+
+    </data>
+</odoo>

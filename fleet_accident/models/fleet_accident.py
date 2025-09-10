@@ -82,7 +82,7 @@ class FleetAccident(models.Model):
     evaluation_report_ids = fields.One2many(
         'accident.evaluation.report', 'accident_id', string='Evaluation Report')
     confirmed_evaluation_report_id = fields.Many2one(
-        'accident.evaluation.report', string='Confirmed Evaluation')
+        'accident.evaluation.report', string='Confirmed Evaluation', copy=False)
     evaluation_type = fields.Selection([
         ('internal', 'Internal'),
         ('external', 'External')
@@ -116,6 +116,10 @@ class FleetAccident(models.Model):
     active = fields.Boolean('Active', copy=False, default=True)
     invoice_count = fields.Integer(
         compute="_compute_invoice_count", store=True)
+    credit_note_count = fields.Integer(
+        compute="_compute_credit_note_count", store=True)
+    payment_count = fields.Integer(
+        compute="_compute_payment_count", store=True)
 
     @api.depends('fleet_vehicle_id')
     def _compute_vehicle_insurance_line_id(self):
@@ -135,10 +139,25 @@ class FleetAccident(models.Model):
         for rec in self:
             rec.other_party_partner_ids = rec.other_party1_id | rec.other_party2_id | rec.other_party3_id | rec.other_party4_id
 
-    @api.depends('due_amount_line_ids', 'due_amount_line_ids.invoice_ids')
+    @api.depends('due_amount_line_ids', 'due_amount_line_ids.invoice_id')
     def _compute_invoice_count(self):
         for rec in self:
-            rec.invoice_count = len(rec.due_amount_line_ids.invoice_ids)
+            rec.invoice_count = len(rec.due_amount_line_ids.invoice_id)
+
+    @api.depends('due_amount_line_ids', 'due_amount_line_ids.invoice_ids', 'due_amount_line_ids.invoice_id.line_ids.matched_credit_ids')
+    def _compute_credit_note_count(self):
+        for rec in self:
+            matching_credit_notes = rec.due_amount_line_ids.invoice_id.line_ids.matched_credit_ids.credit_move_id.move_id.filtered(
+                lambda m: not m.origin_payment_id and not m.statement_line_id)
+            rec.credit_note_count = len(
+                rec.due_amount_line_ids.invoice_ids.filtered(lambda m: m.move_type == 'out_refund') | matching_credit_notes)
+
+    @api.depends('due_amount_line_ids', 'due_amount_line_ids.invoice_id.line_ids.matched_credit_ids')
+    def _compute_payment_count(self):
+        for rec in self:
+            matching_payments = rec.due_amount_line_ids.invoice_id.line_ids.matched_credit_ids.credit_move_id.move_id.filtered(
+                lambda m: m.origin_payment_id).origin_payment_id.ids
+            rec.payment_count = len(matching_payments)
 
     @api.depends('accident_type')
     def _compute_customer_percentage(self):
@@ -316,6 +335,10 @@ class FleetAccident(models.Model):
         self.state = 'invoicing'
 
     def button_closed(self):
+        for rec in self:
+            if sum(rec.due_amount_line_ids.mapped('remaining_amount')) > 0.0:
+                raise ValidationError(
+                    _("You can't close accident that have positive remaining amount!"))
         self.state = 'closed'
 
     def button_cancel(self):
@@ -350,12 +373,51 @@ class FleetAccident(models.Model):
         return super().write(vals)
 
     def view_related_evaluation(self):
+        self.ensure_one()
         return {
             'type': 'ir.actions.act_window',
             'name': _('Evaluations'),
             'res_model': 'accident.evaluation.report',
             'view_mode': 'list,form',
             'domain': [('accident_id', '=', self.id)],
+            'context': {'create': 0}
+        }
+
+    def view_related_invoices(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Invoices'),
+            'res_model': 'account.move',
+            'view_mode': 'list,form',
+            'domain': [('id', 'in', self.due_amount_line_ids.invoice_id.ids)],
+            'context': {'create': 0}
+        }
+
+    def view_related_credit_notes(self):
+        self.ensure_one()
+
+        matching_credit_notes = self.due_amount_line_ids.invoice_id.line_ids.matched_credit_ids.credit_move_id.move_id.filtered(
+            lambda m: not m.origin_payment_id and not m.statement_line_id).ids
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Credit Notes'),
+            'res_model': 'account.move',
+            'view_mode': 'list,form',
+            'domain': [('id', 'in', self.due_amount_line_ids.invoice_ids.filtered(lambda m: m.move_type == 'out_refund').ids + matching_credit_notes)],
+            'context': {'create': 0}
+        }
+
+    def view_related_payments(self):
+        self.ensure_one()
+        matching_payments = self.due_amount_line_ids.invoice_id.line_ids.matched_credit_ids.credit_move_id.move_id.filtered(
+            lambda m: m.origin_payment_id).origin_payment_id.ids
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Payment'),
+            'res_model': 'account.payment',
+            'view_mode': 'list,form',
+            'domain': [('id', 'in', matching_payments)],
             'context': {'create': 0}
         }
 
@@ -396,29 +458,28 @@ class AccidentDueAmountLine(models.Model):
     line_percentage = fields.Float("Line Percentage")
     amount = fields.Float('Amount')
     partner_id = fields.Many2one('res.partner', string='Partner')
-    remaining_amount = fields.Float(
-        'Remaining Amount', compute='_compute_amounts', store=True)
-    to_invoice_amount = fields.Float('To Invoice Amount')
-    invoiced_amount = fields.Float(
-        'Invoiced', compute='_compute_amounts', store=True)
     is_tax_active = fields.Boolean('Tax Active', default=False)
     tax_ids = fields.Many2many('account.tax', string='Taxes',
-                               compute='_compute_tax_ids', store=True, readonly=False)
+                               compute='_compute_tax_ids', store=True)
     invoice_ids = fields.One2many(
-        'account.move', 'accident_due_amount_line_id', string='Invoices')
+        'account.move', 'accident_due_amount_line_id', string='All Invoices')
+    invoice_id = fields.Many2one('account.move', string='Current Invoice')
+
+    # Payment Fields
+    paid_amount = fields.Float(
+        'Paid Amount', compute="_compute_paid_amount", store=True)
+    discount_amount = fields.Float(
+        'Discount Amount', compute="_compute_discount_amount", store=True)
+    remaining_amount = fields.Float(
+        'Remaining Amount', compute="_compute_remaining_amount", store=True)
+
+    # wizard
+    wizard_discount_amount = fields.Float('Discount')
 
     @api.depends('default_accident_item_id')
     def _compute_name(self):
         for rec in self:
             rec.name = rec.default_accident_item_id.name
-
-    @api.depends('amount', 'invoice_ids', 'invoice_ids.state', 'invoice_ids.invoice_line_ids', 'invoice_ids.invoice_line_ids.price_subtotal')
-    def _compute_amounts(self):
-        for rec in self:
-            invoiced_amount = sum(
-                rec.invoice_ids.mapped('invoice_line_ids.price_total'))
-            rec.invoiced_amount = invoiced_amount
-            rec.remaining_amount = rec.amount - invoiced_amount
 
     @api.depends('is_tax_active', 'default_accident_item_id')
     def _compute_tax_ids(self):
@@ -428,6 +489,24 @@ class AccidentDueAmountLine(models.Model):
             else:
                 rec.tax_ids = [(6, 0, [])]
 
+    @api.depends('invoice_id', 'invoice_id.line_ids', 'invoice_id.line_ids.matched_debit_ids', 'invoice_id.line_ids.matched_credit_ids')
+    def _compute_paid_amount(self):
+        for rec in self:
+            payment_move_ids = rec.invoice_id.line_ids.matched_credit_ids.credit_move_id.move_id.filtered(
+                lambda m: m.origin_payment_id)
+            rec.paid_amount = sum(payment_move_ids.mapped('amount_total'))
+
+    @api.depends('invoice_ids')
+    def _compute_discount_amount(self):
+        for rec in self:
+            rec.discount_amount = sum(rec.invoice_ids.filtered(
+                lambda m: m.move_type == 'out_refund').mapped('amount_total'))
+
+    @api.depends('paid_amount', 'discount_amount', 'amount')
+    def _compute_remaining_amount(self):
+        for rec in self:
+            rec.remaining_amount = rec.amount - rec.discount_amount - rec.paid_amount
+
     @api.constrains('amount')
     def _check_amount_validation(self):
         for rec in self:
@@ -435,12 +514,22 @@ class AccidentDueAmountLine(models.Model):
                 raise ValidationError(
                     _(f"{rec.name} Amount can't be Greater than Total Evaluation"))
 
-    @api.constrains('to_invoice_amount')
-    def _check_to_invoice_amount(self):
+    # @api.onchange('is_tax_active')
+    # def _onchange_is_tax_active(self):
+    #     if self.is_tax_active and not self.default_accident_item_id.tax_ids:
+    #         return {
+    #             'warning': {
+    #                 'title': "No Taxes In Configurations",
+    #                 'message': "There's no taxis assign to this type in configuration!",
+    #             }
+    #         }
+
+    @api.constrains('is_tax_active')
+    def _check_is_tax_active(self):
         for rec in self:
-            if rec.to_invoice_amount > rec.remaining_amount:
+            if rec.is_tax_active and not rec.default_accident_item_id.tax_ids:
                 raise ValidationError(
-                    _("To Invoice amount can't be greater than remaining amount"))
+                    _("There's no taxis assign to this type in configuration!"))
 
     def calculate_amount(self):
         for rec in self:
@@ -472,7 +561,7 @@ class AccidentDueAmountLine(models.Model):
             'invoice_line_ids': [(0, 0, {
                 'account_id': self.default_accident_item_id.account_id.id,
                 'quantity': 1,
-                'price_unit': self.to_invoice_amount / (1 + (total_line_tax_percentage / 100)),
+                'price_unit': self.amount / (1 + (total_line_tax_percentage / 100)),
                 'analytic_distribution': {self.accident_id.fleet_vehicle_id.analytic_account_id.id: 100},
                 'tax_ids': [(6, 0, self.tax_ids.ids)] if self.is_tax_active else False
             })]
@@ -480,8 +569,79 @@ class AccidentDueAmountLine(models.Model):
 
     def create_invoice(self):
         account_move_obj = self.env['account.move']
-        vals_list = []
         for rec in self:
-            vals_list.append(rec._prepare_invoice_vals())
-            rec.to_invoice_amount = 0.0
-        account_move_obj.sudo().create(vals_list)
+            vals = rec._prepare_invoice_vals()
+            invoice = account_move_obj.sudo().create(vals)
+            invoice.action_post()
+            rec.invoice_id = invoice.id
+            # reconcile
+            unreconciled_invoice_line = invoice.line_ids.filtered(
+                lambda l: not l.reconciled and l.account_type == 'asset_receivable')
+            unreconciled_credit_note_line = rec.invoice_ids.filtered(lambda m: m.move_type == 'out_refund').line_ids.filtered(
+                lambda l: not l.reconciled and l.account_type == 'asset_receivable')
+            if unreconciled_invoice_line and unreconciled_credit_note_line:
+                try:
+                    (unreconciled_credit_note_line +
+                     unreconciled_invoice_line).reconcile()
+                except Exception as e:
+                    raise ValidationError(
+                        _("Failed to reconcile invoice and credit note lines: %s") % str(e))
+
+    def _prepare_credit_note_vals(self):
+        self.ensure_one()
+        total_line_tax_percentage = sum(self.tax_ids.mapped('amount'))
+        return {
+            'move_type': 'out_refund',
+            'partner_id': self.partner_id.id,
+            'journal_id': self.default_accident_item_id.journal_id.id,
+            'currency_id': self.env.company.currency_id.id,
+            'accident_due_amount_line_id': self.id,
+            'is_accident': True,
+            'invoice_line_ids': [(0, 0, {
+                'account_id': self.default_accident_item_id.account_id.id,
+                'quantity': 1,
+                'price_unit': self.wizard_discount_amount / (1 + (total_line_tax_percentage / 100)),
+                'analytic_distribution': {self.accident_id.fleet_vehicle_id.analytic_account_id.id: 100},
+                'tax_ids': [(6, 0, self.tax_ids.ids)] if self.is_tax_active else False
+            })]
+        }
+
+    def create_credit_note(self):
+        account_move_obj = self.env['account.move']
+        for rec in self:
+            if rec.wizard_discount_amount > rec.remaining_amount:
+                raise ValidationError(
+                    _("Discount can't be greater than remaining amount"))
+
+            vals = rec._prepare_credit_note_vals()
+            credit_note = account_move_obj.sudo().create(vals)
+            credit_note.action_post()
+
+            # reconcile
+            unreconciled_invoice_line = rec.invoice_id.line_ids.filtered(
+                lambda l: not l.reconciled and l.account_type == 'asset_receivable')
+            unreconciled_credit_note_line = credit_note.line_ids.filtered(
+                lambda l: not l.reconciled and l.account_type == 'asset_receivable')
+            if unreconciled_invoice_line and unreconciled_credit_note_line:
+                try:
+                    (unreconciled_credit_note_line +
+                     unreconciled_invoice_line).reconcile()
+                except Exception as e:
+                    raise ValidationError(
+                        _("Failed to reconcile invoice and credit note lines: %s") % str(e))
+
+            rec.wizard_discount_amount = 0.0
+
+    def apply_discount(self):
+        view_id = self.env.ref(
+            'fleet_accident.accident_due_amount_line_view_discount_wiz').id
+
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Apply Discount'),
+            'res_model': 'accident.due.amount.line',
+            'target': 'new',
+            'view_mode': 'form',
+            'res_id': self.id,
+            'views': [[view_id, 'form']]
+        }

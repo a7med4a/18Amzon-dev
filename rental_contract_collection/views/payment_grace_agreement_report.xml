@@ -1,0 +1,102 @@
+<odoo>
+
+    <record id="payment_grace_agreement_report_view_form" model="ir.ui.view">
+        <field name="name">payment.grace.agreement.report.view.form</field>
+        <field name="model">payment.grace.agreement.report</field>
+        <field name="arch" type="xml">
+            <form string="Payment Grace Agreement">
+                <header>
+                    <field name="state" widget="statusbar" options="{'clickable': '1'}" />
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="rental_contract_id" readonly="1"/>
+                            <field name="partner_id" readonly="1"/>
+                            <field name="partner_mobile" readonly="1"/>
+                            <field name="partner_id_no" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="due_date" readonly="state not in ['draft', 'cancelled']"/>
+                            <field name="amount" readonly="state not in ['draft', 'cancelled']"/>
+                            <field name="payment_status" readonly="state not in ['draft', 'cancelled']"/>
+                            <field name="installment_status"/>
+                            <field name="note" readonly="state not in ['draft', 'cancelled']"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="payment_grace_agreement_report_view_list" model="ir.ui.view">
+        <field name="name">payment.grace.agreement.report.view.list</field>
+        <field name="model">payment.grace.agreement.report</field>
+        <field name="arch" type="xml">
+            <list string="Payment Grace Agreement">
+                <field name="due_date" />
+                <field name="rental_contract_id" />
+                <field name="partner_id" />
+                <field name="partner_mobile" />
+                <field name="partner_id_no" />
+                <field name="amount" />
+                <field name="payment_status" />
+                <field name="installment_status" />
+                <field name="note" />
+                <field name="state" />
+            </list>
+        </field>
+    </record>
+
+    <record id='payment_grace_agreement_report_view_kanban' model='ir.ui.view'>
+        <field name="name">payment.grace.agreement.report.kanban</field>
+        <field name="model">payment.grace.agreement.report</field>
+        <field name="arch" type="xml">
+            <kanban group_create="false" group_edit="false" group_delete="false" sample="1" create="0">
+
+                <templates>
+                    <t t-name="card" class="flex-row">
+                        <main>
+                            <div>
+                                Contract:
+                                <field class="fw-bolder fs-5" name="rental_contract_id"/>
+                            </div>
+                            <div>
+                                Customer:
+                                <field class="fw-bolder fs-5" name="partner_id"/>
+                            </div>
+                            <div>
+                                Due Date:
+                                <field class="fw-bolder fs-5" name="due_date"/>
+                            </div>
+                            <div>
+                                Amount:
+                                <field class="fw-bolder fs-5" name="amount"/>
+                            </div>
+                            <div>
+                                Payment Status:
+                                <field class="fw-bolder fs-5" name="payment_status"/>
+                            </div>
+                            <div>
+                                Installment Status:
+                                <field class="fw-bolder fs-5" name="installment_status"/>
+                            </div>
+                            
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="payment_grace_agreement_report_report" model="ir.actions.act_window">
+    <field name="name">Payment Grace Agreement</field>
+    <field name="res_model">payment.grace.agreement.report</field>
+    <field name="view_mode">list,kanban</field>
+    <field name="help" type="html">
+      <p class="oe_view_nocontent_create">
+                Create your first rental contract
+      </p>
+    </field>
+  </record>
+</odoo>

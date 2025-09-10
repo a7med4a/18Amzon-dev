@@ -16,9 +16,25 @@
         <field name="model">fleet.damage</field>
         <field name="inherit_id" ref="fleet_damage.view_fleet_damage_form" />
         <field name="arch" type="xml">
+
+            <xpath expr="//header" position="inside">
+                <field name="charged_waiting_contract" invisible="1"/>
+            </xpath>
+
+            <xpath expr="//button[@name='button_add_evaluation']" position="attributes">
+                <attribute name="invisible">state != 'waiting_evaluation' or charged_waiting_contract</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_cancel']" position="attributes">
+                <attribute name="invisible">state not in ('draft', 'waiting_evaluation') or charged_waiting_contract</attribute>
+            </xpath>
+
             <xpath expr="//field[@name='customer_id']" position="before">
                 <field name="rental_contract_id" readonly="customer_id == False or source == 'rental' or state != 'draft'" 
                 options="{'no_create': True, 'no_open': True, 'no_edit': True}" />
+            </xpath>
+            <xpath expr="//field[@name='vehicle_id']" position="attributes">
+                <attribute name="readonly">state != 'draft' or source == 'rental' or rental_contract_id</attribute>
+                <attribute name="required">1</attribute>
             </xpath>
         </field>
     </record>

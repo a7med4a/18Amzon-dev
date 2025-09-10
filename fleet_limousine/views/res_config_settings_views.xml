@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.fleet.limousine</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority" eval="90"/>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Limousine" id="limousine" string="Limousine" name="limousine"
+                     groups="fleet.fleet_group_manager">
+                    <block title="Limousine" id="limousine_setting">
+                        <setting id="limousine_driver_setting" string="Limousine Driver" company_dependent="1"
+                                 help="Set limousine driver default account receivable and tags">
+                            <div class="content-group">
+                                <div class="row mt16">
+                                    <label string="Account Receivable" for="property_account_receivable_id"
+                                           class="col-lg-6 o_light_label"/>
+                                    <field name="property_account_receivable_id"/>
+                                </div>
+                                <br/>
+                                <div class="row">
+                                    <label string="Tags" for="category_id" class="col-lg-6 o_light_label"/>
+                                    <field name="category_id" widget="many2many_tags"/>
+                                </div>
+                            </div>
+                        </setting>
+                        <!-- Add Shifts Configuration -->
+                        <setting id="limousine_shifts_setting" string="Limousine Shifts" company_dependent="1"
+                                 help="Configure limousine service shifts timing">
+                            <div class="content-group">
+                                <!-- Full Day Shift -->
+                                <div class="row mt16">
+                                    <label string="Full Day Shift" for="limousine_full_day_from"
+                                           class="col-lg-6 o_light_label"/>
+                                    <div class="col-lg-6">
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <label for="limousine_full_day_from" string="From"
+                                                       class="o_form_label"/>
+                                                <field name="limousine_full_day_from" widget="float_time"/>
+                                            </div>
+                                            <div class="col-6">
+                                                <label for="limousine_full_day_to" string="To" class="o_form_label"/>
+                                                <field name="limousine_full_day_to" widget="float_time"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Half Day Shift -->
+                                <div class="row mt16">
+                                    <label string="Half Day Shift" for="limousine_half_day_from"
+                                           class="col-lg-6 o_light_label"/>
+                                    <div class="col-lg-6">
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <label for="limousine_half_day_from" string="From"
+                                                       class="o_form_label"/>
+                                                <field name="limousine_half_day_from" widget="float_time"/>
+                                            </div>
+                                            <div class="col-6">
+                                                <label for="limousine_half_day_to" string="To" class="o_form_label"/>
+                                                <field name="limousine_half_day_to" widget="float_time"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Free Day Shift -->
+                                <div class="row mt16">
+                                    <label string="Free Day Shift" for="limousine_free_day_from"
+                                           class="col-lg-6 o_light_label"/>
+                                    <div class="col-lg-6">
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <label for="limousine_free_day_from" string="From"
+                                                       class="o_form_label"/>
+                                                <field name="limousine_free_day_from" widget="float_time"/>
+                                            </div>
+                                            <div class="col-6">
+                                                <label for="limousine_free_day_to" string="To" class="o_form_label"/>
+                                                <field name="limousine_free_day_to" widget="float_time"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="fleet_config_settings_action" model="ir.actions.act_window">
+        <field name="name">Settings</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+        <field name="context">{'module' : 'limousine', 'bin_size': False}</field>
+    </record>
+
+    <menuitem id="fleet_config_settings_menu"
+              name="Settings"
+              parent="fleet_limousine.fleet_configuration"
+              sequence="0"
+              action="fleet_limousine.fleet_config_settings_action"
+              groups="fleet.fleet_group_manager"/>
+</odoo>

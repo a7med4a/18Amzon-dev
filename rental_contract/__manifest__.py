@@ -10,21 +10,27 @@
     'depends': ['rental_customization', 'customer_info', 'vehicle_info', 'additional_and_supplementary_services', 'fleet_manufacturer_custom', 'fleet_status', 'fleet_accident', 'fleet_damage'],
     'data': [
         # Security
+        'security/groups.xml',
         'security/ir.model.access.csv',
         'security/record_rule.xml',
         # Data views
         'data/rental_contract_sequence.xml',
         'data/contract_server_action.xml',
         'data/cron.xml',
+        # Report views
+        'reports/branch_transaction_report.xml',
         # Wizard views
         'wizard/payment_register.xml',
         'wizard/fines_discount_wiz.xml',
+        'wizard/branch_transaction_report_wiz.xml',
         # Model views
         'views/res_partner.xml',
         'views/res_company.xml',
+        'views/tam_accrued_expenses.xml',
         'views/vehicle_model_details.xml',
         'views/contract_fines_discount_config.xml',
         'views/additional_supplementary_services.xml',
+        'views/upgrade_downgrade_plan.xml',
         'views/rental_contract_lines.xml',
         'views/rental_setting.xml',
         'views/account_move.xml',

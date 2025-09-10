@@ -15,7 +15,7 @@ class AccountMove(models.Model):
     payment_type_selection = fields.Selection(
         string='Payment Type Selection',
         selection=[('advance', 'مقدم'), ('extension', 'تمديد'), ('close', 'إغلاق'), ('debit', 'سداد مديونية'), ('extension_offline', 'تمديد بدون منصة'),
-                   ('suspended_payment', 'سداد عقد معلق'), ('fine', 'غرامة'), ('closing_batch', 'دفعة اغلاق'), ('refund', 'مردودات')],
+                   ('suspended_payment', 'سداد عقد معلق'), ('fine', 'غرامة'), ('closing_batch', 'دفعة اغلاق'), ('refund', 'مردودات'), ('compensation', 'تعويضات')],
         required=False, )
 
     @api.depends('rental_contract_id')

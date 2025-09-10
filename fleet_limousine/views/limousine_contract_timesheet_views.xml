@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="limousine_contract_timesheet_view_tree" model="ir.ui.view">
+        <field name="name">limousine.contract.timesheet.view.tree</field>
+        <field name="model">limousine.contract.timesheet</field>
+        <field name="arch" type="xml">
+            <list string="Limousine Contract" editable="bottom">
+                <field name="date" readonly="True"/>
+                <field name="company_id" readonly="True"/>
+                <field name="partner_id" readonly="True"/>
+                <field name="contract_id" readonly="True"/>
+                <field name="time_spent_char"/>
+                <field name="description"/>
+                <field name="daily_rate"/>
+                <field name="invoice_state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="limousine_contract_timesheet_action" model="ir.actions.act_window">
+        <field name="name">Timesheet</field>
+        <field name="res_model">limousine.contract.timesheet</field>
+        <field name="view_mode">list</field>
+        <field name="context">{'create': False}</field>
+    </record>
+
+    <menuitem id="limousine_contract_timesheet_menu_action"
+              name="Timesheet"
+              parent="limousine_contract_menu_root"
+              action="limousine_contract_timesheet_action"
+              sequence="10">
+    </menuitem>
+
+</odoo>

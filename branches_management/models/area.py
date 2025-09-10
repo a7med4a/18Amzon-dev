@@ -9,6 +9,8 @@ class Area(models.Model):
 
     name = fields.Char(required=True)
     state_id = fields.Many2one('res.country.state', string='City')
+    country_id = fields.Many2one(
+        'res.country', string='Country', related="state_id.country_id", store=True)
     branch_ids = fields.One2many(
         'res.branch', 'area_id', string='Branches')
-    
+    company_id = fields.Many2one('res.company', string='Company')

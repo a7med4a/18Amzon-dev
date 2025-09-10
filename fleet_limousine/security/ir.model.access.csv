@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_limousine_pricing,access.limousine.pricing,model_limousine_pricing,fleet_limousine.group_limousine_pricing_user,1,1,1,1
+access_limousine_pricing_line,access.limousine.pricing.line,model_limousine_pricing_line,fleet_limousine.group_limousine_pricing_user,1,1,1,1
+access_limousine_fines_config,access.limousine.fines.config,model_limousine_fines_config,base.group_user,1,1,1,1
+access_limousine_contract,access.limousine.contract,model_limousine_contract,base.group_user,1,1,1,1
+access_limousine_contract_timesheet,access.limousine.contract.timesheet,model_limousine_contract_timesheet,base.group_user,1,0,0,0
+access_limousine_contract_timesheet_admin,access.limousine.contract.timesheet.admin,model_limousine_contract_timesheet,fleet_limousine.group_limousine_contract_timesheet_admin,1,1,1,1
+access_limousine_contract_payment_register,access.limousine.contract.payment.register,model_limousine_contract_payment_register,base.group_user,1,1,1,1

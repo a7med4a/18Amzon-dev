@@ -1,0 +1,25 @@
+<odoo>
+    <record id="upgrade_downgrade_rental_plan_view_tree" model="ir.ui.view">
+        <field name="name">upgrade.downgrade.rental.plan.view.tree</field>
+        <field name="model">upgrade.downgrade.rental.plan</field>
+        <field name="arch" type="xml">
+            <list string="Upgrade / Downgrade Plan">
+                <field name="rental_contract_id" readonly="1"/>
+                <field name="contract_state" column_invisible="1"/>
+                <field name="upgrade_downgrade_applied" column_invisible="1"/>
+                <field name="old_rental_plan" readonly="1"/>
+                <field name="new_rental_plan" readonly="1"/>
+                <field name="old_daily_rate" readonly="1"/>
+                <field name="new_daily_rate" readonly="1"/>
+                <field name="current_days" readonly="1"/>
+                <field name="current_hours" readonly="1"/>
+                <field name="current_total" readonly="1"/>
+                <field name="new_total" readonly="1"/>
+                <field name="difference_total" readonly="1"/>
+                <field name="type" readonly="1"/>
+                <button name="apply_discount_fine" type="object" invisible="contract_state != 'close_info' or difference_total == 0.0 or upgrade_downgrade_applied" string="Apply" class="oe_highlight"/>
+            </list>
+        </field>
+    </record>
+
+</odoo>

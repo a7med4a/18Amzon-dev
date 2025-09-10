@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Tree View -->
+    <record id="limousine_fines_config_view_tree" model="ir.ui.view">
+        <field name="name">limousine.fines.config.view.tree</field>
+        <field name="model">limousine.fines.config</field>
+        <field name="arch" type="xml">
+            <list string="Fines" multi_edit="1" editable="bottom">
+                <field name="name"/>
+                <field name="price"/>
+                <field name="account_id"/>
+                <field name="company_id"/>
+                <field name="tax_ids" widget="many2many_tags"/>
+                <field name="edit_type"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="limousine_fines_config_view_search" model="ir.ui.view">
+        <field name="name">limousine.fines.config.view.search</field>
+        <field name="model">limousine.fines.config</field>
+        <field name="arch" type="xml">
+            <search string="Fines">
+                <field name="name"/>
+                <field name="price"/>
+                <field name="account_id" options="{'no_open': True, 'no_create': True}"/>
+                <field name="tax_ids" widget="many2many_tags" options="{'no_open': True, 'no_create': True}"/>
+                <field name="edit_type"/>
+                <field name="company_id"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="limousine_fines_config_action" model="ir.actions.act_window">
+        <field name="name">Fines</field>
+        <field name="res_model">limousine.fines.config</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <!-- Menu -->
+    <menuitem id="limousine_fines_config_menu_action"
+              name="Fines"
+              parent="fleet_limousine.fleet_configuration"
+              action="limousine_fines_config_action"
+              sequence="10"/>
+
+</odoo>

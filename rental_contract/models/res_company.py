@@ -12,7 +12,7 @@ class Company(models.Model):
 
     _inherit = 'res.company'
 
-    tz = fields.Selection(_tzs, string="Time Zone", store=True,
+    tz = fields.Selection(_tzs, string="Time Zone", store=True, default='Asia/Riyadh',
                           compute="_compute_tz", inverse="_inverse_tz")
 
     @api.depends('partner_id', 'partner_id.tz')

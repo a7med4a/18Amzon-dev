@@ -83,7 +83,7 @@
                             <field name="total_payment"/>
                         </group>
                         <group>
-                            <field name="create_payment" readonly="actual_extended_days &gt; 0"/>
+                            <field name="create_payment" readonly="extended_payment &gt; 0" force_save="1" invisible="extended_payment &lt;= 0"/>
                             <field name="journal_id" required="create_payment" invisible="not create_payment" domain="[('type', 'in', ['bank', 'cash'])]" options="{'no_open': True, 'no_create': True}"/>
                             <field name="payment_date" required="create_payment" invisible="not create_payment"/>
                             <field name="payment_method_line_id" invisible="1"/>

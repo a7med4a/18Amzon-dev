@@ -1,0 +1,37 @@
+<odoo>
+
+    <record id="collection_action_wiz_view_form" model="ir.ui.view">
+        <field name="name">collection.action.wiz.view.form</field>
+        <field name="model">collection.action.wiz</field>
+        <field name="arch" type="xml">
+            <form string="Collection Action">
+                <sheet>
+                    <group>
+                        <field name="rental_contract_id" invisible="1"/>
+                        <group>
+                            <field name="communication_date" />
+                            <field name="contact_type_id" options="{'no_open': True, 'no_create': True}"/>
+                            <field name="contact_result_id" options="{'no_open': True, 'no_create': True}"/>
+                            <field name="notes" />
+                            <field name="collector_user_id" readonly="1"/>
+                            <field name="create_on_date" readonly="1" />
+                        </group>
+                        
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_confirm" string="Confirm" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="collection_action_wiz_action" model="ir.actions.act_window">
+        <field name="name">Collection Action</field>
+        <field name="res_model">collection.action.wiz</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_rental_contract_id': active_id}</field>
+    </record>
+</odoo>

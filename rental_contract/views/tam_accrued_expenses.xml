@@ -1,0 +1,27 @@
+<odoo>
+    <record id="tam_accrued_expenses_view_tree" model="ir.ui.view">
+        <field name="name">tam.accrued.expenses.view.list</field>
+        <field name="model">tam.accrued.expenses</field>
+        <field name="arch" type="xml">
+            <list string="Tam Accrued Expenses" create="0">
+                <field name="rental_contract_id" />
+                <field name="auth_start_date" />
+                <field name="auth_end_date" />
+                <field name="amount" />
+            </list>
+        </field>
+    </record>
+
+    <record id="tam_accrued_expenses_action" model="ir.actions.act_window">
+        <field name="name">Tam Accrued Expense</field>
+        <field name="res_model">tam.accrued.expenses</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <menuitem
+        id="tam_accrued_expenses_menu"
+        name="Tam Accrued Expense"
+        action="tam_accrued_expenses_action"
+        parent="rental_customization.rental_main_menu" 
+        sequence="20"/>
+</odoo>

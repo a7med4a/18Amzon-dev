@@ -11,7 +11,9 @@ class AccountPayment(models.Model):
     payment_type_selection = fields.Selection(
         string='Payment Type Selection',
         selection=[('advance', 'مقدم'), ('extension', 'تمديد'), ('close', 'إغلاق'), ('debit', 'سداد مديونية'), ('extension_offline', 'تمديد بدون منصة'),
-                   ('suspended_payment', 'سداد عقد معلق'), ('fine', 'غرامة'), ('closing_batch', 'دفعة اغلاق'), ('refund', 'مردودات')], )
+                   ('suspended_payment', 'سداد عقد معلق'), ('fine', 'غرامة'), ('closing_batch', 'دفعة اغلاق'), ('refund', 'مردودات'), ('compensation', 'تعويضات')], )
+    branch_id = fields.Many2one(
+        'res.branch', string='branch', related="journal_id.branch_id", store=True)
 
     def _generate_journal_entry(self, write_off_line_vals=None, force_balance=None, line_ids=None):
         need_move = self.filtered(
@@ -96,3 +98,21 @@ class AccountPayment(models.Model):
             'date', 'amount', 'payment_type', 'partner_type', 'payment_reference',
             'currency_id', 'partner_id', 'destination_account_id', 'partner_bank_id', 'journal_id', 'payment_type_selection'
         )
+
+    @api.model
+    def get_matched_branch_transaction(self, report_obj):
+        from_date = report_obj.from_date
+        to_date = report_obj.to_date
+        company_id = report_obj.company_id
+        branch_ids = report_obj.branch_ids
+        include_draft_cancel = report_obj.include_draft_cancel
+        domain = [
+            ('company_id', '=', company_id.id), ('branch_id', 'in',
+                                                 branch_ids.ids), ('rental_contract_id', '!=', False),
+            '|', ('date', '>=', from_date), ('date', '<=', to_date)
+        ]
+        if not include_draft_cancel:
+            domain.insert(0,
+                          ('state', 'not in', ['draft', 'canceled', 'rejected']))
+
+        return self.sudo().search(domain=domain)

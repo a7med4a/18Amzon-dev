@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="seq_limousine_contract" model="ir.sequence">
+        <field name="name">Limousine Contract</field>
+        <field name="code">limousine.contract</field>
+        <field name="padding">5</field>
+    </record>
+
+</odoo>

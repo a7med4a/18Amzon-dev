@@ -12,8 +12,10 @@
                     <sheet>
                         <group>
                             <group>
-                                <field name="journal_id" domain="[('type', 'in', ['bank', 'cash'])]"  options="{'no_open': True, 'no_create': True}"/>
-                                <field name="payment_method_line_id" options="{'no_open': True, 'no_create': True}" invisible="1"/>
+                                <field name="available_payment_method_line_ids" invisible="1"/>
+                                <field name="allowed_journal_ids" invisible="1"/>
+                                <field name="journal_id"  options="{'no_open': True, 'no_create': True}" domain="[('id', 'in', allowed_journal_ids)]"/>
+                                <field name="payment_method_line_id" domain="[('id', 'in', available_payment_method_line_ids)]" options="{'no_open': True, 'no_create': True}"/>
                             </group>
                             <group>
                                 <field name="payment_date" readonly="1"/>

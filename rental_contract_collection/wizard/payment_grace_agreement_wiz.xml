@@ -1,0 +1,42 @@
+<odoo>
+
+
+    <record id="payment_grace_agreement_wiz_view_form" model="ir.ui.view">
+        <field name="name">payment.grace.agreement.wiz.view.form</field>
+        <field name="model">payment.grace.agreement.wiz</field>
+        <field name="arch" type="xml">
+            <form string="Payment Grace Agreement">
+                <sheet>
+                    <group>
+                        <field name="rental_contract_id" invisible="1"/>
+                        <group>
+                            <field name="start_date" />
+                            <label for="duration"/>
+                            <div class="o_row" >
+                                <field name="duration" required="1"/>
+                                <field name="duration_type" required="1" nolabel="1"/>
+                            </div>
+                            <field name="installment_count"/>
+                            <field name="discount_percentage" />
+                            <field name="discount_amount" />
+                            <field name="due_amount"/>
+                            <field name="note"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_confirm" string="Confirm" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="payment_grace_agreement_wiz_action" model="ir.actions.act_window">
+        <field name="name">Payment Grace Agreement</field>
+        <field name="res_model">payment.grace.agreement.wiz</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_rental_contract_id': active_id}</field>
+    </record>
+</odoo>

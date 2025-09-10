@@ -7,9 +7,9 @@
     'website': "",
     'category': 'Uncategorized',
     'version': '0.1',
-    'depends': ['account', 'fleet', 'analytic','branches_management'],
+    'depends': ['account', 'fleet', 'analytic', 'branches_management'],
     'data': [
         'views/branch.xml',
+        'views/account_journal.xml',
     ]
 }
-

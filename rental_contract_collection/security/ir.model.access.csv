@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_collection_setting,collection.setting,model_collection_setting,base.group_user,1,1,1,1
+access_collection_contact_type,collection.contact.type,model_collection_contact_type,base.group_user,1,1,1,1
+access_collection_contact_result,collection.contact.result,model_collection_contact_result,base.group_user,1,1,1,1
+access_collection_action_wiz,collection.action.wiz,model_collection_action_wiz,base.group_user,1,1,1,1
+access_collection_action_report,collection.action.report,model_collection_action_report,base.group_user,1,1,1,1
+access_payment_grace_agreement_wiz,payment.grace.agreement.wiz,model_payment_grace_agreement_wiz,base.group_user,1,1,1,1
+access_payment_grace_agreement_report,payment.grace.agreement.report,model_payment_grace_agreement_report,base.group_user,1,1,1,1

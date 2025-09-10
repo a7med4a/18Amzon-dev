@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record model="ir.module.category" id="module_category_fleet_limousine">
+            <field name="name">Fleet Limousine</field>
+        </record>
+
+        <record id="group_limousine_pricing_user" model="res.groups">
+            <field name="name">Limousine Pricing User</field>
+            <field name="category_id" ref="module_category_fleet_limousine"/>
+        </record>
+
+        <record id="group_limousine_contract_timesheet_admin" model="res.groups">
+            <field name="name">Edit Limousine Contract Timesheet</field>
+            <field name="category_id" ref="module_category_fleet_limousine"/>
+        </record>
+
+    </data>
+</odoo>

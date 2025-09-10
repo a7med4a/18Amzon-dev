@@ -10,3 +10,6 @@ access_rental_contract_fines_discount_wiz,rental.contract.fines.discount.wiz,mod
 access_rental_contract_fines_discount_wiz_line,rental.contract.fines.discount.wiz.line,model_rental_contract_fines_discount_wiz_line,base.group_user,1,1,1,1
 access_contract_source,contract.source,model_contract_source,base.group_user,1,1,1,1
 access_rental_contract_late_log,rental.contract.late.log,model_rental_contract_late_log,base.group_user,1,1,1,1
+access_tam_accrued_expenses,tam.accrued.expenses,model_tam_accrued_expenses,base.group_user,1,1,1,1
+access_branch_transaction_report,branch.transaction.report,model_branch_transaction_report,base.group_user,1,1,1,1
+access_upgrade_downgrade_rental_plan,upgrade.downgrade.rental.plan,model_upgrade_downgrade_rental_plan,base.group_user,1,1,1,1

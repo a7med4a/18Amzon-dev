@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id='fleet_vehicle_action' model='ir.actions.act_window'>
+        <field name="name">Vehicles</field>
+        <field name="res_model">fleet.vehicle</field>
+        <field name="view_mode">kanban,list,form,pivot,activity</field>
+        <field name="domain">[('usage_type', '=', 'limousine')]</field>
+        <field name="context">{'create': False, 'edit': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Ready to manage your limousine more efficiently?
+            </p>
+            <p>
+                Let's create your limousine.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="fleet_vehicle_menu_root"
+              name="Limousine"
+              sequence="30">
+        <menuitem id="fleet_vehicle_menu_action"
+                  action="fleet_vehicle_action"
+                  sequence="5"
+        />
+        <menuitem id="fleet_configuration"
+                  name="Configuration"
+                  sequence="100"
+                  groups="fleet.fleet_group_manager"
+        />
+    </menuitem>
+
+</odoo>

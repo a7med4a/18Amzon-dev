@@ -1,0 +1,144 @@
+<odoo>
+
+    <record id="paperformat_branch_transaction" model="report.paperformat">
+        <field name="name">Custom Paperformat for branch transaction report</field>
+        <field name="default" eval="False"/>
+        <field name="disable_shrinking" eval="True"/>
+        <field name="format">A4</field>
+        <field name="page_height">0</field>
+        <field name="page_width">0</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">34</field>
+        <field name="margin_bottom">25</field>
+        <field name="margin_left">5</field>
+        <field name="margin_right">5</field>
+        <field name="dpi">96</field>
+    </record>
+
+    <template id="branch_transaction_template">
+        <t t-call="web.html_container">
+
+            <t t-call="web.external_layout">
+                <div class="page o_content_pdf" style="text-align:right;" direction="RTL" >
+                    <div class="oe_structure"></div>
+                    <h2 style="text-align:center;">تقرير السندات</h2>
+                    <!-- <div class="row o_header">
+                        <div class="col-6">
+                            <div class="row">
+                                <div class="col-3 fw-bold"><span>Employee:</span> </div>
+                                <div class="col-9 text-muted"><span t-field="o.employee_id.name">Marc Demo</span></div>
+                            </div>
+                            <div class="row" t-if="o.accounting_date">
+                                <div class="col-3 fw-bold"><span>Date:</span></div>
+                                <div class="col-9 text-muted"><span t-field="o.accounting_date">2023-08-11</span></div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="row" t-if="o.user_id.name">
+                                <div class="col-3 fw-bold"><span>Manager:</span></div>
+                                <div class="col-9 text-muted"><span t-field="o.user_id">Mitchell Admin</span></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-3 fw-bold"><span>Paid by:</span></div>
+                                <div class="col-9 text-muted"><span t-field="o.payment_mode">Credit Card</span></div>
+                            </div>
+                        </div>
+                    </div> -->
+                    <div class="oe_structure"></div>
+
+                    <table class="table table-border">
+                        <thead>
+                            <tr>
+                                <th >الفرع</th>
+                                <th >حاله الدفعه</th>
+                                <th >مبلغ الصرف</th>
+                                <th >مبلغ القبض</th>
+                                <th >طريقة التحصيل / السداد</th>
+                                <th >اليومية</th>
+                                <th >نوع الحركة</th>
+                                <th >نوع السند</th>
+                                <th >رقم اللوحة</th>
+                                <th >العميل</th>
+                                <th >التاريخ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="matched_transactions" t-as="transaction">
+                                <t t-set="transaction" t-value="transaction.with_context(lang='ar_001')" />
+                                <td ><span t-esc="transaction.branch_id.name"></span></td>
+                                <td ><span t-field="transaction.state"></span></td>
+                                <td >
+                                    <span t-if="transaction.payment_type == 'outbound'" t-esc="transaction.amount" t-options='{"widget": "monetary", "display_currency": transaction.currency_id}'>$120.00</span>
+                                </td>
+                                <td >
+                                    <span t-if="transaction.payment_type == 'inbound'" t-esc="transaction.amount" t-options='{"widget": "monetary", "display_currency": transaction.currency_id}'>$120.00</span>
+                                </td>
+                                <td ><span t-esc="transaction.payment_method_line_id.name"></span></td>
+                                <td ><span t-esc="transaction.journal_id.name"></span></td>
+                                <td ><span t-field="transaction.payment_type_selection"></span></td>
+                                <td ><span t-field="transaction.payment_type"></span></td>
+                                <td ><span t-esc="transaction.rental_contract_id.vehicle_id.license_plate"></span></td>
+                                <td ><span t-esc="transaction.partner_id.name"></span></td>
+                                <td ><span t-esc="transaction.date"></span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <t t-set="company_currency" t-value="totals_dict.get('currency_id')" />
+                    <div class="oe_structure"></div>
+                    <div class="row justify-content-end o_total mt-n3">
+                        <div class="col-4">
+                            <div class="oe_structure"></div>
+                            <table class="table table-borderless">
+                                <tbody>
+                                    <tr>
+                                        <td style="border-bottom: 1px solid black;"><span t-esc="totals_dict.get('total_received')" t-options='{"widget": "monetary", "display_currency": company_currency}'>$500.00</span></td>
+                                        <td>اجمالى المقبوضات</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border-bottom: 1px solid black;"><span t-esc="totals_dict.get('total_sent')" t-options='{"widget": "monetary", "display_currency": company_currency}'>$500.00</span></td>
+                                        <td>اجمالى المصروفات</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border-bottom: 1px solid black;"><span t-esc="totals_dict.get('net')" t-options='{"widget": "monetary", "display_currency": company_currency}'>$500.00</span></td>
+                                        <td>اجمالى صافى الرصيد</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border-bottom: 1px solid black;"><span t-esc="totals_dict.get('total_bank_amount')" t-options='{"widget": "monetary", "display_currency": company_currency}'>$500.00</span></td>
+                                        <td>اجمالي الحركات الغير نقدية</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border-bottom: 1px solid black;"><span t-esc="totals_dict.get('total_cash_amount')" t-options='{"widget": "monetary", "display_currency": company_currency}'>$500.00</span></td>
+                                        <td>اجمالى النقدي</td>
+                                    </tr>
+                                    
+                                </tbody>
+                            </table>
+                            <div class="oe_structure"></div>
+                            <table class="table table-borderless">
+                                <tbody>
+                                    <tr t-foreach="totals_dict.get('payment_type_totals')" t-as="payment_type_selection">
+                                        <td style="border-bottom: 1px solid black;"><span t-esc="totals_dict.get('payment_type_totals').get(payment_type_selection)" t-options='{"widget": "monetary", "display_currency": company_currency}'>$500.00</span></td>
+                                        <td><span t-esc="payment_type_selection" /></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="oe_structure"></div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+
+        </t>
+    </template>
+
+    <record id="action_report_branch_transaction" model="ir.actions.report">
+        <field name="name">Branch Transaction Report</field>
+        <field name="model">branch.transaction.report</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">rental_contract.branch_transaction_template</field>
+        <field name="report_file">rental_contract.branch_transaction_template</field>
+        <field name="binding_model_id" eval="False"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_branch_transaction"/>
+    </record>
+</odoo>

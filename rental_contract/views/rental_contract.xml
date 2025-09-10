@@ -12,16 +12,17 @@
           <button name="next_draft_state" type="object" class="oe_highlight" invisible="state != 'draft' or draft_state == 'financial_info'" icon="fa-arrow-circle-o-right" string="Next" />
           <button name="action_open" type="object" invisible="state != 'draft' or draft_state != 'financial_info'" string="Open" class="oe_highlight" confirm="Are you sure you want to open this contract?" />
           <!-- After draft -->
-          <button name="action_pay" type="object" invisible="draft_state != 'financial_info' or (draft_state == 'financial_info' and state == 'draft' and due_amount &lt; 0)" string="Pay" class="oe_highlight" />
-          <button name="action_pay" type="object" invisible="hide_refund_button" string="Refund" class="oe_highlight" />
+          <button name="action_pay" type="object" invisible="hide_pay_button" string="Pay" class="oe_highlight" />
+          <button name="action_pay" type="object" invisible="hide_refund_button" string="Refund" class="oe_highlight" context="{'default_payment_type_selection': 'refund'}" />
           <!-- Open Buttons -->
           <button name="%(rental_contract.rental_contract_fines_wiz_action)d" type="action" invisible="state in ['draft']" string="Add Fines" class="oe_highlight" />
           <button name="%(rental_contract.rental_contract_discount_wiz_action)d" type="action" invisible="state in ['draft']" string="Add Discount Voucher" class="oe_highlight" />
           <button name="create_late_log" type="object" invisible="state != 'opened'" string="Extend" class="oe_highlight" />
           <button name="action_close_info" type="object" invisible="state != 'opened'" string="Close" class="oe_highlight" />
           <!-- Close Info Buttons -->
-          <button name="action_close" type="object" invisible="state != 'close_info' or vehicle_in_state == 'none'" string="Close" class="oe_highlight"/>
-          <button name="action_close" type="object" invisible="state != 'close_info' or vehicle_in_state != 'none'" string="Close" class="oe_highlight" confirm="You select none in has accident / damage?" />
+          <button name="action_close" type="object" invisible="state != 'close_info' or vehicle_in_state == 'none' or closing_message" string="Close" class="oe_highlight"/>
+          <button name="action_close" type="object" invisible="state != 'close_info' or vehicle_in_state != 'none' or closing_message" string="Close" class="oe_highlight" confirm="You select none in has accident / damage?" />
+          <button name="apply_upgrade_downgrade_before_close" type="object" invisible="state != 'close_info' or not closing_message" string="Close" class="oe_highlight" />
           <button name="action_back_to_opened" type="object" invisible="state != 'close_info'" string="Back To Open" confirm="You will open the contract again" />
           <!-- Delivery InDebit / Pending Button -->
           <button name="action_final_close" type="object" invisible="state not in ['delivered_pending', 'delivered_debit']" string="Close" class="oe_highlight" confirm="Are you sure you want to close this contract?"/>
@@ -31,6 +32,9 @@
           <field name="draft_state" widget="statusbar" readonly="0" invisible="state != 'draft'" />
           <field name="state" widget="statusbar" statusbar_visible="opened,close_info,closed" invisible="state == 'draft'" />
           <field name="hide_refund_button" invisible="1" />
+          <field name="hide_pay_button" invisible="1" />
+          <field name="upgrade_downgrade_plan_ids" invisible="1" />
+          <field name="closing_message" invisible="1" />
         </header>
         <sheet>
           <!-- button box -->
@@ -116,6 +120,12 @@
                 <span class="o_stat_text">Extend Log</span>
               </div>
             </button>
+
+            <button class="oe_stat_button" name="view_upgrade_downgrade_contract_plan" type="object" icon="fa-bars" invisible="not upgrade_downgrade_plan_ids">
+              <div class="o_stat_info">
+                <span class="o_stat_text">Upgrade / Downgrade Plan</span>
+              </div>
+            </button>
           </div>
 
           <div class="d-flex">
@@ -123,6 +133,7 @@
               <field name="name" />
             </h2>
             <field name="contract_late_status" widget="badge" decoration-success="contract_late_status == 'extended'" decoration-danger="contract_late_status == 'late'"/>
+            <field name="upgrade_downgrade_state" widget="badge" decoration-success="upgrade_downgrade_state == 'upgrade'" decoration-danger="upgrade_downgrade_state == 'downgrade'" invisible="state != 'close_info'"/>
           </div>
           <!-- customer_info -->
           <group invisible="(state == 'draft' and draft_state != 'customer_info') or state == 'close_info'" string="Customer Info">
@@ -178,7 +189,18 @@
               <field name="out_vehicle_status" required="draft_state != 'customer_info'" readonly="state != 'draft'" />
             </group>
             <group>
-              <field name="out_image_attachment_ids" widget="many2many_binary" readonly="state != 'draft'" />
+            </group>
+            <group>
+              <field name="out_attachment_1" required="draft_state != 'customer_info'" readonly="state != 'draft'"  widget="image"/>
+              <field name="out_attachment_2" required="draft_state != 'customer_info'" readonly="state != 'draft'"  widget="image"/>
+              <field name="out_attachment_3" required="draft_state != 'customer_info'" readonly="state != 'draft'"  widget="image"/>
+              <field name="out_attachment_4" required="draft_state != 'customer_info'" readonly="state != 'draft'"  widget="image"/>
+            </group>
+            <group>
+              <field name="out_attachment_5" required="draft_state != 'customer_info'" readonly="state != 'draft'"  widget="image"/>
+              <field name="out_attachment_6" required="draft_state != 'customer_info'" readonly="state != 'draft'"  widget="image"/>
+              <field name="out_attachment_7" required="draft_state != 'customer_info'" readonly="state != 'draft'"  widget="image"/>
+              <field name="out_attachment_8" required="draft_state != 'customer_info'" readonly="state != 'draft'"  widget="image"/>
             </group>
           </group>
           <!-- contract_info -->
@@ -193,6 +215,7 @@
               <field name="authorization_country_id" options="{'no_create': True, 'no_open': True}" required="draft_state not in ['customer_info', 'vehicle_info'] and authorization_type == 'external'" invisible="authorization_type != 'external'" readonly="state != 'draft'" />
               <field name="need_extra_driver" required="draft_state not in ['customer_info', 'vehicle_info']" readonly="state != 'draft'" />
               <field name="extra_driver_id" required="draft_state not in ['customer_info', 'vehicle_info'] and need_extra_driver == 'true'" invisible="need_extra_driver != 'true'" options="{'no_create': True, 'no_open': True}" context="{'form_view_ref': 'customer_info.view_partner_form_rental', 'search_by_mobile': True}" readonly="state != 'draft'" />
+              <field name="is_authorized_renter" required="draft_state not in ['customer_info', 'vehicle_info']" widget="boolean_toggle" readonly="state != 'draft'" />
             </group>
             <group invisible="state == 'draft' and draft_state != 'contract_info'">
               <field name="expected_return_date" />
@@ -283,6 +306,9 @@
 
               <field name="assumed_amount" />
               <field name="discount_voucher_amount" />
+              <field name="display_late_amount" invisible="state != 'opened'" />
+              <field name="late_amount" invisible="state in ['draft', 'opened']" readonly="1"/>
+              <field name="total_in_na2l" readonly="1"/>
             </group>
 
             <group>
@@ -339,13 +365,25 @@
             <group>
               <field name="in_branch_domain" invisible="1"/>
               <field name="in_branch_id" required="state == 'close_info'" readonly="state != 'close_info'" domain="in_branch_domain"/>
-              <field name="in_image_attachment_ids" widget="many2many_binary" readonly="state != 'close_info'" />
+            </group>
+            <group>
+              <field name="in_attachment_1" required="state == 'close_info'" readonly="state != 'close_info'"  widget="image"/>
+              <field name="in_attachment_2" required="state == 'close_info'" readonly="state != 'close_info'"  widget="image"/>
+              <field name="in_attachment_3" required="state == 'close_info'" readonly="state != 'close_info'"  widget="image"/>
+              <field name="in_attachment_4" required="state == 'close_info'" readonly="state != 'close_info'"  widget="image"/>
+            </group>
+            <group>
+              <field name="in_attachment_5" required="state == 'close_info'" readonly="state != 'close_info'"  widget="image"/>
+              <field name="in_attachment_6" required="state == 'close_info'" readonly="state != 'close_info'"  widget="image"/>
+              <field name="in_attachment_7" required="state == 'close_info'" readonly="state != 'close_info'"  widget="image"/>
+              <field name="in_attachment_8" required="state == 'close_info'" readonly="state != 'close_info'"  widget="image"/>
             </group>
           </group>
           <group invisible="state in ['draft', 'opened']" name="accident_damage">
             <group>
               <field name="vehicle_in_state" readonly="state != 'close_info'" required="state == 'close_info'"/>
               <field name="vehicle_in_state_other_reason" readonly="state != 'close_info'" required="vehicle_in_state == 'other'" invisible="vehicle_in_state != 'other'"/>
+              <field name="damage_note" readonly="state != 'close_info'" required="vehicle_in_state == 'damage'" invisible="vehicle_in_state != 'damage'"/>
             </group>
             <group string="Accident Announcement" invisible="vehicle_in_state != 'accident'">
               <field name="city_id" required="state == 'close_info' and vehicle_in_state == 'accident'" readonly="state != 'close_info'"  options="{'no_open': True, 'no_create': True}"/>
@@ -401,6 +439,25 @@
         <footer>
           <button string="Close" class="btn-secondary" special="cancel" />
         </footer>
+      </form>
+    </field>
+  </record>
+
+  <record id="view_rental_contract_upgrade_downgrade_plan_form" model="ir.ui.view">
+    <field name="name">rental.contract.upgrade.downgrade.plan.form</field>
+    <field name="model">rental.contract</field>
+    <field name="priority">1000</field>
+    <field name="arch" type="xml">
+      <form string="Upgrade / Downgrade Plan">
+      <sheet>
+        <h3>
+          <field name="closing_message"/>
+        </h3>
+      </sheet>
+      <footer>
+          <button name="apply_upgrade_downgrade_plan" string="Apply" type="object" class="btn-primary"/>
+          <button name="action_close" type="object" class="btn-secondary" string="Close Without Apply"/>
+        </footer> 
       </form>
     </field>
   </record>
@@ -535,6 +592,8 @@
                        decoration-warning="vehicle_in_state == 'accident'"
                        decoration-danger="vehicle_in_state == 'damage'"
                        decoration-info="vehicle_in_state == 'other'"/>
+        <field name="has_extra_accident" />
+        <field name="has_extra_damage" />
         <field name="invoice_damage_accident" decoration-info="invoice_damage_accident == 'invoiced'" widget="badge"/>
       </list>
     </field>

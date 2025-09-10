@@ -1,0 +1,79 @@
+<odoo>
+
+    <record id="view_rental_contract_form" model="ir.ui.view">
+        <field name="name">collection.rental.contract.view.form.inherit</field>
+        <field name="model">rental.contract</field>
+        <field name="mode">primary</field>
+        <field name="priority">1000</field>
+        <field name="inherit_id" ref="rental_contract.view_rental_contract_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//header" position="after">
+            
+                <header>
+                    <field name="grace_agreement_amount" invisible="1"/>
+                    <!-- After draft -->
+                    <button name="action_pay" type="object" string="Pay" class="oe_highlight" />
+                    <button name="action_pay" type="object" string="Refund" class="oe_highlight" />
+                    <!-- Open Buttons -->
+                    <button name="%(rental_contract.rental_contract_fines_wiz_action)d" type="action" string="Add Fines" class="oe_highlight" />
+                    <button name="%(rental_contract.rental_contract_discount_wiz_action)d" type="action" string="Add Discount Voucher" class="oe_highlight" />
+                    <button name="%(rental_contract_collection.collection_action_wiz_action)d" type="action"  string="Collection" class="oe_highlight" />
+                    <button name="%(rental_contract_collection.payment_grace_agreement_wiz_action)d" type="action"  string="Create Payment Grace Agreement" class="oe_highlight" invisible="payment_grace_agreement_count != 0"/>
+                    
+                    <!-- State Fields -->
+                    <field name="state" widget="statusbar" statusbar_visible="opened,close_info,closed" invisible="state == 'draft'" />
+                    <field name="hide_refund_button" invisible="1" />
+                </header>
+            </xpath>
+
+            <xpath expr="//div[@name='button_box']" position="inside">
+                
+                <button class="oe_stat_button" name="view_related_collection_actions" type="object" icon="fa-bars" invisible="collection_action_count == 0">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value">
+                        <field name="collection_action_count" />
+                        </span>
+                        <span class="o_stat_text">Collections</span>
+                    </div>
+                </button>
+
+                <button class="oe_stat_button" name="view_related_payment_grace_agreements" type="object" icon="fa-edit" invisible="payment_grace_agreement_count == 0">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value">
+                        <field name="payment_grace_agreement_count" />
+                        </span>
+                        <span class="o_stat_text">Payment Grace Agreement</span>
+                    </div>
+                </button>
+
+                
+            </xpath>
+
+            <xpath expr="//field[@name='total_in_na2l']" position="after">
+                <field name='collector_user_ids' widget="many2many_tags" options="{'no_open': True, 'no_create': True}"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <record id="action_all_collection_contract" model="ir.actions.server">
+        <field name="name">All Contracts</field>
+        <field name="model_id" ref="model_rental_contract"/>
+        <field name="state">code</field>
+        <field name="code">
+            action = model.action_view_all_contracts()
+        </field>
+    </record>
+
+    <record id="action_my_collection_contract" model="ir.actions.server">
+        <field name="name">my Contracts</field>
+        <field name="model_id" ref="model_rental_contract"/>
+        <field name="state">code</field>
+        <field name="code">
+            action = model.action_view_my_contracts()
+        </field>
+    </record>
+</odoo>

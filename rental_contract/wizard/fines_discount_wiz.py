@@ -47,8 +47,7 @@ class ContractFinesDiscountWiz(models.TransientModel):
         for line in self.lines:
             price_unit = line.price
             if self.rental_contract_id.tax_percentage:
-                price_unit = price_unit / \
-                    (1 + (self.rental_contract_id.tax_percentage / 100))
+                price_unit = price_unit
 
             item_vals_list.append((0, 0, {
                 'name': line.config_id.name + ' / ' + line.name,

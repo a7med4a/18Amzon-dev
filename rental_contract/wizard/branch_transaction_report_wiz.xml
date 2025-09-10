@@ -1,0 +1,49 @@
+<odoo>
+
+    <record id="branch_transaction_report_view_form" model="ir.ui.view">
+        <field name="name">branch.transaction.report.view.form</field>
+        <field name="model">branch.transaction.report</field>
+        <field name="arch" type="xml">
+            <form string="Branch Transaction Report">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="from_date"  required="1"/>
+                        </group>
+                        <group>
+                            <field name="to_date"  required="1"/>
+                        </group>
+                        <group>
+                            <field name="company_id" required="1"/>
+                            <field name="area_id" domain="[('company_id', '=', company_id)]" required="1"/>
+                            <field name="branch_ids" domain="branch_domain" required="1" widget="many2many_tags"/>
+                            <field name="branch_domain" invisible="1"/>
+                            <field name="include_draft_cancel" />
+                        </group>
+                        
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_print_pdf_report" string="Print PDF" type="object" class="btn-success"/>
+                    <button name="action_print_excel_report" string="Print Excel" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="branch_transaction_report_action" model="ir.actions.act_window">
+        <field name="name">Branch Transaction Report</field>
+        <field name="res_model">branch.transaction.report</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem
+        id="branch_transaction_report_menu"
+        name="Branch Transaction Report"
+        action="branch_transaction_report_action"
+        parent="rental_customization.rental_main_menu" 
+        sequence="15"/>
+
+</odoo>

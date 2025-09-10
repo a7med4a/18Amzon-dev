@@ -1,0 +1,40 @@
+<odoo>
+    <data>
+        <record id="view_limousine_contract_payment_register_form" model="ir.ui.view">
+            <field name="name">limousine.contract.payment.register.form</field>
+            <field name="model">limousine.contract.payment.register</field>
+            <field name="arch" type="xml">
+                <form string="Pay">
+                    <header>
+                        <field name="contract_id" invisible="1"/>
+                        <field name="contract_state" invisible="1"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="available_payment_method_line_ids" invisible="1"/>
+                                <field name="allowed_journal_ids" invisible="1"/>
+                                <field name="journal_id"  options="{'no_open': True, 'no_create': True}" domain="[('id', 'in', allowed_journal_ids)]"/>
+                                <field name="payment_method_line_id" domain="[('id', 'in', available_payment_method_line_ids)]" options="{'no_open': True, 'no_create': True}"/>
+                            </group>
+                            <group>
+                                <field name="payment_date" readonly="1"/>
+                                <label for="amount"/>
+                                <div name="amount_div" class="o_row">
+                                    <field name="amount" force_save="1" readonly="contract_state == 'draft'"/>
+                                    <field name="currency_id" options="{'no_open': True, 'no_create': True}"/>
+                                </div>
+                                <field name="communication"/>
+                                <field name="payment_type_selection"/>
+                            </group>
+                        </group>
+                    </sheet>
+                    <footer>
+                        <button name="action_register_payment" string="Pay" type="object" class="btn-primary"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

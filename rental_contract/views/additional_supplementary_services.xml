@@ -12,6 +12,10 @@
                 <attribute name="readonly">type in ['external_authorization', 'internal_authorization']</attribute>
                 <attribute name="force_save">1</attribute>
             </xpath>
+            <xpath expr="//field[@name='calculation_type']" position="attributes">
+                <attribute name="readonly">type in ['internal_authorization']</attribute>
+                <attribute name="force_save">1</attribute>
+            </xpath>
 
             <xpath expr="//field[@name='contract_type']" position="after">
                 <field name='is_open_km' widget='boolean_toggle' string="Open KM"/>

@@ -17,7 +17,7 @@ class FleetDamage(models.Model):
     name = fields.Char(string="Reference",
                        copy=False, readonly=True, default="New")
     vehicle_id = fields.Many2one(
-        comodel_name='fleet.vehicle',  string='License Plate', required=True, tracking=True)
+        comodel_name='fleet.vehicle',  string='License Plate', required=True, tracking=True, domain="[('company_id', '=', company_id)]")
     model_id = fields.Many2one(comodel_name='fleet.vehicle.model',
                                string="Model", related='vehicle_id.model_id', store=True)
     category_id = fields.Many2one(comodel_name='fleet.vehicle.model.category',
@@ -30,7 +30,7 @@ class FleetDamage(models.Model):
     evaluation_party_id = fields.Many2one(
         comodel_name='fleet.accident.evaluation.party', string="Evaluation Party", tracking=True)
     company_id = fields.Many2one(comodel_name='res.company', default=lambda self: self.env.company.id, domain=lambda self: [
-                                 ('id', 'in', self.env.user.company_ids.ids)], string='Company', required=False, tracking=True)
+                                 ('id', 'in', self.env.companies.ids)], string='Company', required=False, tracking=True)
     evaluation_report_ids = fields.One2many(
         'damage.evaluation.report', 'damage_id', string='Evaluation Report')
     confirmed_evaluation_report_id = fields.Many2one(
@@ -47,15 +47,20 @@ class FleetDamage(models.Model):
         string='Total Include Tax', compute="_compute_total_amount")
     note = fields.Html(string='Note', required=False)
     invoice_id = fields.Many2one(
-        comodel_name='account.move', string='Invoice_id', required=False)
+        comodel_name='account.move', string='Invoice_id', required=False, copy=False)
     source = fields.Selection(
         [('rental', "Rental"), ('none', "None")], string="Source", default='none')
-    state = fields.Selection([('draft', "Draft"), ('waiting_evaluation', "Waiting Evaluation"), (
-        'charged', "Charged"), ('cancelled', "Cancelled")], string="State", default='draft', tracking=True)
+    state = fields.Selection([('draft', "Draft"), ('waiting_evaluation', "Confirmed"), (
+        'charged', "Closed"), ('cancelled', "Cancelled")], string="State", default='draft', tracking=True)
     state_color = fields.Integer(compute="_compute_state_color")
     invoice_fleet_damage = fields.Selection([
-        ('invoiced', 'Invoiced'),
-        ('none', 'None')], string='Invoice Damage', readonly=True, compute="_compute_invoice_fleet_damage")
+        ('waiting_invoicing', 'Waiting Invoicing'),
+        ('invoiced', 'Invoiced')
+    ], string='Invoice Damage', readonly=True, compute="_compute_invoice_fleet_damage")
+    evaluation_state = fields.Selection([
+        ('waiting_evaluation', 'Waiting Evaluation'),
+        ('evaluated', 'Evaluated')
+    ], compute="_compute_evaluation_state", string='Evaluation State')
 
     @api.depends('state')
     def _compute_state_color(self):
@@ -72,15 +77,28 @@ class FleetDamage(models.Model):
     @api.depends('invoice_id', 'invoice_id.state')
     def _compute_invoice_fleet_damage(self):
         for record in self:
-            if record.invoice_id and record.invoice_id.state == 'posted':
+            if record.invoice_id:
                 record.invoice_fleet_damage = 'invoiced'
             else:
-                record.invoice_fleet_damage = ''
+                record.invoice_fleet_damage = 'waiting_invoicing'
+
+    @api.depends('evaluation_report_ids', 'evaluation_report_ids.state')
+    def _compute_evaluation_state(self):
+        for rec in self:
+            if any(ev.state == 'confirmed' for ev in rec.evaluation_report_ids):
+                rec.evaluation_state = 'evaluated'
+            else:
+                rec.evaluation_state = 'waiting_evaluation'
 
     @api.depends('evaluation_report_ids')
     def _compute_evaluation_count(self):
         for record in self:
             record.evaluation_count = len(record.evaluation_report_ids)
+
+    @api.onchange('company_id')
+    def _onchange_company_id(self):
+        self.customer_id = False
+        self.vehicle_id = False
 
     def action_reset_draft(self):
         for rec in self:

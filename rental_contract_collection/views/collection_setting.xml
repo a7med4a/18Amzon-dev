@@ -1,0 +1,68 @@
+<odoo> 
+    <!-- Setting -->
+    <record id="collection_setting_view_form" model="ir.ui.view">
+        <field name="name">collection.setting.view.form</field>
+        <field name="model">collection.setting</field>
+        <field name="arch" type="xml">
+            <form string="Collection Setting">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="rental_contract_status_ids" widget="many2many_tags"
+                                options="{'no_open': True, 'no_create': True}"/>
+                            <field name="allowed_late_days"/>
+                            <field name="allowed_all_contract_user_ids" widget="many2many_tags"
+                                options="{'no_open': True, 'no_create': True}"/>
+                            <field name="allowed_own_contract_user_ids" widget="many2many_tags"
+                                options="{'no_open': True, 'no_create': True}"/>
+                            <field name="company_id" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="collection_setting_action" model="ir.actions.act_window">
+        <field name="name">Collection Setting</field>
+        <field name="res_model">collection.setting</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+    </record>
+
+    <!-- Contact Type -->
+
+    <record id="collection_contact_type_view_tree" model="ir.ui.view">
+        <field name="name">collection.contact.type.view.tree</field>
+        <field name="model">collection.contact.type</field>
+        <field name="arch" type="xml">
+            <list string="Contact Type" editable="bottom">
+                <field name="name" />
+            </list>
+        </field>
+    </record>
+
+    <record id="collection_contact_type_action" model="ir.actions.act_window">
+        <field name="name">Contact Type</field>
+        <field name="res_model">collection.contact.type</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <!-- Contact Result -->
+
+    <record id="collection_contact_result_view_tree" model="ir.ui.view">
+        <field name="name">collection.contact.result.view.tree</field>
+        <field name="model">collection.contact.result</field>
+        <field name="arch" type="xml">
+            <list string="Contact Result" editable="bottom">
+                <field name="name" />
+            </list>
+        </field>
+    </record>
+
+    <record id="collection_contact_result_action" model="ir.actions.act_window">
+        <field name="name">Contact Result</field>
+        <field name="res_model">collection.contact.result</field>
+        <field name="view_mode">list</field>
+    </record>
+</odoo>

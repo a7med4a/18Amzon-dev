@@ -3,6 +3,7 @@ from odoo.exceptions import ValidationError
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 from datetime import datetime, timedelta
+from lxml import etree
 
 DAYS_reverse = {'Monday': '0',
                 'Tuesday': '1',
@@ -17,7 +18,7 @@ class QuickMaintenanceRequest(models.Model):
     _description = "Quick Maintenance Request"
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
-    name = fields.Char('Name', readonly=True, tracking=True)
+    name = fields.Char('Quick Maintenance Request Number', readonly=True, tracking=True)
     company_id = fields.Many2one('res.company', string='Company', required=True,readonly=True,default=lambda self: self.env.company)
     branch_id = fields.Many2one('res.branch', string='Branch',default=lambda self: self.env.branch,readonly=True)
     maintenance_team_id = fields.Many2one('maintenance.team', string='Maintenance Team',tracking=True,required=True)
@@ -138,13 +139,9 @@ class QuickMaintenanceRequest(models.Model):
     def action_view_transfers(self):
         for rec in self :
             if rec.transfer_ids:
-                return {
-                    'name': 'Transfers',
-                    'type': 'ir.actions.act_window',
-                    'res_model': 'stock.picking',
-                    'view_mode': 'list,form',
-                    'domain': [('id', 'in', rec.transfer_ids.ids)],
-                }
+                action = self.env['ir.actions.actions']._for_xml_id('maintenance_custom.action_picking_tree_all_from_quick_maintenance')
+                action['domain'] = [('id', 'in', rec.transfer_ids.ids)]
+                return action
             else:
                 raise ValidationError(_("No RFQ Created for this PR Request!"))
         return True
@@ -217,7 +214,27 @@ class QuickMaintenanceRequest(models.Model):
         for rec in self:
             picking_moves = rec.transfer_ids
             stock_valuation_layer = picking_moves.move_ids.stock_valuation_layer_ids
-            rec.spare_parts_cost = sum((layer.value) for layer in stock_valuation_layer)
+            rec.spare_parts_cost = abs(sum((layer.value) for layer in stock_valuation_layer))
+
+    def unlink(self):
+        if self.state != 'draft':
+            raise ValidationError(
+                _("You can't delete QMR which is not in Draft State"))
+        return super().unlink()
+
+    @api.model
+    def get_view(self, view_id=None, view_type='form', **options):
+        res = super().get_view(view_id, view_type, **options)
+        admin=self.env.user.has_group('maintenance_custom.group_quick_maintenance_request')
+        if view_type == 'form' and not admin and self.env.user.has_group('maintenance_custom.group_quick_maintenance_requester'):
+            doc = etree.XML(res['arch'])
+            for btn in doc.xpath("//button"):
+                btn.set("invisible", "1")
+            for mr in doc.xpath("//button[@name='action_request_maintenance']"):
+                mr.set("invisible", "state != 'draft'")
+            res['arch'] = etree.tostring(doc, encoding='unicode')
+
+        return res
 
 class QuickMaintenanceRequestComponent(models.Model):
     _name = 'quick.maintenance.request.component'
@@ -235,8 +252,9 @@ class QuickMaintenanceRequestComponent(models.Model):
                                           default="pending")
     picking_status = fields.Selection(string='Picking Status',
                                       selection=[('in_progress', 'In Progress'), ('done', 'Done'),
-                                                 ('cancelled', 'Cancelled'), ], required=False, default="in_progress",
+                                                 ('cancelled', 'Cancelled'),], required=False, default="in_progress",
                                       compute="_compute_picking_status")
+    product_domain = fields.Binary(string="Product domain",compute="_compute_product_domain")
 
 
     def _compute_picking_status(self):
@@ -269,10 +287,41 @@ class QuickMaintenanceRequestComponent(models.Model):
                 _("You can't delete component which is already spare part requests"))
         return super().unlink()
 
+    @api.depends('product_category_id','quick_maintenance_request_id','quick_maintenance_request_id.vehicle_id')
+    def _compute_product_domain(self):
+        for component in self:
+            domain = [('categ_id', '=',component.product_category_id.id)]
+            if component.quick_maintenance_request_id.vehicle_id:
+                domain.append(('related_model_ids', 'in',
+                               component.quick_maintenance_request_id.vehicle_id.model_id.id))
+            component.product_domain = domain
+
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
 
     quick_maintenance_request_id = fields.Many2one(comodel_name='quick.maintenance.request')
+
+    @api.model
+    def get_view(self, view_id=None, view_type='form', **options):
+        res = super().get_view(view_id, view_type, **options)
+
+        action_id = self.env.ref('maintenance_custom.action_picking_tree_all_from_quick_maintenance').id
+        if view_type == 'form' and options.get('action_id') == action_id:
+            doc = etree.XML(res['arch'])
+            for btn in doc.xpath("//button"):
+                btn.set("invisible", "1")
+            for field in doc.xpath("//field"):
+                field.set("readonly", "1")
+            editable_fields = ["quantity", "move_ids_without_package"]
+            for name in editable_fields:
+                for node in doc.xpath(f"//field[@name='{name}']"):
+                    node.set("readonly", "0")
+            for lst in doc.xpath("//list"):
+                lst.set("create", "0")
+            res['arch'] = etree.tostring(doc, encoding='unicode')
+
+        return res
+
 
 class StockMove(models.Model):
     _inherit = 'stock.move'

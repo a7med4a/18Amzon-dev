@@ -16,6 +16,16 @@ class FleetVehicleInherit(models.Model):
             'domain': [('vehicle_id', '=', self.id)]
         }
 
+    def action_view_quick_maintenance_request(self):
+        return {
+            'name': 'Quick Maintenance',
+            'view_type': 'form',
+            'view_mode': 'list,form',
+            'res_model': 'quick.maintenance.request',
+            'type': 'ir.actions.act_window',
+            'domain': [('vehicle_id', '=', self.id)]
+        }
+
     @api.model
     def get_view(self, view_id=None, view_type='form', **options):
         res = super().get_view(view_id, view_type, **options)

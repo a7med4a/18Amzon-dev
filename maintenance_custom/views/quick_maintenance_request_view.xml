@@ -16,12 +16,13 @@
                             confirm="Are you sure you want to approve Request ?"/>
                     <button name="create_stock_transfer" string="Deliver Spare Parts" type="object"
                             class="btn-primary" invisible="state != 'opened'"
-                            confirm="Are you sure you want to close Request ?"/>
+                            confirm="Are you sure you want to Request Spare Parts?"/>
                     <button name="action_close" string="Close" type="object"
                             class="btn-success" invisible="state != 'opened'"
                             confirm="Are you sure you want to close Request ?"/>
                     <button name="action_reset_draft" string="Reset To Draft" type="object"
                             confirm="Are you sure you want to reset back to draft state ?"
+                            groups="base.group_system"
                             class="btn-primary" invisible="state not in  ('opened')"/>
                     <button name="action_cancel" string="Cancel" type="object"
                             confirm="Are you sure you want to Cancel Spare Parts Request ?"
@@ -48,9 +49,11 @@
                             <field name="company_id" options="{'no_open': True, 'no_create': True}"/>
                             <field name="branch_id" options="{'no_open': True, 'no_create': True}"/>
                             <field name="maintenance_team_id" options="{'no_open': True, 'no_create': True}" domain="maintenance_team_branch_domain"/>
-                            <field name="member_ids" widget="many2many_tags"/>
+                            <field name="member_ids" widget="many2many_tags" invisible="1"/>
                             <field name="request_description" readonly="state != 'draft'"/>
-                            <field name="technicians_ids" widget="many2many_tags" invisible="state == 'draft'" readonly="state != 'waiting_approve'"/>
+                            <field name="technicians_ids" widget="many2many_tags" invisible="state == 'draft'"
+                                   readonly="state != 'waiting_approve'" domain="[('is_technical','=',True)]"
+                                   options="{'no_open': True, 'no_create': True}"/>
                             <field name="open_date" invisible="state in ('draft','waiting_approve')"/>
                             <field name="close_date" invisible="state not in ('repaired','cancelled')"/>
                             <field name="duration" invisible="state not in ('repaired','cancelled')"/>
@@ -58,7 +61,7 @@
                         <group>
                             <field name="vehicle_branch_domain" invisible="1"/>
                             <field name="vehicle_id" options="{'no_open': True, 'no_create': True}"
-                                   domain="vehicle_branch_domain" readonly="state != 'waiting_approve'"/>
+                                   domain="vehicle_branch_domain" readonly="state not in ('draft','waiting_approve')" required="1"/>
                             <field name="create_uid" string="Requested By" options="{'no_open': True, 'no_create': True}"/>
                             <field name="create_date" string="Request Date"/>
                             <field name="maintenance_team_branch_domain" invisible="1"/>
@@ -71,9 +74,10 @@
                         <page string="Spart Parts lines">
                             <field name="component_ids" readonly="state not in ('draft','waiting_approve','opened')">
                                 <list editable="bottom">
-                                    <field name="product_category_id" optional='show'
+                                    <field name="product_category_id" optional='show' domain="[('purchase_type_id.name', '=','Spare Parts')]"
                                            options="{'no_open': True, 'no_create': True}"/>
-                                    <field name="product_id" domain="[('categ_id', '=',product_category_id)]"
+                                    <field name="product_domain" column_invisible="1"/>
+                                    <field name="product_id" domain="product_domain"
                                            optional='show' options="{'no_open': True, 'no_create': True}"
                                            readonly="not product_category_id"/>
                                     <field name="uom_id" optional='show'

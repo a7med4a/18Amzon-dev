@@ -8,10 +8,17 @@
     </record>
 
     <record id="group_quick_maintenance_request" model="res.groups">
-        <field name="name">Approve Quick Maintenance</field>
+        <field name="name">Quick Maintenance Admin</field>
         <field name="category_id" ref="base.module_category_manufacturing_maintenance"/>
         <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
         <field name="comment">The user will be able to Quick Maintenance request.</field>
+    </record>
+
+    <record id="group_quick_maintenance_requester" model="res.groups">
+        <field name="name">Quick Maintenance Requester</field>
+        <field name="category_id" ref="base.module_category_manufacturing_maintenance"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">The user will be able to create Quick Maintenance request and request maintenance.</field>
     </record>
 
     <record id="group_approve_external_job_order" model="res.groups">

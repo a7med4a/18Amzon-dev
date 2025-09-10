@@ -14,6 +14,12 @@
                         <span class="o_stat_text">Maintenance Requests</span>
                     </div>
                 </button>
+                <button class="oe_stat_button" name="action_view_quick_maintenance_request" type="object"
+                        icon="fa-bars">
+                    <div class="o_stat_info">
+                        <span class="o_stat_text">Quick Maintenance Requests</span>
+                    </div>
+                </button>
             </xpath>
         </field>
     </record>
